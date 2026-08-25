@@ -10,9 +10,11 @@ IMG: 島上一道木籬把樹分成左右兩區，兩區各有一棵名字一模
 
 圍籬做的事情很單純：**在同一座島上，畫出幾個各自獨立的命名區域。**
 
-三件事今天要記住：
+有三個重點：
 
-**第一，圍籬是邏輯隔離，不是實體隔離。** 看圖 ── 木籬左右兩區的樹還是種在同一座島上。泡泡跑在哪棵樹上，完全由引路鳥決定，跟它屬於哪個圍籬無關。所以你不能靠 Namespace 來達成「這個團隊只准用這幾台機器」，那是另外的機制。
+**第一，圍籬是邏輯隔離，不是實體隔離。**
+
+看圖 ── 木籬左右兩區的樹還是種在同一座島上。泡泡跑在哪棵樹上，完全由引路鳥決定，跟它屬於哪個圍籬無關。所以你不能靠 Namespace 來達成「這個團隊只准用這幾台機器」，那是另外的機制。
 
 **更關鍵的是：預設情況下，圍籬擋不住網路。** dev 區的泡泡打得到 prod 區的泡泡。圍籬隔的是「名字」和「權限管理的範圍」，不是封包。這是新手最大的誤解，一定要記牢。
 
@@ -77,6 +79,10 @@ kubectl get deploy -n dev
 
 **兩區各有一個叫 `hello` 的隊長。** 名字一樣，完全獨立。你在 dev 改壞了，default 一點事都沒有。
 
+![day-13-shot-01](screenshots/day-13-shot-01.png)
+
+兩個 `hello` 各自獨立，但最後那行的 NODE 欄位透露了真相 ── 它們種在同一棵樹上。
+
 看看它們是不是真的種在同一座島上：
 
 ```bash
@@ -99,6 +105,8 @@ wget -qO- <default區泡泡的IP>
 ```
 
 Nginx 的頁面吐出來了。**跨區暢通無阻。** 打 `exit` 出來。
+
+順便記住一件之後會咬你的事：**便條本和小盒是綁在圍籬上的。** 你把一份 Deployment 複製到另一個圍籬，它引用的 ConfigMap／Secret **不會**跟著過去。泡泡會卡在 `ContainerCreating`，`describe` 會寫 `configmap "xxx" not found`。搬服務到新環境時，記得連設定一起搬。
 
 最後兩個省打字的技巧。第一，看全島所有區：
 
@@ -136,3 +144,8 @@ kubectl delete namespace dev
 ## 帶走一句話
 
 **圍籬隔開名字，隔不開網路。**
+
+## 參考資源
+
+- [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
+- [DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)

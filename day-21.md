@@ -14,9 +14,9 @@ IMG: 一顆泡泡正在破掉，裡面那個食盆跟著碎成一地 ｜ 出場�
 
 每破一次，那隻小鳥寫在自己肚子裡的東西就全沒了。新的小鳥是從 image 重新長出來的，**image 是什麼樣，它就是什麼樣**。
 
-所以想留住資料，得把資料放到「小鳥肚子外面」。第一種容器，就是圖上那個**食盆**。
+所以想留住資料，得把資料放到「小鳥肚子外面」。圖上那個食盆更精確的正式名稱是 **Volume Mount**：它是 Pod 裡的掛載位置，實際來源可以是 `emptyDir`、ConfigMap、Secret、PVC 或其他 Volume。
 
-食盆的正式名字叫 **emptyDir**，直翻是「空目錄」。它的行為完全照字面：
+今天先看的食盆來源是 **emptyDir**，直翻是「空目錄」。它的行為完全照字面：
 
 **泡泡建立時，K8s 開一個空目錄給它。泡泡刪掉時，這個目錄跟著刪掉。**
 
@@ -132,6 +132,10 @@ kubectl exec demo-vol -c reader -- cat /shared/log.txt
 
 **只有一兩行，從頭開始。** 之前累積的全部消失了 ── 這就是圖上那個碎掉的食盆。
 
+![day-21-shot-01](screenshots/day-21-shot-01.png)
+
+小鳥重啟後行數繼續累加（7→10），泡泡重建後直接歸零（10→2）。
+
 收工清掉：
 
 ```bash
@@ -161,3 +165,8 @@ kubectl delete pod demo-vol
 ## 帶走一句話
 
 **小鳥重啟食盆還在，泡泡破了就沒了。**
+
+## 參考資源
+
+- [Volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
+- [emptyDir volume](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir)

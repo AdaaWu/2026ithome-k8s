@@ -8,13 +8,13 @@
 
 IMG: 一群繫著不同顏色圍巾的泡泡散在樹上，一支放大鏡照出來的光圈裡只有繫紅圍巾的那三顆 ｜ 出場角色：泡泡、小鳥、彩色圍巾、放大鏡、巢樹 ｜ 亮橘重點：放大鏡的光圈範圍
 
-答案是圍巾。K8s 完全不靠位置、不靠名字前綴分類東西，它只靠**每顆泡泡身上繫的圍巾**。
+答案是圍巾。在 Service、Deployment、ReplicaSet 這些 selector 場景，K8s 主要靠**每顆泡泡身上繫的圍巾**找目標；Namespace、名字和 owner reference 也各自有用途。
 
 圍巾就是 Label，格式是 `key: value`，例如 `app: hello`。一顆泡泡可以繫很多條：`app: hello`、`env: dev`、`tier: frontend`，各代表一個分類角度。
 
 拿著放大鏡去找特定圍巾的動作叫 **Selector**。「幫我找出所有繫著 `app: hello` 的泡泡」── 就這麼一句話，回傳一組泡泡。
 
-看圖上那個光圈：光圈裡有幾顆泡泡，完全由圍巾決定，跟它們掛在哪棵樹上、叫什麼名字都無關。
+看圖上那個光圈：光圈主要由 selector 與圍巾決定，但 Namespace 和 selector 的種類也會影響搜尋範圍。
 
 今天這件事看起來平凡，但它是後面所有東西的地基：
 
@@ -82,7 +82,11 @@ hello 出現在清單裡。
 kubectl get pods -l app=world
 ```
 
-`No resources found in default namespace.` 泡泡明明還在跑，只是不在光圈裡。**記住這個畫面**，之後你的 Service 沒流量、Deployment 數字對不上，十次有八次就是這個畫面。
+`No resources found in default namespace.` 泡泡明明還在跑，只是不在光圈裡。**記住這個畫面**，之後你的 Service 沒流量、Deployment 數字對不上，這是很常見、值得先檢查的原因之一。
+
+![day-08-shot-01](screenshots/day-08-shot-01.png)
+
+泡泡好好地跑著，放大鏡卻照不到 ── 而且沒有任何錯誤訊息。
 
 再多建一顆繫不同圍巾的泡泡，感受一下分類：
 
@@ -107,7 +111,7 @@ kubectl label pod hello env=dev
 kubectl get pods -l env=dev --show-labels
 ```
 
-臨時查東西很好用，但正式的圍巾一定要寫回 YAML。因為 apply 是照著檔案內容對齊現況的，檔案裡沒有 `env: dev`，下次 apply 它就被拿掉了 ── 而且不會有任何警告。
+臨時查東西很好用，但正式的圍巾一定要寫回 YAML。因為 apply 是照著檔案內容對齊現況的，這個欄位如果由目前這份 apply 設定管理，檔案裡拿掉後，下次 apply 可能會把它移除 ── 而且不會有任何警告。
 
 最後一個實用招式，把圍巾拉出來當表格欄位看：
 
@@ -129,7 +133,7 @@ kubectl delete pod other
 
 **圍巾是拿來被找的，附註是拿來被讀的。**
 
-放大鏡只照圍巾，永遠不會去照附註。所以任何你需要用來篩選、分組、被 Service 或 Deployment 選中的資訊，一律放 Label；那些「給人看」或「給工具看」但沒人需要拿它來搜尋的東西，放 Annotation。
+Selector 不會使用 Annotation 來篩選。所以任何你需要用來篩選、分組、被 Service 或 Deployment 選中的資訊，一律放 Label；那些「給人看」或「給工具看」但沒人需要拿它來搜尋的東西，放 Annotation。
 
 你 Day 11 會用到的 `kubernetes.io/change-cause`、Day 16 會用到的 Ingress 設定，全部都是 Annotation。
 
@@ -156,3 +160,8 @@ kubectl logs -l app=hello --tail=5
 ## 帶走一句話
 
 **K8s 靠圍巾找人，不靠名字。**
+
+## 參考資源
+
+- [Labels and Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)
+- [Annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/)

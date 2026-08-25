@@ -12,17 +12,17 @@ IMG: 一條橫向長條旅程圖，七個站點由左到右依序排開，一隻
 
 **第一站，訪客。** 瀏覽器發出一個請求，打的是 `http://你的網域/hello`。它對島上的一切一無所知，它只知道一個網址。
 
-**第二站，大門地圖看板（Ingress）。** 島的唯一入口。看板讀網址、對規則表，決定這個請求歸哪根柱子管。看板不認識任何一顆泡泡，它只認識柱子的名字。
+**第二站，大門地圖看板（Ingress）。** 在今天這張示意圖裡，它是島的主要入口；實際叢集可能同時有多個入口。看板讀網址、對規則表，決定這個請求歸哪根柱子管。看板不認識任何一顆泡泡，它只認識柱子的名字。
 
-**第三站，圖騰柱（Service）。** 柱子有一個固定不變的 IP，手上有一份隨時更新的名單。它從名單裡挑一個健康的泡泡，把請求交出去。**柱子做的是決定，不是搬運。**
+**第三站，圖騰柱（Service）。** 柱子通常有穩定的虛擬位址與一份隨時更新的 endpoint 名單；實際封包轉送由 kube-proxy、eBPF 或其他資料平面實作完成。**柱子描述的是入口，不是一個搬運中的程序。**
 
 **第四站，郵差鼴鼠（kube-proxy）── 今天第一次登場。** 這位是實際搬運的人。
 
-停下來想一個你可能一直沒想過的問題：柱子那個 `10.96.x.x` 的 IP，島上根本沒有任何一台機器擁有它。它不對應任何一張網卡。那封包打過去，為什麼會通？
+停下來想一個你可能一直沒想過的問題：柱子那個 `10.96.x.x` 的 IP，一般 Node 的網卡不會直接擁有它。它不對應任何一張網卡。那封包打過去，為什麼會通？
 
-因為每一棵巢樹的地底下都住著一隻郵差鼴鼠。它一直盯著燈塔櫃台看，只要柱子的名單有變動，它就跑回自己那棵樹底下**重新挖一次地道**：凡是要去 `10.96.x.x` 的封包，一律轉去這幾個泡泡 IP 其中一個。
+因為每一棵巢樹的地底下都住著一隻郵差鼴鼠。它一直盯著燈塔櫃台看，只要柱子的名單有變動，它就跑回自己那棵樹底下**重新挖一次地道**：凡是要去 `10.96.x.x` 的封包，會依節點上的 Service 規則轉向符合條件的泡泡 IP；實際機制可能是 iptables、IPVS 或 eBPF。
 
-所以柱子的 IP 是**虛擬的**。它不是一個地址，它是一條規則。看圖上鼴鼠站的位置 ── 它在地底，你平常完全看不到它，但每一個封包都是踩著它挖的地道過去的。這也是為什麼 Day 15 說 ClusterIP 在島外打不通：島外的機器底下沒有鼴鼠，沒有地道。
+所以柱子的 IP 是**虛擬的**。它不是一個地址，它是一條規則。看圖上鼴鼠站的位置 ── 它在地底，你平常看不到這些規則；封包會依節點上的資料平面規則被轉向。這也是為什麼 Day 15 說 ClusterIP 在島外打不通：島外的機器底下沒有鼴鼠，沒有地道。
 
 **第五站，巢樹（Node）。** 封包現在有了一個真實的泡泡 IP，透過島上的網路送到那顆泡泡所在的樹。**這棵樹不一定是收到請求的那棵。** 流量在島內橫向跨樹是很正常的事。
 
@@ -53,7 +53,7 @@ kubectl describe ingress hello | grep -A4 Rules
 
 ```bash
 kubectl get svc hello
-kubectl get endpoints hello
+kubectl get endpointslices -l kubernetes.io/service-name=hello
 ```
 
 一個固定 IP，加一份三筆的名單。
@@ -74,13 +74,17 @@ docker exec hello-control-plane iptables-save -t nat | grep "default/hello"
 
 你會看到幾行規則，裡面有你柱子的 `10.96.x.x`，也有泡泡的 `10.244.x.x`。**這就是鼴鼠寫下的地道。** 柱子的 IP 在這裡從一個「地址」變成一條「轉向指令」。
 
-看仔細一點，會看到類似 `statistic mode random probability 0.33333` 的字樣 ── 三顆泡泡各三分之一，**負載平衡就是這樣做出來的**，沒有什麼神祕的東西。
+看仔細一點，會看到類似 `statistic mode random probability 0.33333` 的字樣 ── 三顆泡泡各三分之一，這是這次環境中 iptables 規則呈現的近似分配方式；實際流量不保證平均，還會受連線、session affinity 和資料平面實作影響。
+
+![day-18-shot-01](screenshots/day-18-shot-01.png)
+
+三顆泡泡時是 1/3、1/2、剩下全給 ── 機率是接力算下來的。擴成五顆之後規則從 11 行變 17 行，鼴鼠自己重挖的。
 
 驗證它會自己更新。把泡泡擴成五顆：
 
 ```bash
 kubectl scale deployment hello --replicas=5
-kubectl get endpoints hello
+kubectl get endpointslices -l kubernetes.io/service-name=hello
 docker exec hello-control-plane iptables-save -t nat | grep -c "default/hello"
 ```
 
@@ -109,3 +113,8 @@ kubectl scale deployment hello --replicas=3
 ## 帶走一句話
 
 **柱子的 IP 不是地址，是鼴鼠挖的地道。**
+
+## 參考資源
+
+- [Virtual IPs and Service Proxies](https://kubernetes.io/docs/reference/networking/virtual-ips/)
+- [Service](https://kubernetes.io/docs/concepts/services-networking/service/)

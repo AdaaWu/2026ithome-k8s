@@ -1,4 +1,4 @@
-# Day 27：有名字的鳥 StatefulSet ── 資料庫為什麼不能用 Deployment
+# Day 27：編號泡泡管理員 StatefulSet ── 資料庫為什麼不能用 Deployment
 
 ## 痛點
 
@@ -6,7 +6,7 @@ Day 23 你的資料庫是用 Deployment 跑的，也跑得好好的。那為什�
 
 ![day-27-01](illustrations/day-27-01.png)
 
-IMG: 三隻掛著 0、1、2 號碼牌的鳥各自站在自己的泡泡裡，每顆泡泡下方各連著一座專屬的倉庫 ｜ 出場角色：有名字的鳥、泡泡、島上的倉庫、借用單 ｜ 亮橘重點：三隻鳥胸前的號碼牌
+IMG: 三顆泡泡各自掛著 0、1、2 號碼牌，泡泡裡各有一隻小鳥，泡泡下方各連著一座專屬的倉庫 ｜ 出場角色：編號泡泡管理員、泡泡、小鳥、島上的倉庫、借用單 ｜ 亮橘重點：泡泡外壁上的 0、1、2 號碼牌
 
 因為 Deployment 手下的泡泡是**可拋棄的**，而資料庫**不能被拋棄**。
 
@@ -16,17 +16,17 @@ IMG: 三隻掛著 0、1、2 號碼牌的鳥各自站在自己的泡泡裡，每�
 **沒有順序** ── 三顆同時吹出來，誰先誰後不一定。
 **共用倉庫** ── 大家掛同一張借用單。
 
-這三件事對前端來說完全沒問題，反而是優點。但對資料庫來說，三件全是災難。看圖上那三隻鳥，StatefulSet 把三件事一次改掉：
+這三件事對前端來說完全沒問題，反而是優點。但對資料庫來說，三件全是災難。看圖上泡泡外壁的號碼牌，StatefulSet 把三件事一次改掉：
 
-**第一，固定的名字。** 泡泡叫 `hello-db-0`、`hello-db-1`、`hello-db-2`，掛號碼牌。刪掉 `hello-db-1`，補回來的還是叫 `hello-db-1`，不是換一串亂碼。
+**第一，固定的名字。** 泡泡叫 `hello-db-0`、`hello-db-1`、`hello-db-2`，在泡泡外掛著號碼牌。刪掉 `hello-db-1`，補回來的還是叫 `hello-db-1`，不是換一串亂碼。
 
 **第二，一鳥一倉庫。** 每個編號各自綁一張自己的借用單、一座自己的倉庫。`hello-db-1` 重建之後，接回去的是**它原本那座倉庫**，資料原封不動。這是整個 StatefulSet 最核心的價值。
 
-**第三，有順序。** 啟動是 0 → 1 → 2，一顆完全就緒才吹下一顆；關閉是倒過來，2 → 1 → 0。資料庫的主從架構、分散式系統的初始化，全都靠這個順序。
+**第三，預設的 OrderedReady 策略有順序。** 啟動通常是 0 → 1 → 2，一顆就緒才建立下一顆；關閉則反向進行。若設定 `podManagementPolicy: Parallel`，就不必等待這個順序。資料庫的主從架構、分散式系統的初始化，全都靠這個順序。
 
 ![day-27-02](illustrations/day-27-02.png)
 
-IMG: 三顆泡泡由左到右依序吹出，1 號還沒成形時 2 號完全還沒開始 ｜ 出場角色：有名字的鳥、泡泡、小鳥 ｜ 亮橘重點：還完全空白的 2 號位置
+IMG: 三顆帶著 0、1、2 號碼牌的泡泡由左到右依序建立，1 號還沒 Ready 時 2 號尚未開始 ｜ 出場角色：編號泡泡管理員、泡泡、小鳥 ｜ 亮橘重點：尚未建立的 2 號位置
 
 還有一個必配的東西：**Headless Service（無頭的圖騰柱）。**
 
@@ -36,11 +36,11 @@ IMG: 三顆泡泡由左到右依序吹出，1 號還沒成形時 2 號完全還�
 
 一句話總結今天：**Deployment 管的是「三個一樣的東西」，StatefulSet 管的是「三個不一樣、而且分得出誰是誰的東西」。**
 
-那什麼時候該用？判準只有一條：**這顆泡泡有沒有「只屬於它自己」的資料或身分？** 有就用 StatefulSet ── 資料庫、訊息佇列、分散式快取。沒有就用 Deployment，那是九成的情況。
+那什麼時候該用？判準只有一條：**這顆泡泡有沒有「只屬於它自己」的資料或身分？** 有穩定身份、順序或每顆 Pod 專屬儲存需求時，才考慮 StatefulSet；資料庫、訊息佇列與分散式快取還要看應用程式和 Operator 的需求。沒有就用 Deployment，那是九成的情況。
 
 ## 動手 5 分鐘
 
-前二十六天我們所有東西都是 Deployment。今天做一組掛號碼牌的鳥，把三個差異一次看完。
+前二十六天我們示範的工作負載都是 Deployment。今天讓編號泡泡管理員建立一組帶號碼牌的泡泡，把三個差異一次看完。
 
 建立 `demo-statefulset.yaml`：
 
@@ -134,15 +134,22 @@ kubectl get pods -l app=demo-sts
 kubectl exec demo-sts-1 -- cat /data/id.txt
 ```
 
-**`I am number one` 還在。** 它接回了自己原本那座倉庫。這件事 Deployment 做不到 ── 因為貓頭鷹補出來的是一顆名字完全不同的新泡泡，不知道該接哪座倉庫。
+**`I am number one` 還在。** 這次 demo 中它接回了自己原本那座倉庫；前提是 PVC、PV 與掛載流程都正常。這件事 Deployment 做不到 ── 因為貓頭鷹補出來的是一顆名字完全不同的新泡泡，不知道該接哪座倉庫。
+
+![day-27-shot-01](screenshots/day-27-shot-01.png)
+
+三顆泡泡的名字是 0、1、2，三張借用單也是 0、1、2 ── 一一對應。
 
 **差異三，帶編號的地址：**
 
 ```bash
-kubectl run dns-test --rm -it --image=busybox:1.36 -- nslookup demo-sts-1.demo-sts
+kubectl run dns-test --rm -it --image=busybox:1.36 -- \
+  nslookup demo-sts-1.demo-sts.default.svc.cluster.local
 ```
 
-印出 `demo-sts-1.demo-sts.default.svc.cluster.local` 和那顆泡泡的 IP。**你叫得到指定的那一顆。**
+印出那顆泡泡的 IP。**你叫得到指定的那一顆。**
+
+（這裡要寫完整位址。busybox 的 `nslookup` 不太會用叢集的搜尋網域，只打 `demo-sts-1.demo-sts` 會拿到 `NXDOMAIN` ── 但你的**程式**在泡泡裡用短名稱是通的，那是 busybox 這個工具的問題，不是 DNS 的問題。）
 
 至於你的 `hello-db`，要換過去其實只有四個地方要改：`kind` 換成 `StatefulSet`、加 `serviceName`、把 `volumes` 那段改成 `volumeClaimTemplates`、柱子加 `clusterIP: None`。今天先不動它，知道怎麼換就好。
 
@@ -156,8 +163,13 @@ kubectl delete pvc data-demo-sts-0 data-demo-sts-1 data-demo-sts-2
 
 **注意最後這行。** 刪掉 StatefulSet **不會**連借用單一起刪 ── 這是刻意的保護，免得你手滑砍掉資料。所以清場的時候要多這一步，不然倉庫會一直留在島上。
 
-再補一個很多人會忽略的差別：**StatefulSet 的滾動更新也是照編號來的，而且是倒著走。** 更新時從編號最大的開始換，一顆完全就緒才動下一顆。所以更新一組五顆的資料庫會明顯比更新前端慢，這是正常的，不要中途以為卡住就去手動干預。
+再補一個很多人會忽略的差別：**在預設 RollingUpdate 策略下，StatefulSet 通常照編號倒著更新。** 更新時從編號最大的開始換，一顆就緒才動下一顆；`OnDelete` 或其他設定會改變這個行為。所以更新一組五顆的資料庫會明顯比更新前端慢，這是正常的，不要中途以為卡住就去手動干預。
 
 ## 帶走一句話
 
 **號碼牌配專屬倉庫，這才是 StatefulSet。**
+
+## 參考資源
+
+- [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
+- [StatefulSet Basics](https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/)

@@ -8,7 +8,7 @@
 
 IMG: 一顆紅色的壞掉泡泡卡在樹枝半路上不上不下，旁邊三顆舊版泡泡照常運作，一支箭頭從紅泡泡指回舊版那一區 ｜ 出場角色：泡泡、小鳥、巢樹、隊長 ｜ 亮橘重點：從紅泡泡指回舊版的那支箭頭
 
-好消息是：**大部分情況下你不會全掛，你會卡住。**
+好消息是：**在舊副本仍健康、更新策略保留可用副本時，通常會卡住而不是全掛。**
 
 這是昨天那套滾動更新順便送你的保護。回想隊長的動作 ── 新的加一顆、舊的減一顆、再加一顆、再減一顆。關鍵在於隊長不是無腦往下推的，它每推一顆就會停下來確認：這顆新泡泡真的活起來了嗎？
 
@@ -75,13 +75,17 @@ kubectl rollout status deployment/hello --timeout=30s
 
 畫面停在 `Waiting for deployment "hello" rollout to finish: 1 out of 3 new replicas have been updated...`，三十秒後 timeout 退出。**卡住，但沒有崩潰。**
 
+![day-11-shot-01](screenshots/day-11-shot-01.png)
+
+壞版本卡在 ImagePullBackOff，但同一時間 curl 拿到的是 200 ── 使用者什麼都沒感覺到。
+
 現在做今天最重要的驗證 ── 服務到底還活著沒有：
 
 ```bash
 kubectl port-forward deployment/hello 8080:80
 ```
 
-打開 `http://localhost:8080`，Nginx 的 Welcome 頁照常出現。你剛剛推了一個完全壞掉的版本上去，使用者卻什麼都沒感覺到。`Ctrl+C` 離開。
+打開 `http://localhost:8080`，Nginx 的 Welcome 頁照常出現。你剛剛推了一個完全壞掉的版本上去，在這個設定與舊副本仍健康的前提下，使用者通常不會感覺到。`Ctrl+C` 離開。
 
 看隊長怎麼說：
 
@@ -136,10 +140,15 @@ kubectl set image deployment/hello hello=nginx:1.27-alpine
 kubectl rollout status deployment/hello
 ```
 
-`maxUnavailable: 0` 保證整個過程可服務的泡泡數量一次都沒有少於三顆。代價是更新會慢一點、過程中會多佔一顆泡泡的資源。
+`maxUnavailable: 0` 會要求更新期間不可少於期望的可用副本數；實際能否維持服務，仍取決於舊副本、Readiness 和節點資源。代價是更新會慢一點、過程中會多佔一顆泡泡的資源。
 
 記得把檔案裡的 image 也對齊成 `nginx:1.27-alpine` 再存進 git，別讓檔案跟島上打架。
 
 ## 帶走一句話
 
-**推壞了不會全掛，只會卡住等你回捲。**
+**在保留健康舊副本時，推壞版本通常會卡住等你回捲。**
+
+## 參考資源
+
+- [Deployment 更新策略](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
+- [Deployment rollback](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-a-deployment)

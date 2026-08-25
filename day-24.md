@@ -16,15 +16,15 @@ IMG: 一隻啄木鳥敲著泡泡的外壁，泡泡頂上插著一面旗子 ｜ �
 
 **Liveness（醫生啄木鳥）── 你還活著嗎？沒回應就重啟。**
 
-啄木鳥固定去敲泡泡，敲不出聲就判定這隻小鳥死了，直接砍掉重來。它管的是「**救不救**」。
+啄木鳥固定去敲泡泡，連續失敗達到設定門檻時，kubelet 會重啟這隻小鳥。它管的是「**救不救**」。
 
 **Readiness（小旗子）── 你準備好了嗎？沒好就不給流量。**
 
-看圖上那面旗子。旗子升起來，柱子才把它加進名單；旗子降下來，柱子立刻把它從名單移除 ── **但不會重啟它**。它管的是「**給不給客人**」。
+看圖上那面旗子。旗子升起來，柱子才把它加進名單；旗子降下來，柱子立刻把它從名單移除 ── **通常不會重啟它**。它管的是「**給不給客人**」。
 
 **Startup（啟動緩衝）── 你還在開機嗎？開機期間其他兩隻先別吵。**
 
-有些服務啟動要花兩分鐘（載模型、跑 migration）。Startup 探針成功之前，另外兩種探針完全不作用。它管的是「**什麼時候開始檢查**」。
+有些服務啟動要花兩分鐘（載模型、跑 migration）。Startup 探針成功之前，liveness 和 readiness 通常不會開始執行；startup 自己失敗到門檻時仍可能造成重啟。它管的是「**什麼時候開始檢查**」。
 
 三者的分工用一句話講死：**Liveness 決定生死，Readiness 決定流量，Startup 決定何時開始問。**
 
@@ -87,49 +87,131 @@ kubectl describe pod -l app=hello | grep -E "Liveness|Readiness"
 
 會印出 `http-get http://:80/ delay=10s timeout=1s period=10s #success=1 #failure=5` 這種摘要。
 
-**現在弄壞它。** 把首頁改名，讓 Nginx 對 `/` 回 404：
+**現在弄壞一顆給你看。** 這裡要另外開一組拋棄式的泡泡，原因很實際：你的 hello 泡泡從 Day 19 起，首頁是 ConfigMap **唯讀掛載**進去的，改不動。
 
-```bash
-POD=$(kubectl get pods -l app=hello -o jsonpath='{.items[0].metadata.name}')
-kubectl exec $POD -- mv /usr/share/nginx/html/index.html /tmp/
+建立 `demo-probe.yaml`，一根柱子加三顆帶探針的泡泡：
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-probe
+spec:
+  selector:
+    app: demo-probe
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-probe
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo-probe
+  template:
+    metadata:
+      labels:
+        app: demo-probe
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet: {path: /, port: 80}
+            initialDelaySeconds: 2
+            periodSeconds: 3
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: {path: /, port: 80}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
 ```
 
-（如果你的 index.html 是 Day 19 掛載進來的唯讀檔案，改用這行製造 404：`kubectl exec $POD -- sh -c "nginx -s stop"`。）
+```bash
+kubectl apply -f demo-probe.yaml
+kubectl rollout status deployment/demo-probe
+```
+
+把其中一顆的首頁搬走，讓它對 `/` 回 403：
+
+```bash
+POD=$(kubectl get pods -l app=demo-probe -o jsonpath='{.items[0].metadata.name}')
+kubectl exec $POD -- mv /usr/share/nginx/html/index.html /tmp/
+```
 
 立刻盯著看：
 
 ```bash
-kubectl get pods -w
+kubectl get pods -l app=demo-probe -w
 ```
 
 **先看到的是 READY 從 `1/1` 變成 `0/1`，但 STATUS 還是 `Running`。** 這就是小旗子降下來了 ── 泡泡活著，只是不接客。
 
-同時去看柱子的名單：
+同時去看柱子的名單，但**要看對地方**：
 
 ```bash
-kubectl get endpoints hello
+kubectl get endpointslices -l kubernetes.io/service-name=demo-probe
 ```
 
-**名單從三筆變成兩筆。** 柱子已經自動把它跳過了，使用者完全不受影響。這是 Readiness 的價值。
+奇怪，`ENDPOINTS` 那欄還是三個位址，一個都沒少。
+
+這裡有個很多人會誤會的細節：**EndpointSlice 不會把未就緒的泡泡從名單上刪掉，它是掛一個 `ready: false` 的標記。** 表格那一欄是不分就緒與否全部列出來的，所以你得往裡面看：
+
+```bash
+kubectl get endpointslices -l kubernetes.io/service-name=demo-probe \
+  -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{"  ready="}{.conditions.ready}{"\n"}{end}'
+```
+
+```
+10.244.0.39  ready=false
+10.244.0.37  ready=true
+10.244.0.38  ready=true
+```
+
+**降旗的那顆變成 `ready=false`。** 郵差鼴鼠只會把流量送給 `ready=true` 的，所以它確實已經不接客了 ── 只要還有健康的泡泡在，使用者不會感覺到這件事（長連線、或三顆同時倒下時仍可能中斷）。
 
 繼續等。五十秒後回到 `-w` 那個畫面：
 
 ```
-hello-xxx   0/1   Running   1 (3s ago)
+demo-probe-xxx   1/1   Running   1 (5s ago)
 ```
 
-**RESTARTS 變成 1** ── 啄木鳥終於出手了。重啟後容器從 image 重新長出來，index.html 回來了，READY 變回 `1/1`，名單也變回三筆。`Ctrl+C` 離開。
+**RESTARTS 變成 1** ── 啄木鳥終於出手了。重啟後容器從 image 重新長出來，index.html 回來了，READY 變回 `1/1`，那個位址也變回 `ready=true`。`Ctrl+C` 離開。
+
+![day-24-shot-01](screenshots/day-24-shot-01.png)
+
+`0/1` 但 `Running` 是旗子降下來；五十秒後 RESTARTS 變 1 才是啄木鳥動手。兩者差了整整一個數量級的時間。
 
 看啄木鳥的說法：
 
 ```bash
-kubectl describe pod $POD | grep -A3 "Liveness probe failed"
+kubectl describe pod $POD | grep -E "Liveness probe failed|will be restarted"
 ```
 
-Events 裡明明白白寫著 `Liveness probe failed: HTTP probe failed with statuscode: 404`，接著 `Container hello failed liveness probe, will be restarted`。
+Events 裡明明白白寫著 `Liveness probe failed: HTTP probe failed with statuscode: 403`，接著 `Container web failed liveness probe, will be restarted`。（403 不是 404 ── 目錄還在，只是沒有首頁可以給，Nginx 預設不列目錄。）
 
 **整個過程你什麼都沒做，服務也沒有中斷。** 這就是今天要換到的東西。
+
+驗收完把拋棄式那組清掉：
+
+```bash
+kubectl delete -f demo-probe.yaml
+```
+
+至於你真正的 hello 服務，把那兩段 `readinessProbe` / `livenessProbe` 加進 `hello-deployment.yaml` 的 `ports` 底下再 apply 就好，設定完全一樣。
 
 ## 帶走一句話
 
 **旗子管流量，啄木鳥管生死，別搞反。**
+
+## 參考資源
+
+- [Liveness, Readiness and Startup Probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/)
+- [Probe Configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)

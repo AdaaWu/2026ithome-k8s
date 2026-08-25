@@ -51,10 +51,10 @@ kubectl get pod hello -o jsonpath='{.status.podIP}{"\n"}{range .spec.containers[
 現在往同一顆泡泡裡臨時加一隻小鳥：
 
 ```bash
-kubectl debug -it hello --image=busybox:1.36 -- sh
+kubectl debug -it hello --image=busybox:1.36 --profile=general -- sh
 ```
 
-`kubectl debug` 會在既有泡泡裡插入一隻臨時小鳥，不動到原本那隻。等個幾秒，提示字元變成 `/ #`，你人就在第二隻小鳥裡面了。
+`kubectl debug` 會在既有泡泡裡插入一隻臨時小鳥，不動到原本那隻（`--profile=general` 不加也會動，但新版 kubectl 會跳一行棄用警告）。等個幾秒，提示字元變成 `/ #`，你人就在第二隻小鳥裡面了。
 
 在裡面打這行：
 
@@ -65,6 +65,10 @@ wget -qO- localhost:80
 Nginx 的 HTML 直接吐出來了。
 
 停一下想清楚這件事有多怪：這隻 busybox 小鳥完全沒裝 Nginx，它打 `localhost` 卻打得到 Nginx。因為它跟 Nginx 那隻小鳥站在同一顆泡泡裡，共用那塊門牌。
+
+![day-06-shot-01](screenshots/day-06-shot-01.png)
+
+橘色那個位址出現兩次：一次是外面看到的 podIP，一次是臨時小鳥自己的網卡。
 
 換個角度再確認一次：
 
@@ -103,14 +107,19 @@ spec:
 
 最後把一個很容易搞混的問題釐清：**泡泡自己會不會重啟？**
 
-不會。**能重啟的是小鳥，不是泡泡。**
+這裡說的「重啟」是同一個泡泡內的 container 重啟；**控制器也可能刪除原本的泡泡，再建立一顆新的。**
 
-一顆泡泡從被建立的那一刻起，它掛在哪棵樹上、拿到哪個門牌，就定死了，不會改變。裡面的小鳥死掉了，管家松鼠會在**同一顆泡泡裡**重新拉一隻起來 ── 你在 `kubectl get pods` 看到的 RESTARTS 欄位加一，就是這件事。
+一顆泡泡從被建立的那一刻起，對同一顆泡泡來說，它掛在哪棵樹上、拿到哪個門牌，在生命週期內通常不會改變；需要換樹時，控制器通常會建立新的泡泡。裡面的小鳥死掉了，管家松鼠會在**同一顆泡泡裡**重新拉一隻起來 ── 你在 `kubectl get pods` 看到的 RESTARTS 欄位加一，就是這件事。
 
 但如果是整顆泡泡出問題（那棵樹掛了、資源不夠被趕走），它不會「搬家」，它會**直接消失**，然後由別人建一顆全新的泡泡出來。新泡泡是新的名字、新的門牌，跟舊的完全沒有關係。
 
-**泡泡不會移動，只會被替換。** 這句話請記牢，第二幕後面每一天都會用到它。
+**一般由 Deployment 管理的泡泡不會被搬到另一棵樹，而是由新的泡泡取代。** 這句話請記牢，第二幕後面每一天都會用到它。
 
 ## 帶走一句話
 
 **同一顆泡泡的小鳥，共用一塊門牌。**
+
+## 參考資源
+
+- [Pods](https://kubernetes.io/docs/concepts/workloads/pods/)
+- [Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)

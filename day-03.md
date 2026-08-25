@@ -12,11 +12,11 @@ IMG: 雲之島的全景剖面，島上長著巢樹、樹上掛著泡泡、泡泡
 
 四層由外而內是這樣的：
 
-**雲之島 = Cluster（叢集）。** 一座島就是一整套 K8s。島有自己的邊界，島外的東西進不來，除非你開門（第三幕會講怎麼開門）。你昨天 `kind create cluster` 蓋的就是這座島。
+**雲之島 = Cluster（叢集）。** 一座島就是一整套 K8s。叢集內的資源有自己的邊界；外部流量要能進來，還要看你是否配置了對外入口（第三幕會講怎麼開門）。你昨天 `kind create cluster` 蓋的就是這座島。
 
 **巢樹 = Node（節點）。** 島上的每一棵樹都是一台可以提供 CPU 和記憶體的機器，可以是實體機器，也可以是虛擬機器。正式環境的島上會有五棵、十棵樹；Kind 預設只給你一棵，因為它是拿一個 Docker 容器模擬的。樹是實際幹活的地方。
 
-**泡泡 = Pod。** 掛在樹枝上的泡泡，是 K8s 排程的最小單位。注意這個詞：最小單位是泡泡，不是小鳥。你之後跟 K8s 說的所有話，數量都是在數泡泡。
+**泡泡 = Pod。** 掛在樹枝上的泡泡，是 K8s 排程的最小單位。注意這個詞：最小單位是泡泡，不是小鳥。在 Deployment、ReplicaSet 這類工作負載裡，你看到的副本數是在數泡泡；其他資源有自己的數量與狀態。
 
 **小鳥 = Container（容器）。** Container 是 Pod 裡實際執行程式的隔離程序。你熟悉的 Docker 容器是其中一種容器實作，但 Kubernetes 不限定只能使用 Docker。看圖上小鳥的位置，明天你就懂為什麼要多包一層。
 
@@ -56,6 +56,10 @@ kubectl get pods -o wide
 
 `-o wide` 是關鍵。你會多看到兩欄：`IP` 是這顆泡泡自己的門牌，`NODE` 是它掛在哪棵樹上。NODE 那欄印出來的名字，跟上面 `get nodes` 看到的是同一個 ── 這就是圖上「泡泡掛在樹枝上」那條線，在終端機裡的樣子。
 
+![day-03-shot-01](screenshots/day-03-shot-01.png)
+
+橘色那兩處是同一棵樹的名字，一個在樹的清單上、一個在泡泡的 NODE 欄。
+
 再往裡看一層，看泡泡裡有哪隻小鳥：
 
 ```bash
@@ -81,7 +85,7 @@ Kind 預設只給你一棵，但你隨時可以多種幾棵。在 `kind-config.y
 順便看一下這棵樹能裝多少東西：
 
 ```bash
-kubectl describe node hello-control-plane | grep -A5 Capacity
+kubectl describe node hello-control-plane | grep -A9 Capacity
 ```
 
 CPU、記憶體、還有 `pods: 110` 這一行 ── **一棵樹預設最多掛 110 顆泡泡**。這是引路鳥排位子時的其中一條規則，Day 25 我們會再回來看它怎麼算的。
@@ -95,3 +99,8 @@ CPU、記憶體、還有 `pods: 110` 這一行 ── **一棵樹預設最多掛
 ## 帶走一句話
 
 **島包樹、樹掛泡泡、泡泡裝小鳥。**
+
+## 參考資源
+
+- [Kubernetes 架構](https://kubernetes.io/docs/concepts/architecture/)
+- [Nodes](https://kubernetes.io/docs/concepts/architecture/nodes/)

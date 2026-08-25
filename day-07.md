@@ -8,7 +8,7 @@
 
 IMG: 左邊一張攤開的 YAML 卷軸，右邊一顆泡泡，四條線把卷軸上的四個段落分別連到泡泡的名牌、外壁、內部的小鳥和小鳥身上的埠號 ｜ 出場角色：泡泡、小鳥 ｜ 亮橘重點：卷軸和泡泡之間那四條對照線
 
-YAML 只是把你原本用指令講的話，改成寫下來。看圖上那四條線，每份 K8s 的 YAML 都只有四個最上層欄位，一個都不會少：
+YAML 只是把你原本用指令講的話，改成寫下來。看圖上那四條線，今天的 Pod YAML 先從四個常見的最上層欄位開始：
 
 **apiVersion ── 你要用哪一版的規格書。** Pod 這種最基本的資源寫 `v1`。之後你會看到 `apps/v1`、`networking.k8s.io/v1`，各有各的家族。這欄寫錯，櫃台第一關就退件。
 
@@ -83,6 +83,10 @@ kubectl get pods
 
 等十秒再打一次 `kubectl get pods`。還是沒有。它不會回來。
 
+![day-07-shot-01](screenshots/day-07-shot-01.png)
+
+建得起來、刪得掉、刪完就真的沒了 ── 沒有人在幫你盯著它。
+
 想拿回來，只能你自己再 apply 一次：
 
 ```bash
@@ -123,10 +127,15 @@ kubectl run hello --image=nginx:alpine --dry-run=client -o yaml > hello-pod.yaml
 
 `create` 是「建一個新的」，東西已經存在就報錯。`apply` 是「讓它變成這個樣子」── 不存在就建、已存在就改成檔案寫的樣子。
 
-差別聽起來很小，但意義完全不同：**`create` 是動作，`apply` 是結果。** 這正是 Day 4 那個宣告式的落地方式。所以這 30 天你會看到我幾乎只用 `apply`，因為同一行指令可以無限次重複執行，結果永遠一樣。
+差別聽起來很小，但意義完全不同：**`create` 是動作，`apply` 是結果。** 這正是 Day 4 那個宣告式的落地方式。所以這 30 天你會看到我幾乎只用 `apply`，因為同一行指令可以重複執行，通常會把它管理的欄位維持在相同目標狀態。
 
-這個特性有個名字叫**冪等**，它是所有自動化部署的前提 ── 你的 CI 不需要知道現在是第一次部署還是第一百次，打同一行就對了。
+這個特性有個名字叫**冪等**，它是所有自動化部署的前提 ── 你的 CI 不需要自己記住現在是第一次部署還是第一百次，而是交給 API Server 依宣告內容對齊狀態。
 
 ## 帶走一句話
 
 **YAML 只有四塊：規格書、種類、名牌、內容。**
+
+## 參考資源
+
+- [Kubernetes Objects](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/)
+- [Object Management](https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/)

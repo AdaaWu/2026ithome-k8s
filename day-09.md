@@ -12,7 +12,7 @@ IMG: 一隻貓頭鷹拿著計數器盯著樹枝，其中一顆泡泡正在破掉
 
 它手上有兩個數字。一個是**期望數量**，你告訴它的，寫在 `replicas` 欄位；另一個是**實際數量**，它自己數出來的。兩個數字只要不一樣，它就動手把它們弄一樣 ── 少了就吹一顆，多了就戳破一顆。
 
-它怎麼數？靠圍巾。你昨天繫的那條 `app: hello`，就是貓頭鷹的計數依據。它不看名字、不看是誰建的，只要身上有那條圍巾就算進去。
+它怎麼數？靠圍巾。你昨天繫的那條 `app: hello`，就是貓頭鷹的計數依據。它主要依 selector 找符合的泡泡，也會考慮 Namespace 和 controller ownership；不是只看名字。
 
 ![day-09-02](illustrations/day-09-02.png)
 
@@ -20,9 +20,9 @@ IMG: 貓頭鷹透過放大鏡只數繫紅圍巾的泡泡，旁邊一顆繫藍圍
 
 這帶出一個很多人第一次會撞到的行為：**你手動建的泡泡，如果不小心繫了同一條圍巾，會被貓頭鷹算進去。** 數字超了，它就隨機戳破一顆 ── 有可能戳的是你手動建的，也有可能是它自己吹的。所以圍巾不要亂繫。
 
-回頭看 Day 4 的宣告式：你對貓頭鷹說的是「我要三顆」這個**結果**，不是「去吹三顆」這個**動作**。動作做完就結束了，結果會被一直維持。這就是為什麼刪掉一顆它會自己長回來 ── 不是它記得你刪了什麼，是它數出來只剩兩顆。
+回頭看 Day 4 的宣告式：你對貓頭鷹說的是「我要三顆」這個**結果**，不是「去吹三顆」這個**動作**。動作做完就結束了，結果會被一直維持。這就是為什麼刪掉一顆後，ReplicaSet 會非同步建立替代泡泡 ── 不是它記得你刪了什麼，是它數出來只剩兩顆。
 
-最後講清楚一件事：實務上你**不會直接寫 ReplicaSet**。今天寫它只是為了看懂它在幹嘛，明天 Deployment 登場後，貓頭鷹就退到幕後由隊長指揮了。
+最後講清楚一件事：實務上無狀態服務通常交給 Deployment 管理 ReplicaSet。今天寫它只是為了看懂它在幹嘛，明天 Deployment 登場後，貓頭鷹就退到幕後由隊長指揮了。
 
 ## 動手 5 分鐘
 
@@ -58,7 +58,7 @@ spec:
             - containerPort: 80
 ```
 
-注意兩件事。第一，`apiVersion` 從 `v1` 變成 `apps/v1` ── 不同家族。第二，`selector.matchLabels` 是貓頭鷹拿的放大鏡，`template.metadata.labels` 是它吹出來的泡泡要繫什麼圍巾，**這兩處必須一模一樣**，不然它會吹出自己找不到的泡泡，然後無限吹下去。
+注意兩件事。第一，`apiVersion` 從 `v1` 變成 `apps/v1` ── 不同家族。第二，`selector.matchLabels` 是貓頭鷹拿的放大鏡，`template.metadata.labels` 是它吹出來的泡泡要繫什麼圍巾，**selector.matchLabels 必須能匹配 template.metadata.labels**，不然它會吹出自己找不到的泡泡，然後無限吹下去。
 
 `template` 底下那一整段，就是你昨天寫的 Pod YAML 去掉 `apiVersion` 和 `kind` 之後的樣子。
 
@@ -84,10 +84,14 @@ kubectl get pods
 看貓頭鷹的說法：
 
 ```bash
-kubectl describe rs hello-rs | grep -A5 Events
+kubectl describe rs hello-rs | sed -n '/Events:/,$p'
 ```
 
 Events 裡一行 `Created pod: hello-rs-xxxxx`，時間就是你剛剛刪掉那一刻。
+
+![day-09-shot-01](screenshots/day-09-shot-01.png)
+
+橘色那顆被刪掉的同時，一顆全新名字的泡泡已經在 ContainerCreating 了。
 
 再玩一次，這次改數量。把檔案裡的 `replicas` 改成 5 再 apply：
 
@@ -133,3 +137,8 @@ kubectl get pods
 ## 帶走一句話
 
 **貓頭鷹只數數字，不認得哪顆是哪顆。**
+
+## 參考資源
+
+- [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/)
+- [Owners and Dependents](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/)

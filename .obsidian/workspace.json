@@ -1,0 +1,213 @@
+{
+  "main": {
+    "id": "491cba0a7b3f192d",
+    "type": "split",
+    "children": [
+      {
+        "id": "67872e801eb7e420",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5579a989dd955977",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "day-01.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "day-01"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a6171c746c45920d",
+    "type": "split",
+    "children": [
+      {
+        "id": "04ce79dc18ab3f0c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "adf87dec7f6d43d5",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "檔案瀏覽器"
+            }
+          },
+          {
+            "id": "f0b803a2b65a19b9",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜尋"
+            }
+          },
+          {
+            "id": "a061e978c6927396",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "書籤"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "9b179e95006d630c",
+    "type": "split",
+    "children": [
+      {
+        "id": "7648aefafc897dde",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4f1f86705dcffa4a",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "day-01.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "day-01 的反向連結"
+            }
+          },
+          {
+            "id": "276a81f18441884b",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "day-01.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "day-01 的對外連結"
+            }
+          },
+          {
+            "id": "c7d599af556d2cc1",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "標籤"
+            }
+          },
+          {
+            "id": "0a340b9921be6437",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "day-01.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "day-01 的大綱"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:開啟快速切換": false,
+      "graph:查看關聯圖": false,
+      "canvas:建立新畫布": false,
+      "daily-notes:開啟今天的每日筆記": false,
+      "templates:插入模板": false,
+      "command-palette:開啟命令面板": false,
+      "bases:建立新的 base": false
+    }
+  },
+  "active": "5579a989dd955977",
+  "lastOpenFiles": [
+    "day-14.md",
+    "screenshots/day-15-shot-01.png",
+    "screenshots/day-14-shot-01.png",
+    "k8s-series-spec.md",
+    "screenshots/day-29-shot-02.png",
+    "screenshots/day-29-shot-01.png",
+    "screenshots/day-28-shot-01.png",
+    "screenshots/day-27-shot-01.png",
+    "screenshots/day-26-shot-01.png",
+    "screenshots/day-25-shot-01.png",
+    "screenshots/day-24-shot-01.png",
+    "screenshots/day-23-shot-01.png",
+    "day-03.md",
+    "day-01.md",
+    "day-02.md",
+    "day-23.md",
+    "screenshots",
+    "day-22.md",
+    "day-30.md",
+    "day-19.md",
+    "day-18.md",
+    "day-21.md",
+    "k8s-series-tasks.md",
+    "day-13.md",
+    "day-07.md",
+    "day-06.md",
+    "day-05.md",
+    "day-10.md",
+    "day-09.md",
+    "day-08.md",
+    "day-04.md",
+    "day-12.md",
+    "illustrations",
+    "day-11.md",
+    "day-28.md",
+    "day-17.md",
+    "day-29.md",
+    "day-27.md"
+  ]
+}

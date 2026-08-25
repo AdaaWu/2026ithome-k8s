@@ -8,13 +8,13 @@
 
 IMG: 一顆掛著問號的泡泡，底下分出三條路徑，分別通往三個工具 ｜ 出場角色：泡泡、小鳥、哨子 ｜ 亮橘重點：三條路徑最左邊那條的起點
 
-這篇是整季最實用的一篇。面試官問「Pod 起不來你會怎麼查」，你照著這篇講就是滿分答案。
+這篇是整季最實用的一篇。面試官問「Pod 起不來你會怎麼查」，這篇可以當成基本排查骨架。
 
-先講**判讀順序**，這比記指令重要一百倍。看圖上三條路的起點，你永遠從最左邊那條開始，一條走完才走下一條：
+先講**判讀順序**，通常比只背指令更重要。看圖上三條路的起點，你永遠從最左邊那條開始，一條走完才走下一條：
 
 **第一步 `get` ── 看狀態字串。** 狀態字串本身就是最強的線索，它幾乎已經告訴你問題出在哪一層了。跳過這步直接看 logs 是新手最常見的浪費。
 
-**第二步 `describe` ── 看最下面的 Events。** Events 是這顆泡泡的病歷，按時間記錄了排程、拉 image、掛載、啟動的每一步。**如果容器根本沒起來，問題一定在這裡，不會在 logs 裡。**
+**第二步 `describe` ── 看最下面的 Events。** Events 是這顆泡泡的病歷，按時間記錄了排程、拉 image、掛載、啟動的每一步。**如果容器根本沒起來，通常要先看 Events；若仍找不到原因，再查 Node、kubelet、Runtime 或儲存系統的 logs。**
 
 **第三步 `logs` ── 讀容器自己印出來的東西。** 只有當容器**曾經跑起來過**，logs 才有內容。容器都還沒啟動，logs 當然是空的。
 
@@ -24,7 +24,7 @@ IMG: 一顆掛著問號的泡泡，底下分出三條路徑，分別通往三個
 
 **ImagePullBackOff / ErrImagePull ── 拉不到 image。** K8s 連容器都還沒開始跑。原因大概三種：tag 打錯、image 不存在、私有 registry 沒給帳密。昨天你已經親手製造過這個狀態了。查法：`describe` 的 Events 會直接寫 `Failed to pull image`，後面接原因。
 
-**CrashLoopBackOff ── 容器起得來，但一直死。** 這代表 image 沒問題、K8s 沒問題，是**你的程式自己跑一跑就結束或報錯了**。`BackOff` 的意思是 K8s 重啟它、它又死、K8s 等更久再試，間隔會越拉越長。這是唯一一個要認真看 logs 的狀態。查法：`kubectl logs <pod> --previous` ── 加 `--previous` 才看得到**上一次死掉那輪**的輸出，這是關鍵，不加你只會看到剛重啟的空白。
+**CrashLoopBackOff ── 容器起得來，但一直死。** 這代表容器反覆退出並進入 backoff；常見原因是程式、command、設定或 probe，但不能只靠這個狀態判定 K8s 沒問題。`BackOff` 的意思是 K8s 重啟它、它又死、K8s 等更久再試，間隔會越拉越長。這是三種狀態裡最常需要看 logs 的一種。查法：`kubectl logs <pod> --previous` ── 加 `--previous` 才看得到**上一次死掉那輪**的輸出，這是關鍵，不加你只會看到剛重啟的空白。
 
 **Pending ── 泡泡還沒被掛到任何一棵樹上。** 問題不在你的程式，在島上。引路鳥找不到合適的樹：資源不夠、沒有符合條件的節點、或是在等一個還沒準備好的倉庫（PVC，Day 22 會遇到）。查法：`describe` 的 Events 會有 `FailedScheduling`，後面寫得很清楚是哪個條件不滿足。
 
@@ -80,6 +80,10 @@ kubectl logs broken-crash --previous
 
 印出 `starting`。你的程式印了什麼、死前留下什麼，都在這裡。實務上這行會直接給你 stack trace 或設定檔讀不到的錯誤訊息。
 
+![day-12-shot-01](screenshots/day-12-shot-01.png)
+
+三顆壞泡泡各自的狀態、以及對應那條路查出來的答案。順帶一提，`--previous` 要等它**真的重啟過一輪**才有東西可看 ── 剛壞掉的頭幾秒打會拿到 `unable to retrieve container logs`，等它進入 `CrashLoopBackOff` 再打就對了。
+
 順便看它的重啟間隔：
 
 ```bash
@@ -125,3 +129,8 @@ kubectl get events --sort-by=.lastTimestamp
 ## 帶走一句話
 
 **Events 是 K8s 說的，logs 是程式說的。**
+
+## 參考資源
+
+- [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-running-pod/)
+- [Pod Lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)

@@ -79,50 +79,64 @@ IMG: 一棵巢樹上掛著三顆泡泡，其中一顆正在破掉 ｜ 出場角�
 
 ## 5. 角色表（不可自創、不可改名）
 
-| K8s 概念 | 角色 |
-|---|---|
-| Cluster | 雲之島 |
-| Node | 巢樹 |
-| Pod | 泡泡巢（簡稱泡泡） |
-| Container | 小鳥 |
-| Namespace | 圍籬 |
-| API Server | 燈塔櫃台 |
-| etcd | 記憶樹 |
-| Scheduler | 引路鳥 |
-| Controller Manager | 巡邏隊長 |
-| kubectl | 哨子 |
-| kubelet | 管家松鼠 |
-| kube-proxy | 郵差鼴鼠 |
-| Label | 彩色圍巾 |
-| Selector | 放大鏡 |
-| ReplicaSet | 數泡泡的貓頭鷹 |
-| Deployment | 隊長（持版本卷軸） |
-| StatefulSet | 有名字的鳥（掛號碼牌） |
-| DaemonSet | 守樹鳥 |
-| Job | 信鴿 |
-| CronJob | 報時鳥 |
-| Service | 圖騰柱 |
-| ClusterIP | 島內路標 |
-| NodePort | 樹幹上的小門 |
-| LoadBalancer | 海邊碼頭 |
-| Ingress | 大門與地圖看板 |
-| ConfigMap | 便條本 |
-| Secret | 上鎖小盒 |
-| Volume | 泡泡裡的食盆 |
-| PV | 島上的倉庫 |
-| PVC | 借用單 |
-| Liveness Probe | 醫生啄木鳥 |
-| Readiness Probe | 小旗子 |
-| Resource Limit | 飯碗上的水位線 |
-| HPA | 自動吹泡機 |
+| K8s 概念             | 角色          |
+| ------------------ | ----------- |
+| Cluster            | 雲之島         |
+| Node               | 巢樹          |
+| Pod                | 泡泡巢（簡稱泡泡）   |
+| Container          | 小鳥          |
+| Namespace          | 圍籬          |
+| API Server         | 燈塔櫃台        |
+| etcd               | 記憶樹         |
+| Scheduler          | 引路鳥         |
+| Controller Manager | 巡邏隊長        |
+| kubectl            | 哨子          |
+| kubelet            | 管家松鼠        |
+| kube-proxy         | 郵差鼴鼠        |
+| Label              | 彩色圍巾        |
+| Selector           | 放大鏡         |
+| ReplicaSet         | 數泡泡的貓頭鷹     |
+| Deployment         | 隊長（持版本卷軸）   |
+| StatefulSet        | 編號泡泡管理員       |
+| DaemonSet          | 每棵樹派駐守衛的隊長   |
+| Job                | 一次性任務委託單       |
+| CronJob            | 定時任務鐘             |
+| Service            | 圖騰柱         |
+| ClusterIP          | 島內型圖騰柱           |
+| NodePort           | 開樹門的圖騰柱         |
+| LoadBalancer       | 接碼頭的圖騰柱         |
+| Ingress            | 大門與地圖看板         |
+| Ingress Controller | 守門員             |
+| ConfigMap          | 便條本         |
+| Secret             | 上鎖小盒        |
+| Volume             | 泡泡裡的 Volume Mount（食盆） |
+| PV                 | 島上的倉庫       |
+| PVC                | 借用單         |
+| Liveness Probe     | 醫生啄木鳥       |
+| Readiness Probe    | 小旗子         |
+| Resource Limit     | 飯碗上的水位線     |
+| HPA                | 自動調節旋鈕           |
 
 ### 三條構圖鐵律（寫 IMG 描述時必須遵守）
 
-① 小鳥永遠在泡泡裡，不單獨站樹枝上 → 表達「容器不能脫離 Pod 存在」
-② 泡泡可以破，圖騰柱永遠完整不破 → 表達「Service 是穩定入口」
-③ 食盆畫在泡泡內部，倉庫畫在地面上 → 表達「Volume 與 PV 的生命週期差異」
+① 小鳥永遠畫在泡泡裡
+→ 表達「Container 由 Pod 包裝；Kubernetes 排程的是 Pod」。
 
-這三條靠構圖教觀念，所以文章裡**不要**再用文字重複解釋一遍，只要說「看圖上的位置」。
+② 泡泡可以被替換，圖騰柱在未被刪除時維持同一個入口
+→ 表達「Pod 身分短暫；Service 提供穩定的存取入口，但不保證後端永遠可用」。
+
+③ 食盆畫在泡泡裡；持久資料必須透過借用單連到地面倉庫
+→ 表達「Volume Mount 掛載在 Pod 中；PVC 用來申請並連接持久儲存」。空的 emptyDir 食盆會跟著 Pod 消失，PVC/PV 接上的食盆則可在 Pod 替換後保留資料。
+
+圖先建立直覺，正文再用一至兩句正式術語確認真實關係。
+
+### 比喻使用規則
+
+- 比喻只負責建立第一印象，不能取代正式術語。
+- 第一次出現角色時，必須使用「正式名稱（角色）」。
+- 每張主圖後，至少用一句話翻回真實的 Kubernetes 行為。
+- 不得使用比喻推導正式術語沒有保證的行為。
+- 同一類角色必須維持相同層級：小鳥只代表 Container，控制器不得再畫成小鳥。
 
 ---
 
@@ -160,15 +174,3 @@ IMG: 一棵巢樹上掛著三顆泡泡，其中一顆正在破掉 ｜ 出場角�
 ## 9. 每篇的自我檢查（寫完後跑一遍）
 
 - [ ] 字數在 800-1200 之間
-- [ ] 四段結構齊全且順序正確
-- [ ] IMG 標記格式正確、角色名都在角色表內、每張圖只有一個亮橘重點
-- [ ] 「動手 5 分鐘」的指令接得上前一天
-- [ ] 「帶走一句話」在 20 字內且是粗體
-- [ ] 沒有出現禁止事項清單裡的東西
-
----
-
-## 10. 執行方式
-
-依 `k8s-series-tasks.md` 由 Day 1 開始，一次寫一天，寫完存成 `day-NN.md`。
-每寫完 5 篇停下來，回報這 5 篇的字數與 IMG 數量統計，等待確認後再繼續。

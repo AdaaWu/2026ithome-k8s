@@ -16,7 +16,7 @@ IMG: 雙層架構的島景，前端三顆泡泡連到一根圖騰柱，柱子後
 
 **中間層。** 一根 `hello-db` 圖騰柱。這根柱子的存在，讓前端可以只認一個名字，不必知道資料庫泡泡在哪棵樹、IP 是多少。
 
-**資料層。** 一顆 Postgres 泡泡，接著地面上的倉庫。**它是唯一不能隨便死的東西**，因為東西都在它手上。
+**資料層。** 一顆 Postgres 泡泡，接著地面上的倉庫。**它是最不能隨便處理的東西之一**，因為東西都在它手上。
 
 三個關鍵的連接方式，每個都是前面學過的：
 
@@ -30,7 +30,7 @@ IMG: 雙層架構的島景，前端三顆泡泡連到一根圖騰柱，柱子後
 
 IMG: 前端一顆泡泡朝著一根寫著名字的圖騰柱喊話，柱子後面連著資料庫泡泡 ｜ 出場角色：泡泡、小鳥、圖騰柱 ｜ 亮橘重點：柱子上那個被喊的名字
 
-先誠實說一件事：**用 Deployment 跑資料庫，正式環境是不夠的。** 資料庫需要固定的身分和固定的倉庫，那是 Day 27 那位「有名字的鳥」的工作。今天先用你熟悉的東西把架構跑通，Day 27 再告訴你為什麼要換。
+先誠實說一件事：**用 Deployment 跑資料庫，正式環境是不夠的。** 資料庫需要固定的身分和固定的倉庫，那是 Day 27 那位「編號泡泡管理員（StatefulSet）」的工作。今天先用你熟悉的東西把架構跑通，Day 27 再告訴你為什麼要換。
 
 ## 動手 5 分鐘
 
@@ -174,7 +174,11 @@ kubectl get pods -l app=hello-db
 kubectl run psql-client --rm -it --image=postgres:16-alpine --env="PGPASSWORD=super-secret-123" -- psql -h hello-db -U postgres -c "SELECT * FROM greetings;"
 ```
 
-**`hello from day 23` 還在。** 新泡泡、新 IP、新容器，資料一個字都沒少 ── 因為它從來就不在泡泡裡，它在地面上的倉庫裡。
+**`hello from day 23` 還在。** 新泡泡、新 IP、新容器，這次 demo 中資料仍然存在，因為它寫在地面上的倉庫；PVC 提供持久化位置，但不等於備份或資料一致性保證。
+
+![day-23-shot-01](screenshots/day-23-shot-01.png)
+
+前端一組、資料庫一組，各有各的柱子；資料庫泡泡換過一輪，資料原封不動。
 
 最後把整座島看一遍：
 
@@ -191,7 +195,7 @@ kubectl get svc hello-db
 curl --max-time 5 http://localhost/hello
 ```
 
-`hello-db` 的 EXTERNAL-IP 是 `<none>`，島外沒有它的位址；而看板上也沒有任何一條規則指向它。**你的資料庫從外面完全不存在。** 這不是靠防火牆做到的，是靠一開始就沒開門。
+`hello-db` 的 EXTERNAL-IP 是 `<none>`，島外沒有它的位址；而看板上也沒有任何一條規則指向它。**你的資料庫沒有透過這組 Ingress／對外 Service 暴露。** 這不等於所有網路路徑都不可達，真正的隔離仍要搭配網路與權限政策。
 
 最後把今天的檔案整理一下，你的專案目錄現在應該長這樣：
 
@@ -206,3 +210,8 @@ ls *.yaml
 ## 帶走一句話
 
 **前端隨便死，資料庫的倉庫不能死。**
+
+## 參考資源
+
+- [Stateful Applications](https://kubernetes.io/docs/tasks/run-application/run-single-instance-stateful-application/)
+- [Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)

@@ -17,7 +17,7 @@ IMG: 一隻人類的手拿著哨子吹出聲波，聲波傳到遠處的燈塔櫃
 
 八個記熟，你就能應付九成的日常狀況。至於為什麼是這八個，因為 Day 12 教你查問題的時候，用的就是其中前三個。
 
-還有兩件事先講，可以省你很多打字時間。第一，所有指令都吃縮寫：`pods` 可以打 `po`、`deployments` 打 `deploy`、`services` 打 `svc`。第二，所有指令預設只看 `default` 這個區域，要看別區加 `-n <名字>`，要看全部加 `-A` ── 你昨天在燈塔村用過。
+還有兩件事先講，可以省你很多打字時間。第一，常見資源支援縮寫：`pods` 可以打 `po`、`deployments` 打 `deploy`、`services` 打 `svc`。第二，所有指令預設只看 `default` 這個區域，要看別區加 `-n <名字>`，要看全部加 `-A` ── 你昨天在燈塔村用過。
 
 ![day-05-02](illustrations/day-05-02.png)
 
@@ -101,6 +101,10 @@ kubectl get pod hello -o yaml
 
 印出來的東西比你建立時多很多 ── 多出來的是 K8s 自己補上的預設值和現況。想知道某個欄位怎麼寫，來這裡抄最準，比翻文件快。
 
+![day-05-shot-01](screenshots/day-05-shot-01.png)
+
+同一套動詞，換個名詞就能問島上任何一種資源。
+
 最後補一個查文件的指令，它不在八個裡面，但會救你很多次：
 
 ```bash
@@ -137,7 +141,7 @@ kubectl get --help
 
 最後再補一個觀念，它能解釋為什麼八個指令就夠用。
 
-**這八個指令對所有資源都通用。** `kubectl get` 不只能看 Pod，也能看 Deployment、Service、Ingress、Secret ── 只要把後面的名詞換掉就好。`describe`、`delete`、`get -o yaml` 也一樣。
+**這八個指令涵蓋大量日常資源操作，但 `logs`、`exec`、`rollout` 等指令各有適用範圍。** `kubectl get` 不只能看 Pod，也能看 Deployment、Service、Ingress、Secret ── 只要把後面的名詞換掉就好。`describe`、`delete`、`get -o yaml` 也一樣。
 
 ```bash
 kubectl get pods
@@ -145,7 +149,7 @@ kubectl get svc
 kubectl get all
 ```
 
-這是 K8s 刻意的設計：**所有東西都是資源，所有資源都用同一套動詞操作。** 所以你之後學新資源時，真正要學的只有「它的 YAML 怎麼寫」，指令的部分你今天就已經全部學完了。
+這是 K8s 刻意的設計：**大量 Kubernetes 物件都能用同一套基本動詞操作；特殊子資源仍有自己的指令與限制。** 所以你之後學新資源時，真正要學的只有「它的 YAML 怎麼寫」，指令的部分你今天就已經全部學完了。
 
 想知道島上總共有幾種資源可以操作，打這行：
 
@@ -153,8 +157,13 @@ kubectl get all
 kubectl api-resources | wc -l
 ```
 
-七十幾種。但你今天學的八個動詞，對它們全部有效。
+六、七十種。但你今天學的八個動詞，對它們全部有效。
 
 ## 帶走一句話
 
 **先看狀態、再看事件、最後看日誌。**
+
+## 參考資源
+
+- [kubectl 指令參考](https://kubernetes.io/docs/reference/kubectl/)
+- [kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)

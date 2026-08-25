@@ -16,7 +16,7 @@ IMG: 雲之島的全景大圖，所有角色各就各位：左上燈塔村（燈
 
 **第二條線：燈塔村做決定。**
 
-巡邏隊長一直在比對「記憶樹上寫的」跟「島上實際有的」。發現你要三顆但只有零顆，它就交代隊長；隊長交代貓頭鷹；貓頭鷹登記三顆泡泡。這三顆泡泡此時還沒有家，引路鳥看每棵樹剩多少資源（就是你在 Day 25 畫的那條 Request 線），挑一棵，把答案寫回櫃台。**整條線上沒有人動手，全部只是在寫字。**
+巡邏隊長一直在比對「記憶樹上寫的」跟「島上實際有的」。發現你要三顆但只有零顆，它就交代隊長；隊長交代貓頭鷹；貓頭鷹登記三顆泡泡。這三顆泡泡此時還沒有家，引路鳥看每棵樹剩多少資源（就是你在 Day 25 畫的那條 Request 線），挑一棵，把答案寫回櫃台。**控制面這條線主要是在協調與更新狀態；真正建立容器、掛載儲存和處理封包，則由 kubelet、Runtime、CSI、CNI 與資料平面元件執行。**
 
 **第三條線：巢樹執行。**
 
@@ -32,9 +32,9 @@ IMG: 雲之島的全景大圖，所有角色各就各位：左上燈塔村（燈
 
 五條線的分工，一句話各記一個動詞：**你說、村裡想、樹上做、鼴鼠送、倉庫留。**
 
-最後看整張圖的節奏。**這座島上沒有任何一個角色在等別人。** 每一位都只做同一件事：看櫃台、比對、動作、再看櫃台。沒有中央的排程表、沒有誰指揮誰的呼叫鏈，只有一群各自盯著同一份紀錄的角色。
+最後看整張圖的節奏。**這座島不是一條由單一角色串起來的中央流水線。** 不同角色各自跑 reconciliation loop，但它們仍會依賴 API Server、etcd、kubelet、Runtime、CNI 或 CSI 等元件。 每一位都只做同一件事：看櫃台、比對、動作、再看櫃台。沒有中央的排程表、沒有誰指揮誰的呼叫鏈，只有一群各自盯著同一份紀錄的角色。
 
-這就是 K8s 最核心、也最反直覺的設計：**它不是一條流水線，它是一群獨立的迴圈。** 所以任何一個角色掛掉，其他人照常運轉；掛掉的那個回來之後，看一眼櫃台就知道自己漏了什麼，接著做。
+這就是 K8s 最核心、也最反直覺的設計：**它不是一條由中央指揮到底的流水線，而是一群彼此有依賴的 reconciliation loop。** 某個角色掛掉時，其他部分可能暫時繼續，但影響範圍取決於掛掉的是誰。
 
 你二十八天來每一次「刪掉泡泡它自己長回來」的體驗，都是這個設計的副產品。
 
@@ -54,7 +54,11 @@ kubectl get all -A -o wide
 kubectl get deploy,rs,pod,svc,ingress,pvc,hpa
 ```
 
-**這幾行就是你二十九天的成果**：前端隊長帶著泡泡、一根柱子、一塊看板、一台吹泡機、資料庫和它的倉庫。
+**這幾行就是你二十九天的成果**：前端隊長帶著泡泡、一根柱子、一塊看板、一個自動調節旋鈕、資料庫和它的倉庫。
+
+![day-29-shot-02](screenshots/day-29-shot-02.png)
+
+兩個隊長、三根柱子、一塊看板、兩座倉庫、一台吹泡機 ── 全部是你自己蓋的。
 
 最後跑一次完整的驗收，五條線各測一站：
 
@@ -62,12 +66,21 @@ kubectl get deploy,rs,pod,svc,ingress,pvc,hpa
 kubectl get --raw='/readyz' && echo
 kubectl get nodes
 curl -s -o /dev/null -w "外部入口 %{http_code}\n" http://localhost/hello
-kubectl get endpoints hello
+kubectl get endpointslices -l kubernetes.io/service-name=hello
 kubectl get pvc
 ```
 
 櫃台 `ok`、樹 `Ready`、大門 `200`、名單有人、倉庫 `Bound`。**五條線全綠。**
 
+![day-29-shot-01](screenshots/day-29-shot-01.png)
+
+一條線一個指令，五行就把整座島從頭到尾檢查完。
+
 ## 帶走一句話
 
 **K8s 不是流水線，是一群獨立的迴圈。**
+
+## 參考資源
+
+- [Kubernetes Components](https://kubernetes.io/docs/concepts/architecture/components/)
+- [Service Networking](https://kubernetes.io/docs/concepts/services-networking/)

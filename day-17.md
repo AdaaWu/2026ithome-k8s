@@ -83,7 +83,7 @@ nslookup hello
 **第四站，柱子的名單裡真的有人嗎？**
 
 ```bash
-kubectl get endpoints hello
+kubectl get endpointslices -l kubernetes.io/service-name=hello
 ```
 
 三個 `IP:80`。這一站是最容易出事的，Day 14 你已經看過空名單長什麼樣。
@@ -94,7 +94,7 @@ kubectl get endpoints hello
 kubectl describe ingress hello
 ```
 
-看 `Rules` 區塊，`/hello` 對應到 `hello:80`，後面括號裡會列出三個泡泡的 IP ── **看板已經穿透到最底層了**。如果括號裡是空的或寫 `<error: endpoints "hello" not found>`，問題出在第四站。
+看 `Rules` 區塊，`/hello` 對應到 `hello:80`，後面括號裡會列出三個泡泡的 IP ── **看板已經穿透到最底層了**。如果括號裡是空的或寫 `<error: services "hello" not found>`，問題出在第四站。
 
 五站都綠燈，這條路就是通的。
 
@@ -115,7 +115,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost/hello
 kubectl apply -f hello-service.yaml
 ```
 
-第二種，把看板指向一根不存在的柱子。編輯 `hello-ingress.yaml`，把 `name: hello` 暫時改成 `name: hello-typo`，然後：
+第二種，把看板指向一根不存在的柱子。編輯 `hello-ingress.yaml`，把**最底下 `backend.service.name` 那個** `hello` 改成 `hello-typo`（**不是** `metadata.name` 那個 ── 改到那個會變成新增第二張規則表，然後被擋下來），然後：
 
 ```bash
 kubectl apply -f hello-ingress.yaml
@@ -128,7 +128,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost/hello
 kubectl describe ingress hello | grep -A5 Rules
 ```
 
-括號裡寫著 `<error: endpoints "hello-typo" not found>` ── **柱子根本不存在**。改回 `hello` 再 apply。
+括號裡寫著 `<error: services "hello-typo" not found>` ── **柱子根本不存在**。改回 `hello` 再 apply。
 
 第三種，打一個看板沒有的路徑：
 
@@ -149,6 +149,10 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost/hello
 
 回 **200**。收工。
 
+![day-17-shot-01](screenshots/day-17-shot-01.png)
+
+兩種 503 長得一模一樣，但原因完全不同 ── 差別只在 `describe ingress` 那一行括號裡。
+
 ![day-17-02](illustrations/day-17-02.png)
 
 IMG: 同一條路徑上三個不同位置各有一個斷點，每個斷點旁標著不同的數字牌 ｜ 出場角色：大門與地圖看板、圖騰柱、泡泡、小鳥 ｜ 亮橘重點：三個斷點上那三塊數字牌
@@ -168,3 +172,8 @@ kubectl exec -n ingress-nginx deploy/ingress-nginx-controller -- cat /etc/nginx/
 ## 帶走一句話
 
 **由內而外一站一站問，不要猜。**
+
+## 參考資源
+
+- [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+- [Debug Services](https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/)

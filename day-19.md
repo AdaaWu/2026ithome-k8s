@@ -28,8 +28,8 @@ IMG: 一顆泡泡外面掛著一本便條本，泡泡裡的小鳥探頭出來讀
 
 這代表你改完設定、apply 完、看起來一切正常，但服務其實還在用舊設定。而且兩種用法的行為還不一樣，更容易混淆：
 
-- **環境變數的，永遠不會變。** 環境變數是容器啟動那一刻決定的，之後改便條本一點用都沒有，非重啟不可。
-- **掛成檔案的，檔案內容大約一分鐘後會自己更新**，但你的程式**不會知道**它變了。除非你的程式本身會監看檔案變動（Nginx 不會），否則還是得 reload 或重啟。
+- **以環境變數注入的值，不會因為 ConfigMap 改變而自動更新。** 環境變數是容器啟動那一刻決定的，之後改便條本一點用都沒有，非重啟不可。
+- **掛成檔案的，檔案內容大約一分鐘後會自己更新。** 但「檔案變了」不等於「程式知道了」── 每次請求才去讀磁碟的（例如 Nginx 提供的靜態檔）會跟著變，只在啟動時讀一次設定的（例如 `nginx.conf` 本身）則完全不受影響。
 
 所以規則是：**改完 ConfigMap，就要讓泡泡重新來過。**
 
@@ -107,6 +107,10 @@ kubectl rollout status deployment/hello
 
 **Hello from Kubernetes 出現了。** 你沒有 build 任何 image。
 
+![day-19-shot-01](screenshots/day-19-shot-01.png)
+
+首頁的內容來自便條本，不在 image 裡。
+
 看環境變數進去了沒：
 
 ```bash
@@ -123,31 +127,45 @@ kubectl exec deploy/hello -- cat /usr/share/nginx/html/index.html
 
 就是你寫的那段 HTML。
 
-**現在踩那個坑。** 改 `hello-configmap.yaml`，把 `<h1>` 那行改成 `Hello v2`，然後：
+**現在踩那個坑。** 改 `hello-configmap.yaml`，把 `APP_ENV` 從 `dev` 改成 `prod`，然後：
 
 ```bash
 kubectl apply -f hello-configmap.yaml
-curl -s http://localhost/hello | grep h1
+kubectl get cm hello-config -o jsonpath='{.data.APP_ENV}'
+kubectl exec deploy/hello -- printenv APP_ENV
 ```
 
-**還是舊的。** 等一分鐘再打一次：
+**兩行印出來的值不一樣。** 便條本上寫的是 `prod`，泡泡裡拿到的還是 `dev`。
 
-```bash
-kubectl exec deploy/hello -- cat /usr/share/nginx/html/index.html | grep h1
-curl -s http://localhost/hello | grep h1
-```
+等一分鐘再打一次。還是 `dev`。等十分鐘、一小時 ── 永遠都是 `dev`。**環境變數是容器啟動那一刻拍下來的快照，之後便條本怎麼改都跟它無關。**
 
-有趣的事情發生了：**檔案裡已經是 v2，但瀏覽器拿到的還是舊的** ── Nginx 把首頁快取住了，它完全不知道檔案被換過。
-
-正確做法，逼它重來一次：
+正確做法，逼泡泡重來一次：
 
 ```bash
 kubectl rollout restart deployment/hello
 kubectl rollout status deployment/hello
-curl -s http://localhost/hello | grep h1
+kubectl exec deploy/hello -- printenv APP_ENV
 ```
 
-`Hello v2`。`rollout restart` 會走一次滾動更新，把泡泡一顆顆換掉，零停機。**把這個指令記起來，改完 ConfigMap 就打它。**
+`prod`。`rollout restart` 會走一次滾動更新，把泡泡一顆顆換掉，零停機。**把這個指令記起來，改完 ConfigMap 就打它。**
+
+![day-19-shot-02](screenshots/day-19-shot-02.png)
+
+便條本上是 `prod`、泡泡裡是 `dev`，兩邊不一致而且不會自己好。
+
+順便把掛成檔案的那種也試一次，因為它的行為不一樣。改 `index.html` 那段的 `<h1>` 成 `Hello v2` 再 apply，立刻打：
+
+```bash
+kubectl exec deploy/hello -- cat /usr/share/nginx/html/index.html | grep h1
+```
+
+還是舊的 ── 檔案的同步有延遲。**等約一分鐘**再打一次，就變成 `Hello v2` 了。
+
+這裡要講清楚一件常被誤傳的事：**檔案更新之後，Nginx 提供的首頁會跟著變**，因為它每次請求都重新讀磁碟。所以「掛成檔案」不是永遠不會更新，它只是**慢**。
+
+真正會咬你的是**程式只在啟動時讀一次設定**的那種 ── Nginx 自己的 `nginx.conf`、Spring 的 `application.yml`、大部分框架的設定檔都是。那種你等到天荒地老檔案都同步好了，程式還是用著記憶體裡的舊值。
+
+所以規則簡化成一句：**除非你很確定程式會自己監看檔案，否則改完就 `rollout restart`。**
 
 最後補兩個你之後會用到的東西。第一，便條本可以直接從現有檔案建，不用手抄進 YAML：
 
@@ -162,3 +180,8 @@ kubectl create configmap nginx-conf --from-file=./nginx.conf --dry-run=client -o
 ## 帶走一句話
 
 **改完便條本，一定要叫泡泡重來一次。**
+
+## 參考資源
+
+- [ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/)
+- [Use a ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)

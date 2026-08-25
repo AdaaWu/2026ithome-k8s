@@ -16,17 +16,17 @@ IMG: 一個飯碗上畫著上下兩條水位線，一隻小鳥吃到飯滿出碗
 
 這條線是給**引路鳥**看的。Day 4 講過引路鳥決定新泡泡掛哪棵樹，它憑什麼決定？就憑這條線。它把每棵樹上所有泡泡的 Request 加起來，跟樹的總容量比一比，還放得下才把新泡泡掛上去。
 
-**這是今天最容易被誤解的地方：引路鳥只看 Request，完全不看實際用量。** 一棵樹上的泡泡實際只用了 10% 的 CPU，但 Request 加起來已經滿了，引路鳥就是不會再放新泡泡進去 ── 你會得到一顆 `Pending` 的泡泡（Day 12 那三種狀態之一）。
+**這是今天最容易被誤解的地方：一般資源 fit 判斷主要看 Request，而不是即時實際用量；但排程還會考慮 affinity、taint、topology 等條件。** 一棵樹上的泡泡實際只用了 10% 的 CPU，但 Request 加起來已經滿了，引路鳥就是不會再放新泡泡進去 ── 你會得到一顆 `Pending` 的泡泡（Day 12 那三種狀態之一）。
 
 **Limit（上面那條線）── 最多只准吃到這麼多。**
 
 這條線是給**管家松鼠**看的，它負責在樹上執行。超過會怎樣？**CPU 和記憶體的下場完全不同，這個差別非常重要：**
 
-**CPU 超過 → 被限速（throttle）。** CPU 是可壓縮資源，管家松鼠就是不給你更多時間片，你的程式變慢，但活著。
+**CPU 超過 → 被限速（throttle）。** CPU 是可壓縮資源，通常會被限速；但程式仍可能因 timeout、probe failure 或其他錯誤退出。
 
 **記憶體超過 → 直接被砍（OOMKilled）。** 記憶體是不可壓縮的，沒辦法「少給一點」。超過 Limit 那一刻，容器直接被殺，然後重啟。
 
-所以你會在 `kubectl get pods` 看到 `OOMKilled`，卻永遠不會看到 `CPUKilled`。
+所以你會在 `kubectl get pods` 看到 `OOMKilled`，而不是一個對稱的 `CPUKilled`；CPU 壓力仍可能間接造成服務失敗。
 
 ![day-25-02](illustrations/day-25-02.png)
 
@@ -38,7 +38,7 @@ IMG: 兩個飯碗並排，左邊的小鳥被一條繩子拉慢動作但還在吃
 
 **第二，你的泡泡可以吃光整棵樹**，連累鄰居 ── 就是開頭那個慘案。
 
-最後給你一個實務上的起手式：**Request 設成日常的實際用量，Limit 設成 Request 的兩倍上下。** 然後記憶體的 Request 和 Limit 建議設成**一樣**，因為記憶體超標的代價是被砍，不是變慢，你不會想賭那個空間。
+最後給你一個實務上的起手式：**Request 應依監控、壓測與容量目標設定；Limit 則要依服務的 burst 特性與失敗代價評估，沒有通用的兩倍規則。** 然後記憶體的 Request 和 Limit 建議設成**一樣**，因為記憶體超標的代價是被砍，不是變慢，你不會想賭那個空間。
 
 ## 動手 5 分鐘
 
@@ -100,14 +100,33 @@ kubectl top pods
 
 **實際用量出來了。** 你會發現 hello 泡泡的 CPU 幾乎是 `0m`、記憶體大概 `4Mi` ── 遠低於你設的 Request。這很正常，Request 是預留的位子，不是實際的消耗。
 
-**現在做那個經典實驗：把記憶體撐爆。** 建立一顆故意吃太多的泡泡：
+**現在做那個經典實驗：把記憶體撐爆。** 建立 `oom-demo.yaml`，一顆故意吃太多的泡泡：
 
-```bash
-kubectl run oom-demo --image=busybox:1.36 \
-  --overrides='{"spec":{"containers":[{"name":"oom-demo","image":"busybox:1.36","command":["sh","-c","dd if=/dev/zero of=/dev/shm/fill bs=1M count=200; sleep 300"],"resources":{"limits":{"memory":"64Mi"}}}]}}'
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oom-demo
+spec:
+  containers:
+    - name: oom-demo
+      image: polinux/stress
+      command: ["stress"]
+      args: ["--vm", "1", "--vm-bytes", "250M", "--vm-hang", "1"]
+      resources:
+        requests:
+          memory: "64Mi"
+        limits:
+          memory: "64Mi"
 ```
 
-它的 Limit 是 64Mi，但它要寫 200 MB 進記憶體。盯著看：
+`stress` 這個工具唯一的作用就是把資源吃滿，`--vm-bytes 250M` 是「配置 250 MB 記憶體」。它的 Limit 只有 64Mi，所以一定會撞牆。
+
+```bash
+kubectl apply -f oom-demo.yaml
+```
+
+盯著看：
 
 ```bash
 kubectl get pod oom-demo -w
@@ -125,15 +144,21 @@ oom-demo   0/1   CrashLoopBackOff   1
 看死因：
 
 ```bash
-kubectl describe pod oom-demo | grep -E "Reason|Exit Code"
+kubectl get pod oom-demo -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}{"  "}{.status.containerStatuses[0].lastState.terminated.exitCode}{"\n"}'
 ```
 
-`Reason: OOMKilled`、`Exit Code: 137`。**137 這個數字記起來**，它就是「被 SIGKILL 砍掉」的意思，你之後查問題會一直遇到它。
+`OOMKilled  137`。（要看 `lastState` 而不是 `state`，因為它已經被重啟了，現在這一輪還活著 ── 死因記錄在「上一輪」。）
+
+![day-25-shot-01](screenshots/day-25-shot-01.png)
+
+實際用量遠低於 Request（6Mi vs 64Mi）很正常；下面那顆撞到上限的，死因寫得清清楚楚。
+
+**137 這個數字記起來**，它就是「被 SIGKILL 砍掉」的意思，你之後查問題會一直遇到它。
 
 收工：
 
 ```bash
-kubectl delete pod oom-demo
+kubectl delete -f oom-demo.yaml
 ```
 
 最後認識一個你不設也會被貼上的標籤。K8s 會依你怎麼畫線，把泡泡分成三個等級：
@@ -151,3 +176,8 @@ kubectl get pod -l app=hello -o jsonpath='{.items[0].status.qosClass}{"\n"}'
 ## 帶走一句話
 
 **CPU 超標會變慢，記憶體超標會被砍。**
+
+## 參考資源
+
+- [Resource Management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [Pod QoS Classes](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)

@@ -24,7 +24,7 @@ base64 是**編碼**，不是**加密**。編碼的目的是讓資料能安全�
 
 **第二，它的權限可以獨立管理。** 島上可以設定「這個人讀得到 ConfigMap，但讀不到 Secret」。這是實務上 Secret 最大的價值 ── **它的安全性來自誰能拿到它，不是來自它本身。**
 
-**第三，K8s 對它比較小心。** 它不會被寫進節點的硬碟（掛載時放在記憶體），也不會出現在一般的日誌裡。
+**第三，K8s 對它比較小心。** Secret volume 通常以記憶體型態掛載，但 Secret 仍會儲存在 API／etcd，應用程式、診斷與備份流程也可能把它暴露出來；Kubernetes 的一般狀態輸出不會直接顯示 value，但不能把它當成完整保護。
 
 ![day-20-02](illustrations/day-20-02.png)
 
@@ -57,7 +57,7 @@ kubectl describe secret hello-secret
 ```
 Data
 ====
-DB_PASSWORD:  17 bytes
+DB_PASSWORD:  16 bytes
 ```
 
 **只有長度，沒有內容。** 看起來很專業對吧。
@@ -79,6 +79,10 @@ super-secret-123
 ```
 
 **兩行指令，密碼裸奔。** 沒有輸入任何金鑰，沒有任何驗證。這就是今天要你親眼看到的事實。
+
+![day-20-shot-01](screenshots/day-20-shot-01.png)
+
+`describe` 只給你長度，看起來很專業；下一行就把它還原成明文了。
 
 反過來確認 base64 真的只是編碼：
 
@@ -138,7 +142,7 @@ kubectl exec deploy/hello -- env | grep DB_PASSWORD
 kubectl exec deploy/hello -- printenv DB_PASSWORD
 ```
 
-任何能 `exec` 進你泡泡的人，都拿得到它。**所以真正該管的是「誰能 exec」，不是「有沒有用 Secret」。**
+能 `exec` 進掛載 Secret 的 container 的人，通常就能讀取它；實際範圍還取決於掛載位置與權限。**所以真正該管的是「誰能 exec」，不是「有沒有用 Secret」。**
 
 這個 Secret 留著，Day 23 我們的資料庫密碼就用它。
 
@@ -152,7 +156,7 @@ kubectl get secrets -A --field-selector type!=Opaque | head -5
 
 型號的意義在於**它規定了裡面必須有哪些 key**。填錯 key，櫃台會直接退件，不會等到用的時候才爆炸。
 
-還有一個和昨天共通的坑要提醒：**改了 Secret，跑著的泡泡一樣不會自動更新。** 環境變數那種永遠不會變，掛成檔案的會延遲更新但程式不知道。所以換密碼之後，記得補一行昨天學的：
+還有一個和昨天共通的坑要提醒：**改了 Secret，跑著的泡泡一樣不會自動更新。** 以環境變數注入的值不會因為 Secret 改變而自動更新，掛成檔案的會延遲更新但程式不知道。所以換密碼之後，記得補一行昨天學的：
 
 ```bash
 kubectl rollout restart deployment/hello
@@ -163,3 +167,8 @@ kubectl rollout restart deployment/hello
 ## 帶走一句話
 
 **Secret 是玩具鎖，安全靠的是誰拿得到鑰匙。**
+
+## 參考資源
+
+- [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [Secret Good Practices](https://kubernetes.io/docs/concepts/security/secrets-good-practices/)

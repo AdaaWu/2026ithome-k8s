@@ -6,6 +6,23 @@
 
 ![day-23-01](illustrations/day-23-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart LR
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    F["Frontend Pods"] --> FS["Service: hello"]
+    F --> DBS["Service: hello-db"]
+    DBS --> DB["PostgreSQL Pod"]
+    DB --> PVC["PVC"]
+    PVC --> PV["PV / backing storage"]
+    Secret["Secret: DB password"] --> DB
+```
+
+![day-23-mermaid](illustrations/day-23-mermaid.png)
+![day-23-diagram](illustrations/day-23-diagram.png)
+
 IMG: 雙層架構的島景，前端三顆泡泡連到一根圖騰柱，柱子後面一顆資料庫泡泡，泡泡下方連著地面的倉庫 ｜ 出場角色：泡泡、小鳥、圖騰柱、島上的倉庫、借用單 ｜ 亮橘重點：資料庫泡泡與地面倉庫之間那條連線
 
 今天不學新東西，把第四幕的零件組成你的第一個真實架構。
@@ -34,7 +51,7 @@ IMG: 前端一顆泡泡朝著一根寫著名字的圖騰柱喊話，柱子後面
 
 ## 動手 5 分鐘
 
-前二十二天我們有前端三件套加一座倉庫。今天長出第二層。
+前二十二天我們有前端三件套加一座本機測試用倉庫。今天長出第二層；資料庫另外使用一個明確的本機 PV，避免把 Kind 是否內建 StorageClass 當成前提。
 
 先把密碼放進 Day 20 那個小盒。編輯 `hello-secret.yaml`：
 
@@ -66,6 +83,24 @@ spec:
   resources:
     requests:
       storage: 1Gi
+```
+
+建立配對用的 `hello-db-pv.yaml`：
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: hello-db-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/local-path-provisioner/hello-db-data
+    type: DirectoryOrCreate
 ```
 
 主角登場。建立 `hello-db-deployment.yaml`：
@@ -129,7 +164,7 @@ spec:
 一次全部套上去：
 
 ```bash
-kubectl apply -f hello-db-pvc.yaml -f hello-db-deployment.yaml -f hello-db-service.yaml
+kubectl apply -f hello-db-pv.yaml -f hello-db-pvc.yaml -f hello-db-deployment.yaml -f hello-db-service.yaml
 kubectl get pods,svc,pvc
 ```
 
@@ -203,7 +238,7 @@ curl --max-time 5 http://localhost/hello
 ls *.yaml
 ```
 
-前端四個（deployment、service、ingress、configmap）、資料庫三個（deployment、service、pvc）、共用一個 secret，加上蓋島用的 kind-config。**九個檔案，一座完整的島。** 換一台電腦，`kind create cluster` 加上 `kubectl apply` 就能整套重現 ── 這才是這二十三天真正做出來的東西。
+前端四個（deployment、service、ingress、configmap）、資料庫四個（deployment、service、pvc、pv）、共用一個 secret，加上蓋島用的 kind-config。**十個檔案，一座完整的島。** 換一台電腦，`kind create cluster` 加上 `kubectl apply` 就能整套重現 ── 這才是這二十三天真正做出來的東西。
 
 記得 `hello-secret.yaml` 不進 git，其他八個都該進。
 

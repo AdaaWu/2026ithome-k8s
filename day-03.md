@@ -6,6 +6,27 @@
 
 ![day-03-01](illustrations/day-03-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    subgraph C["Cluster 叢集"]
+        subgraph N["Node 節點"]
+            subgraph P["Pod 排程單位"]
+                T["Container 執行中的容器"]
+            end
+        end
+    end
+    style C fill:#FFF4D6,stroke:#C58B21,stroke-width:3px
+    style N fill:#E7F7EF,stroke:#3C8C66,stroke-width:3px
+    style P fill:#E8F1FF,stroke:#4F7CAC,stroke-width:3px
+```
+
+![day-03-mermaid](illustrations/day-03-mermaid.png)
+![day-03-diagram](illustrations/day-03-diagram.png)
+
 IMG: 雲之島的全景剖面，島上長著巢樹、樹上掛著泡泡、泡泡裡站著小鳥，四層由外而內一次看完 ｜ 出場角色：雲之島、巢樹、泡泡、小鳥 ｜ 亮橘重點：由外而內的四層包含關係
 
 這是整個系列最重要的一張圖，看懂它，後面 27 天都在往上加東西而已。
@@ -80,7 +101,7 @@ kubectl get pods -A
 
 Kind 預設只給你一棵，但你隨時可以多種幾棵。在 `kind-config.yaml` 裡多寫幾行 `- role: worker`，重蓋一次島就有三棵樹了（Day 16 我們就會為了另一個理由做這件事）。
 
-樹一多，一個問題就變得有意思：**你的三顆泡泡會被放到哪幾棵樹上？** 這件事不是你決定的，是引路鳥決定的 ── 明天你就會認識它。
+樹一多，一個問題就變得有意思：**你的三顆泡泡會被放到哪幾棵樹上？** 這件事不是你決定的，是選樹官決定的 ── 明天你就會認識它。
 
 順便看一下這棵樹能裝多少東西：
 
@@ -88,7 +109,7 @@ Kind 預設只給你一棵，但你隨時可以多種幾棵。在 `kind-config.y
 kubectl describe node hello-control-plane | grep -A9 Capacity
 ```
 
-CPU、記憶體、還有 `pods: 110` 這一行 ── **一棵樹預設最多掛 110 顆泡泡**。這是引路鳥排位子時的其中一條規則，Day 25 我們會再回來看它怎麼算的。
+CPU、記憶體、還有 `pods: 110` 這一行 ── **一棵樹預設最多掛 110 顆泡泡**。這是選樹官排位子時的其中一條規則，Day 25 我們會再回來看它怎麼算的。
 
 還有一件事，圖上沒畫但你要知道：**這四層裡，Pod 是你最常觀察和管理的執行單位；但在正式環境，你通常會透過 Deployment、Job 或 StatefulSet 間接建立 Pod。**
 

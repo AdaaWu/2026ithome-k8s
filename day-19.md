@@ -6,6 +6,22 @@
 
 ![day-19-01](illustrations/day-19-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    CM["ConfigMap"] --> E["envFrom → environment snapshot"]
+    CM --> V["volume → projected files"]
+    E --> C["Container"]
+    V --> C
+    CM -. "change does not restart Pod" .-> C
+```
+
+![day-19-mermaid](illustrations/day-19-mermaid.png)
+![day-19-diagram](illustrations/day-19-diagram.png)
+
 IMG: 一顆泡泡外面掛著一本便條本，泡泡裡的小鳥探頭出來讀上面的字 ｜ 出場角色：便條本、泡泡、小鳥 ｜ 亮橘重點：掛在泡泡外的那本便條本
 
 先講清楚為什麼設定不能寫死在 image 裡。
@@ -29,7 +45,7 @@ IMG: 一顆泡泡外面掛著一本便條本，泡泡裡的小鳥探頭出來讀
 這代表你改完設定、apply 完、看起來一切正常，但服務其實還在用舊設定。而且兩種用法的行為還不一樣，更容易混淆：
 
 - **以環境變數注入的值，不會因為 ConfigMap 改變而自動更新。** 環境變數是容器啟動那一刻決定的，之後改便條本一點用都沒有，非重啟不可。
-- **掛成檔案的，檔案內容大約一分鐘後會自己更新。** 但「檔案變了」不等於「程式知道了」── 每次請求才去讀磁碟的（例如 Nginx 提供的靜態檔）會跟著變，只在啟動時讀一次設定的（例如 `nginx.conf` 本身）則完全不受影響。
+- **掛成檔案的，內容通常會在 kubelet 的同步週期後更新，但不是即時保證。** 另外，掛載的 ConfigMap 會以投影檔案的方式更新；每次請求才讀磁碟的（例如 Nginx 提供的靜態檔）會跟著變，只在啟動時讀一次設定的（例如 `nginx.conf` 本身）則不會自動套用。
 
 所以規則是：**改完 ConfigMap，就要讓泡泡重新來過。**
 

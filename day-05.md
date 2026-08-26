@@ -7,6 +7,20 @@ kubectl 的指令有上百個，官方文件一頁列不完。
 
 ![day-05-01](illustrations/day-05-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart LR
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    K["kubectl"] --> A["API Server"]
+    A --> R["Kubernetes API resource"]
+    K -. "logs / exec / port-forward" .-> A
+```
+
+![day-05-mermaid](illustrations/day-05-mermaid.png)
+![day-05-diagram](illustrations/day-05-diagram.png)
+
 IMG: 一隻人類的手拿著哨子吹出聲波，聲波傳到遠處的燈塔櫃台 ｜ 出場角色：哨子、燈塔櫃台 ｜ 亮橘重點：從哨子傳到櫃台的聲波
 
 哨子是你唯一的溝通工具。昨天我們看過，它做的事情就是把你打的字翻成 HTTP 請求送到燈塔櫃台。

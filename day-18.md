@@ -6,7 +6,22 @@
 
 ![day-18-01](illustrations/day-18-01.png)
 
-IMG: 一條橫向長條旅程圖，七個站點由左到右依序排開，一隻郵差鼴鼠站在中段的地底通道口 ｜ 出場角色：大門與地圖看板、圖騰柱、郵差鼴鼠、巢樹、泡泡、小鳥、雲之島 ｜ 亮橘重點：中段那隻郵差鼴鼠
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart LR
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    I["Ingress"] --> S["Service VIP"]
+    S --> K["kube-proxy / data plane"]
+    K --> P["Pod IP"]
+    P --> C["Container"]
+```
+
+![day-18-mermaid](illustrations/day-18-mermaid.png)
+![day-18-diagram](illustrations/day-18-diagram.png)
+
+IMG: 一條橫向長條旅程圖，七個站點由左到右依序排開，一位道路管理員站在中段的地底通道口 ｜ 出場角色：大門與地圖看板、圖騰柱、道路管理員、巢樹、泡泡、小鳥、雲之島 ｜ 亮橘重點：中段的道路管理員
 
 今天不學新東西，把已經學過的排成一條線。看圖上由左到右七站：
 
@@ -16,11 +31,11 @@ IMG: 一條橫向長條旅程圖，七個站點由左到右依序排開，一隻
 
 **第三站，圖騰柱（Service）。** 柱子通常有穩定的虛擬位址與一份隨時更新的 endpoint 名單；實際封包轉送由 kube-proxy、eBPF 或其他資料平面實作完成。**柱子描述的是入口，不是一個搬運中的程序。**
 
-**第四站，郵差鼴鼠（kube-proxy）── 今天第一次登場。** 這位是實際搬運的人。
+**第四站，道路管理員（kube-proxy）── 今天第一次登場。** 這位負責維護封包轉送規則。
 
 停下來想一個你可能一直沒想過的問題：柱子那個 `10.96.x.x` 的 IP，一般 Node 的網卡不會直接擁有它。它不對應任何一張網卡。那封包打過去，為什麼會通？
 
-因為每一棵巢樹的地底下都住著一隻郵差鼴鼠。它一直盯著燈塔櫃台看，只要柱子的名單有變動，它就跑回自己那棵樹底下**重新挖一次地道**：凡是要去 `10.96.x.x` 的封包，會依節點上的 Service 規則轉向符合條件的泡泡 IP；實際機制可能是 iptables、IPVS 或 eBPF。
+因為每一棵巢樹底下都有道路管理員。它一直盯著燈塔櫃台看，只要柱子的名單有變動，就回到自己那棵樹底下**重新整理地道規則**：凡是要去 `10.96.x.x` 的封包，會依節點上的 Service 規則轉向符合條件的泡泡 IP；實際機制可能是 iptables、IPVS 或 eBPF。
 
 所以柱子的 IP 是**虛擬的**。它不是一個地址，它是一條規則。看圖上鼴鼠站的位置 ── 它在地底，你平常看不到這些規則；封包會依節點上的資料平面規則被轉向。這也是為什麼 Day 15 說 ClusterIP 在島外打不通：島外的機器底下沒有鼴鼠，沒有地道。
 
@@ -32,7 +47,7 @@ IMG: 一條橫向長條旅程圖，七個站點由左到右依序排開，一隻
 
 ![day-18-02](illustrations/day-18-02.png)
 
-IMG: 一根圖騰柱下方連著一條地道，地道另一端分岔通往三顆泡泡 ｜ 出場角色：圖騰柱、郵差鼴鼠、泡泡、小鳥 ｜ 亮橘重點：地道分岔出去的那三個出口
+IMG: 一根圖騰柱下方連著一條地道，地道另一端分岔通往三顆泡泡，道路管理員站在地道旁維護轉送規則 ｜ 出場角色：圖騰柱、道路管理員、泡泡、小鳥 ｜ 亮橘重點：地道分岔出去的那三個出口
 
 整條路記住這個分工就好：**看板挑柱子、柱子挑泡泡、鼴鼠負責真的把封包送過去。** Day 29 我們會把這條線和其他四條線畫進同一張大圖。
 

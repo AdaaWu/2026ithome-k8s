@@ -6,7 +6,30 @@
 
 ![day-06-01](illustrations/day-06-01.png)
 
-IMG: 一顆泡泡的剖面，裡面站著兩隻小鳥，共用中間一個食盆和泡泡外壁上唯一一塊門牌 ｜ 出場角色：泡泡、小鳥、泡泡裡的食盆 ｜ 亮橘重點：泡泡外壁上那塊門牌
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    subgraph P["Pod"]
+        N["Shared network namespace"]
+        V["Shared volumes"]
+        C1["Container A"]
+        C2["Container B"]
+        N --> C1
+        N --> C2
+        V --> C1
+        V --> C2
+    end
+    style P fill:#E8F1FF,stroke:#4F7CAC,stroke-width:3px
+    class N,V success
+```
+
+![day-06-mermaid](illustrations/day-06-mermaid.png)
+![day-06-diagram](illustrations/day-06-diagram.png)
+
+IMG: 一顆泡泡的剖面，裡面站著兩隻小鳥，共用中央的共享食物桶，各自透過面前的食盆取用，泡泡外壁上有唯一一塊門牌 ｜ 出場角色：泡泡、小鳥、共享食物桶、食盆 ｜ 亮橘重點：泡泡外壁上那塊門牌
 
 答案就在圖上那塊門牌：**門牌只有一塊，掛在泡泡上，不是掛在小鳥身上。**
 
@@ -109,7 +132,7 @@ spec:
 
 這裡說的「重啟」是同一個泡泡內的 container 重啟；**控制器也可能刪除原本的泡泡，再建立一顆新的。**
 
-一顆泡泡從被建立的那一刻起，對同一顆泡泡來說，它掛在哪棵樹上、拿到哪個門牌，在生命週期內通常不會改變；需要換樹時，控制器通常會建立新的泡泡。裡面的小鳥死掉了，管家松鼠會在**同一顆泡泡裡**重新拉一隻起來 ── 你在 `kubectl get pods` 看到的 RESTARTS 欄位加一，就是這件事。
+一顆泡泡從被建立的那一刻起，對同一顆泡泡來說，它掛在哪棵樹上、拿到哪個門牌，在生命週期內通常不會改變；需要換樹時，控制器通常會建立新的泡泡。裡面的小鳥死掉了，管家松鼠會在**同一顆泡泡裡**重新啟動該 Container（是否重新拉 image 取決於 `imagePullPolicy` 與本機快取）── 你在 `kubectl get pods` 看到的 RESTARTS 欄位加一，就是這件事。
 
 但如果是整顆泡泡出問題（那棵樹掛了、資源不夠被趕走），它不會「搬家」，它會**直接消失**，然後由別人建一顆全新的泡泡出來。新泡泡是新的名字、新的門牌，跟舊的完全沒有關係。
 

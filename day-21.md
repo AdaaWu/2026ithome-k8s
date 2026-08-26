@@ -1,4 +1,4 @@
-# Day 21：泡泡裡的食盆 ── 為什麼重啟之後資料就不見了
+# Day 21：泡泡裡的共享食物桶 ── 為什麼重啟之後資料就不見了
 
 ## 痛點
 
@@ -6,7 +6,22 @@
 
 ![day-21-01](illustrations/day-21-01.png)
 
-IMG: 一顆泡泡正在破掉，裡面那個食盆跟著碎成一地 ｜ 出場角色：泡泡、小鳥、泡泡裡的食盆 ｜ 亮橘重點：碎掉消失的那個食盆
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    P["Pod lifetime"] --> E["emptyDir volume"]
+    E --> C1["Container A"]
+    E --> C2["Container B"]
+    P -->|deleted| X["emptyDir data deleted"]
+```
+
+![day-21-mermaid](illustrations/day-21-mermaid.png)
+![day-21-diagram](illustrations/day-21-diagram.png)
+
+IMG: 一顆泡泡正在破掉，裡面的共享食物桶與食盆跟著碎成一地 ｜ 出場角色：泡泡、小鳥、共享食物桶、食盆 ｜ 亮橘重點：碎掉消失的共享食物桶
 
 程式沒錯，是你對容器的檔案系統有誤解。
 
@@ -34,7 +49,7 @@ IMG: 一顆泡泡正在破掉，裡面那個食盆跟著碎成一地 ｜ 出場�
 
 ![day-21-02](illustrations/day-21-02.png)
 
-IMG: 一顆泡泡裡兩隻小鳥共用中央一個食盆，左邊的往盆裡放東西、右邊的從盆裡拿走 ｜ 出場角色：泡泡、小鳥、泡泡裡的食盆 ｜ 亮橘重點：兩隻小鳥之間那個共用的食盆
+IMG: 一顆泡泡裡兩隻小鳥共用中央一個共享食物桶，各自透過面前的食盆取用，左邊的小鳥往桶裡放東西、右邊的小鳥從盆裡拿走 ｜ 出場角色：泡泡、小鳥、共享食物桶、食盆 ｜ 亮橘重點：兩隻小鳥之間那個共享食物桶
 
 真正要「泡泡破了資料還在」的東西，得放到泡泡外面去 ── 那是明天的倉庫。
 

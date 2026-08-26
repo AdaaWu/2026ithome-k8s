@@ -1,4 +1,4 @@
-# Day 24：醫生啄木鳥與小旗子 ── 三種探針
+# Day 24：存活檢查鈴與小旗子 ── 三種探針
 
 ## 痛點
 
@@ -6,7 +6,26 @@
 
 ![day-24-01](illustrations/day-24-01.png)
 
-IMG: 一隻啄木鳥敲著泡泡的外壁，泡泡頂上插著一面旗子 ｜ 出場角色：醫生啄木鳥、小旗子、泡泡、小鳥 ｜ 亮橘重點：泡泡頂上那面旗子是升起還是垂下
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    K["kubelet"] --> L["Liveness probe"]
+    K --> R["Readiness probe"]
+    K --> S["Startup probe"]
+    L -->|failure| Restart["Restart container"]
+    R -->|failure| Exclude["Endpoint not ready"]
+    S -->|success| Enable["Enable liveness / readiness"]
+    class L,R,S success
+    class Restart,Exclude accent
+```
+
+![day-24-mermaid](illustrations/day-24-mermaid.png)
+![day-24-diagram](illustrations/day-24-diagram.png)
+
+IMG: 泡泡外掛著存活檢查鈴，泡泡頂上插著一面旗子 ｜ 出場角色：存活檢查鈴、小旗子、泡泡、小鳥 ｜ 亮橘重點：存活檢查鈴響起的檢查動作
 
 `Running` 這個狀態只代表一件事：**容器的主程序還在。**
 
@@ -14,7 +33,7 @@ IMG: 一隻啄木鳥敲著泡泡的外壁，泡泡頂上插著一面旗子 ｜ �
 
 教它的方式就是**探針**。三種，各管一件事：
 
-**Liveness（醫生啄木鳥）── 你還活著嗎？沒回應就重啟。**
+**Liveness（存活檢查鈴）── 你還活著嗎？沒回應就重啟。**
 
 啄木鳥固定去敲泡泡，連續失敗達到設定門檻時，kubelet 會重啟這隻小鳥。它管的是「**救不救**」。
 
@@ -30,7 +49,7 @@ IMG: 一隻啄木鳥敲著泡泡的外壁，泡泡頂上插著一面旗子 ｜ �
 
 ![day-24-02](illustrations/day-24-02.png)
 
-IMG: 三顆泡泡並排，第一顆被啄木鳥敲到破掉重生，第二顆旗子降下但泡泡完好、旁邊的圖騰柱把它跳過，第三顆掛著一個沙漏 ｜ 出場角色：醫生啄木鳥、小旗子、泡泡、小鳥、圖騰柱 ｜ 亮橘重點：第二顆泡泡完好但被柱子跳過
+IMG: 三顆泡泡並排，第一顆的存活檢查鈴發出警示後泡泡重生，第二顆旗子降下但泡泡完好、旁邊的圖騰柱把它跳過，第三顆掛著一個沙漏 ｜ 出場角色：存活檢查鈴、小旗子、泡泡、小鳥、圖騰柱 ｜ 亮橘重點：第二顆泡泡完好但被柱子跳過
 
 接下來是**最常見、也最貴的設定錯誤**：
 
@@ -175,7 +194,7 @@ kubectl get endpointslices -l kubernetes.io/service-name=demo-probe \
 10.244.0.38  ready=true
 ```
 
-**降旗的那顆變成 `ready=false`。** 郵差鼴鼠只會把流量送給 `ready=true` 的，所以它確實已經不接客了 ── 只要還有健康的泡泡在，使用者不會感覺到這件事（長連線、或三顆同時倒下時仍可能中斷）。
+**降旗的那顆變成 `ready=false`。** 道路管理員只會把流量送給 `ready=true` 的，所以它確實已經不接客了 ── 只要還有健康的泡泡在，使用者不會感覺到這件事（長連線、或三顆同時倒下時仍可能中斷）。
 
 繼續等。五十秒後回到 `-w` 那個畫面：
 

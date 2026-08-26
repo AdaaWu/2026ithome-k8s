@@ -6,6 +6,21 @@
 
 ![day-12-01](illustrations/day-12-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    P["Pod status"] --> G["get: identify state"]
+    G --> D["describe: Events"]
+    D --> L["logs: application output"]
+    D --> E["Node / kubelet / runtime logs"]
+```
+
+![day-12-mermaid](illustrations/day-12-mermaid.png)
+![day-12-diagram](illustrations/day-12-diagram.png)
+
 IMG: 一顆掛著問號的泡泡，底下分出三條路徑，分別通往三個工具 ｜ 出場角色：泡泡、小鳥、哨子 ｜ 亮橘重點：三條路徑最左邊那條的起點
 
 這篇是整季最實用的一篇。面試官問「Pod 起不來你會怎麼查」，這篇可以當成基本排查骨架。
@@ -26,7 +41,7 @@ IMG: 一顆掛著問號的泡泡，底下分出三條路徑，分別通往三個
 
 **CrashLoopBackOff ── 容器起得來，但一直死。** 這代表容器反覆退出並進入 backoff；常見原因是程式、command、設定或 probe，但不能只靠這個狀態判定 K8s 沒問題。`BackOff` 的意思是 K8s 重啟它、它又死、K8s 等更久再試，間隔會越拉越長。這是三種狀態裡最常需要看 logs 的一種。查法：`kubectl logs <pod> --previous` ── 加 `--previous` 才看得到**上一次死掉那輪**的輸出，這是關鍵，不加你只會看到剛重啟的空白。
 
-**Pending ── 泡泡還沒被掛到任何一棵樹上。** 問題不在你的程式，在島上。引路鳥找不到合適的樹：資源不夠、沒有符合條件的節點、或是在等一個還沒準備好的倉庫（PVC，Day 22 會遇到）。查法：`describe` 的 Events 會有 `FailedScheduling`，後面寫得很清楚是哪個條件不滿足。
+**Pending ── 泡泡還沒被掛到任何一棵樹上。** 問題不在你的程式，在島上。選樹官找不到合適的樹：資源不夠、沒有符合條件的節點、或是在等一個還沒準備好的倉庫（PVC，Day 22 會遇到）。查法：`describe` 的 Events 會有 `FailedScheduling`，後面寫得很清楚是哪個條件不滿足。
 
 ![day-12-02](illustrations/day-12-02.png)
 
@@ -105,7 +120,7 @@ STATUS 停在 `Pending` 不動，因為島上沒有任何一棵樹繫著 `disk=s
 kubectl describe pod broken-pending | tail -8
 ```
 
-Events：`0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector`。引路鳥在跟你說「我找不到樹」。
+Events：`0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector`。選樹官在跟你說「我找不到樹」。
 
 三個查完了，收工清乾淨：
 

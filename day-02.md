@@ -7,9 +7,25 @@
 
 ![day-02-01](illustrations/day-02-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    K["kind create cluster"] --> C["Cluster 叢集"]
+    C --> N["Node 節點"]
+    K --> X["kubectl context"]
+    X --> P["Pod hello"]
+    P --> F["port-forward localhost:8080 → Pod:80"]
+```
+
+![day-02-mermaid](illustrations/day-02-mermaid.png)
+![day-02-diagram](illustrations/day-02-diagram.png)
+
 IMG: 一座空盪盪的島上長出第一棵巢樹，樹枝上掛著一顆剛吹出來的泡泡，泡泡裡有一隻小鳥 ｜ 出場角色：雲之島、巢樹、泡泡、小鳥 ｜ 亮橘重點：樹上那顆新長出來的泡泡
 
-Kind 的全名是 Kubernetes in Docker。它做的事情很單純：把 K8s 的節點包成 Docker 容器，在你筆電上跑起來。所以你需要的只有 Docker 和一個指令。
+Kind 的名稱來自 Kubernetes IN Docker。它把 Kubernetes 節點以容器方式在本機跑起來；本篇以 Docker 作為容器執行環境，所以你需要 Docker 和 Kind。Kind 也支援其他相容的容器執行環境，但那不是今天的重點。
 
 這件事之所以重要，是因為它把「一座叢集」變成免洗的。蓋壞了砍掉重蓋，三十秒的事。學東西最怕的就是不敢亂動，Kind 讓你可以放心亂動。
 

@@ -6,6 +6,22 @@
 
 ![day-11-01](illustrations/day-11-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    D["Deployment"] --> N["New ReplicaSet"]
+    N --> B["New Pod: image pull fails"]
+    D --> O["Old ReplicaSet"]
+    O --> H["Healthy old Pods"]
+    B -. "rollout undo" .-> O
+```
+
+![day-11-mermaid](illustrations/day-11-mermaid.png)
+![day-11-diagram](illustrations/day-11-diagram.png)
+
 IMG: 一顆紅色的壞掉泡泡卡在樹枝半路上不上不下，旁邊三顆舊版泡泡照常運作，一支箭頭從紅泡泡指回舊版那一區 ｜ 出場角色：泡泡、小鳥、巢樹、隊長 ｜ 亮橘重點：從紅泡泡指回舊版的那支箭頭
 
 好消息是：**在舊副本仍健康、更新策略保留可用副本時，通常會卡住而不是全掛。**
@@ -24,7 +40,7 @@ IMG: 一顆紅色的壞掉泡泡卡在樹枝半路上不上不下，旁邊三顆
 
 那卡住之後怎麼救？隊長身上有那卷版本卷軸。卷軸上一行一個版本，每一行對應昨天講的一隻貓頭鷹 ── 舊貓頭鷹沒被刪掉，只是數字停在 0。所謂 rollback，就是叫隊長把卷軸往回捲一格，然後把兩隻貓頭鷹的數字對調回去。
 
-**所以回滾不需要重新拉 image、不需要你記得舊版 tag、不需要翻 git。** 東西本來就還在島上，一個指令的事。
+**所以回滾通常不需要你重新查舊版 tag，也不需要翻 git。** 但如果執行回滾的 Node 沒有舊 image 快取，仍可能重新從 registry 拉取；image 已不存在或 registry 不可用時，回滾也會失敗。
 
 ![day-11-02](illustrations/day-11-02.png)
 

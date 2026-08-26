@@ -6,6 +6,26 @@ Day 23 你的資料庫是用 Deployment 跑的，也跑得好好的。那為什�
 
 ![day-27-01](illustrations/day-27-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    S["StatefulSet"] --> P0["Pod: app-0"]
+    S --> P1["Pod: app-1"]
+    S --> P2["Pod: app-2"]
+    P0 --> V0["PVC: data-app-0"]
+    P1 --> V1["PVC: data-app-1"]
+    P2 --> V2["PVC: data-app-2"]
+    H["Headless Service"] --> P0
+    H --> P1
+    H --> P2
+```
+
+![day-27-mermaid](illustrations/day-27-mermaid.png)
+![day-27-diagram](illustrations/day-27-diagram.png)
+
 IMG: 三顆泡泡各自掛著 0、1、2 號碼牌，泡泡裡各有一隻小鳥，泡泡下方各連著一座專屬的倉庫 ｜ 出場角色：編號泡泡管理員、泡泡、小鳥、島上的倉庫、借用單 ｜ 亮橘重點：泡泡外壁上的 0、1、2 號碼牌
 
 因為 Deployment 手下的泡泡是**可拋棄的**，而資料庫**不能被拋棄**。

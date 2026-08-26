@@ -79,54 +79,56 @@ IMG: 一棵巢樹上掛著三顆泡泡，其中一顆正在破掉 ｜ 出場角�
 
 ## 5. 角色表（不可自創、不可改名）
 
-| K8s 概念             | 角色          |
-| ------------------ | ----------- |
-| Cluster            | 雲之島         |
-| Node               | 巢樹          |
-| Pod                | 泡泡巢（簡稱泡泡）   |
-| Container          | 小鳥          |
-| Namespace          | 圍籬          |
-| API Server         | 燈塔櫃台        |
-| etcd               | 記憶樹         |
-| Scheduler          | 引路鳥         |
-| Controller Manager | 巡邏隊長        |
-| kubectl            | 哨子          |
-| kubelet            | 管家松鼠        |
-| kube-proxy         | 郵差鼴鼠        |
-| Label              | 彩色圍巾        |
-| Selector           | 放大鏡         |
-| ReplicaSet         | 數泡泡的貓頭鷹     |
-| Deployment         | 隊長（持版本卷軸）   |
-| StatefulSet        | 編號泡泡管理員       |
-| DaemonSet          | 每棵樹派駐守衛的隊長   |
-| Job                | 一次性任務委託單       |
-| CronJob            | 定時任務鐘             |
-| Service            | 圖騰柱         |
-| ClusterIP          | 島內型圖騰柱           |
-| NodePort           | 開樹門的圖騰柱         |
-| LoadBalancer       | 接碼頭的圖騰柱         |
-| Ingress            | 大門與地圖看板         |
-| Ingress Controller | 守門員             |
-| ConfigMap          | 便條本         |
-| Secret             | 上鎖小盒        |
-| Volume             | 泡泡裡的 Volume Mount（食盆） |
-| PV                 | 島上的倉庫       |
-| PVC                | 借用單         |
-| Liveness Probe     | 醫生啄木鳥       |
-| Readiness Probe    | 小旗子         |
-| Resource Limit     | 飯碗上的水位線     |
-| HPA                | 自動調節旋鈕           |
+| K8s 概念             | 角色                    |
+| ------------------ | --------------------- |
+| Cluster            | 雲之島                   |
+| Node               | 巢樹                    |
+| Pod                | 泡泡巢（簡稱泡泡）             |
+| Container          | 小鳥                    |
+| Namespace          | 圍籬                    |
+| API Server         | 燈塔櫃台                  |
+| etcd               | 記憶樹                   |
+| Scheduler          | 選樹官                   |
+| Controller Manager | 巡邏隊長                  |
+| kubectl            | 哨子                    |
+| kubelet            | 管家松鼠                  |
+| kube-proxy         | 道路管理員                 |
+| Label              | 彩色圍巾                  |
+| Selector           | 放大鏡                   |
+| ReplicaSet         | 數泡泡的貓頭鷹               |
+| Deployment         | 隊長（持版本卷軸）             |
+| StatefulSet        | 編號泡泡管理員               |
+| DaemonSet          | 每棵樹派駐守衛的隊長            |
+| Job                | 一次性任務委託單              |
+| CronJob            | 定時任務鐘                 |
+| Service            | 圖騰柱                   |
+| ClusterIP          | 島內型圖騰柱                |
+| NodePort           | 開樹門的圖騰柱               |
+| LoadBalancer       | 接碼頭的圖騰柱               |
+| Ingress            | 大門與地圖看板               |
+| Ingress Controller | 守門員                   |
+| ConfigMap          | 便條本                   |
+| Secret             | 上鎖小盒                  |
+| Volume             | 泡泡裡的共享食物桶             |
+| Volume Mount       | 小鳥面前、連接共享食物桶的食盆     |
+| PV                 | 島上的倉庫                 |
+| PVC                | 借用單                   |
+| Liveness Probe     | 存活檢查鈴                 |
+| Readiness Probe    | 小旗子                   |
+| Resource Request   | 資源需求牌                 |
+| Resource Limit     | 資源上限線                 |
+| HPA                | 自動調節旋鈕                |
 
 ### 三條構圖鐵律（寫 IMG 描述時必須遵守）
 
-① 小鳥永遠畫在泡泡裡
+① 進入 Kubernetes 管理範圍後，小鳥永遠畫在泡泡裡
 → 表達「Container 由 Pod 包裝；Kubernetes 排程的是 Pod」。
 
 ② 泡泡可以被替換，圖騰柱在未被刪除時維持同一個入口
 → 表達「Pod 身分短暫；Service 提供穩定的存取入口，但不保證後端永遠可用」。
 
-③ 食盆畫在泡泡裡；持久資料必須透過借用單連到地面倉庫
-→ 表達「Volume Mount 掛載在 Pod 中；PVC 用來申請並連接持久儲存」。空的 emptyDir 食盆會跟著 Pod 消失，PVC/PV 接上的食盆則可在 Pod 替換後保留資料。
+③ 共享食物桶與食盆畫在泡泡裡；持久資料必須透過借用單連到地面倉庫
+→ 表達「Volume 定義在 Pod 層級，Volume Mount 把它掛載進特定 Container；PVC 用來申請並連接持久儲存」。空的 emptyDir 共享食物桶會跟著 Pod 消失，PVC/PV 接上的儲存則可在 Pod 替換後保留資料。
 
 圖先建立直覺，正文再用一至兩句正式術語確認真實關係。
 

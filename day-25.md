@@ -1,4 +1,4 @@
-# Day 25：飯碗上的水位線 ── Request 與 Limit
+# Day 25：資源需求牌與資源上限線 ── Request 與 Limit
 
 ## 痛點
 
@@ -6,7 +6,22 @@
 
 ![day-25-01](illustrations/day-25-01.png)
 
-IMG: 一個飯碗上畫著上下兩條水位線，一隻小鳥吃到飯滿出碗外正被拉走 ｜ 出場角色：飯碗上的水位線、小鳥、泡泡 ｜ 亮橘重點：飯從碗裡滿出來的那一刻
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    R["resources.requests"] --> Sch["Scheduler: placement"]
+    L["resources.limits"] --> K["kubelet / cgroups"]
+    K --> CPU["CPU: throttle"]
+    K --> Mem["Memory: OOM kill"]
+```
+
+![day-25-mermaid](illustrations/day-25-mermaid.png)
+![day-25-diagram](illustrations/day-25-diagram.png)
+
+IMG: 一顆泡泡旁掛著資源需求牌，另一側有一條資源上限線；小鳥吃到超過上限的飯正被拉走 ｜ 出場角色：資源需求牌、資源上限線、小鳥、泡泡 ｜ 亮橘重點：小鳥超過資源上限的那一刻
 
 因為你沒有畫線。**不設限制的泡泡，預設可以吃光整棵樹。**
 
@@ -14,9 +29,9 @@ IMG: 一個飯碗上畫著上下兩條水位線，一隻小鳥吃到飯滿出碗
 
 **Request（下面那條線）── 我保證要吃到這麼多。**
 
-這條線是給**引路鳥**看的。Day 4 講過引路鳥決定新泡泡掛哪棵樹，它憑什麼決定？就憑這條線。它把每棵樹上所有泡泡的 Request 加起來，跟樹的總容量比一比，還放得下才把新泡泡掛上去。
+這條線是給**選樹官**看的。Day 4 講過選樹官決定新泡泡掛哪棵樹，它憑什麼決定？就憑這條線。它把每棵樹上所有泡泡的 Request 加起來，跟樹的總容量比一比，還放得下才把新泡泡掛上去。
 
-**這是今天最容易被誤解的地方：一般資源 fit 判斷主要看 Request，而不是即時實際用量；但排程還會考慮 affinity、taint、topology 等條件。** 一棵樹上的泡泡實際只用了 10% 的 CPU，但 Request 加起來已經滿了，引路鳥就是不會再放新泡泡進去 ── 你會得到一顆 `Pending` 的泡泡（Day 12 那三種狀態之一）。
+**這是今天最容易被誤解的地方：一般資源 fit 判斷主要看 Request，而不是即時實際用量；但排程還會考慮 affinity、taint、topology 等條件。** 一棵樹上的泡泡實際只用了 10% 的 CPU，但 Request 加起來已經滿了，選樹官就是不會再放新泡泡進去 ── 你會得到一顆 `Pending` 的泡泡（Day 12 那三種狀態之一）。
 
 **Limit（上面那條線）── 最多只准吃到這麼多。**
 
@@ -30,11 +45,11 @@ IMG: 一個飯碗上畫著上下兩條水位線，一隻小鳥吃到飯滿出碗
 
 ![day-25-02](illustrations/day-25-02.png)
 
-IMG: 兩個飯碗並排，左邊的小鳥被一條繩子拉慢動作但還在吃，右邊的小鳥直接被抓走、碗留在原地 ｜ 出場角色：飯碗上的水位線、小鳥、泡泡 ｜ 亮橘重點：右邊那隻被抓走的小鳥
+IMG: 兩顆泡泡並排，左邊的資源上限線讓小鳥吃飯速度變慢但還在吃，右邊的小鳥超過記憶體上限後被抓走 ｜ 出場角色：資源上限線、小鳥、泡泡 ｜ 亮橘重點：右邊那隻被抓走的小鳥
 
 那不設會怎樣？兩件事都很糟：
 
-**第一，引路鳥完全不知道你要多少**，只好當你不佔空間，於是把一堆泡泡塞到同一棵樹上，最後大家一起餓死。
+**第一，選樹官完全不知道你要多少**，只好當你不佔空間，於是把一堆泡泡塞到同一棵樹上，最後大家一起餓死。
 
 **第二，你的泡泡可以吃光整棵樹**，連累鄰居 ── 就是開頭那個慘案。
 
@@ -50,7 +65,7 @@ IMG: 兩個飯碗並排，左邊的小鳥被一條繩子拉慢動作但還在吃
 kubectl describe node hello-control-plane | grep -A6 "Allocated resources"
 ```
 
-CPU Requests 和 Memory Requests 都很低，而且你的 hello 泡泡**一份都沒佔**。引路鳥眼中它們是零。
+CPU Requests 和 Memory Requests 都很低，而且你的 hello 泡泡**一份都沒佔**。選樹官眼中它們是零。
 
 改 `hello-deployment.yaml`，在 `image` 底下加這段：
 
@@ -72,7 +87,7 @@ kubectl rollout status deployment/hello
 kubectl describe node hello-control-plane | grep -A6 "Allocated resources"
 ```
 
-數字上去了。**引路鳥現在知道你佔多少位子。**
+數字上去了。**選樹官現在知道你佔多少位子。**
 
 看看它怎麼被記錄的：
 

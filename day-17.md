@@ -6,6 +6,22 @@
 
 ![day-17-01](illustrations/day-17-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart LR
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    B["Browser"] --> I["Ingress"]
+    I --> S["Service"]
+    S --> ES["EndpointSlice"]
+    ES --> P["Ready Pod"]
+    P --> C["Container"]
+```
+
+![day-17-mermaid](illustrations/day-17-mermaid.png)
+![day-17-diagram](illustrations/day-17-diagram.png)
+
 IMG: 一條由左到右的完整路徑，從瀏覽器出發，經過大門地圖看板、圖騰柱，最後抵達泡泡裡的小鳥 ｜ 出場角色：大門與地圖看板、圖騰柱、泡泡、小鳥 ｜ 亮橘重點：整條路徑由左到右的貫穿線
 
 今天觀念只有三句話。

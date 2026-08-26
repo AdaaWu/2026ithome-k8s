@@ -6,6 +6,22 @@ Day 7 你已經看過了：泡泡刪掉就是沒了，沒有人幫你補。正�
 
 ![day-09-01](illustrations/day-09-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    D["ReplicaSet\nreplicas: 3"] --> Q["期望 Pod 數量 = 3"]
+    A["目前符合 selector 的 Pods"] --> C["控制器比對差異"]
+    Q --> C
+    C -->|少於 3| N["建立替代 Pod"]
+    C -->|多於 3| X["刪除多餘 Pod"]
+```
+
+![day-09-mermaid](illustrations/day-09-mermaid.png)
+![day-09-diagram](illustrations/day-09-diagram.png)
+
 IMG: 一隻貓頭鷹拿著計數器盯著樹枝，其中一顆泡泡正在破掉，旁邊立刻有一顆新泡泡被吹出來 ｜ 出場角色：數泡泡的貓頭鷹、泡泡、小鳥、巢樹 ｜ 亮橘重點：剛被吹出來的那顆新泡泡
 
 貓頭鷹只做一件事，而且做一輩子：**數泡泡**。

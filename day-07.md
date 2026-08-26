@@ -6,6 +6,23 @@
 
 ![day-07-01](illustrations/day-07-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    Y["YAML manifest"] --> AV["apiVersion"]
+    Y --> K["kind"]
+    Y --> M["metadata"]
+    Y --> S["spec"]
+    S --> P["Pod"]
+    P --> C["Container"]
+```
+
+![day-07-mermaid](illustrations/day-07-mermaid.png)
+![day-07-diagram](illustrations/day-07-diagram.png)
+
 IMG: 左邊一張攤開的 YAML 卷軸，右邊一顆泡泡，四條線把卷軸上的四個段落分別連到泡泡的名牌、外壁、內部的小鳥和小鳥身上的埠號 ｜ 出場角色：泡泡、小鳥 ｜ 亮橘重點：卷軸和泡泡之間那四條對照線
 
 YAML 只是把你原本用指令講的話，改成寫下來。看圖上那四條線，今天的 Pod YAML 先從四個常見的最上層欄位開始：

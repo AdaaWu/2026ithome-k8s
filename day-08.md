@@ -6,6 +6,20 @@
 
 ![day-08-01](illustrations/day-08-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart LR
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    L["Pod labels\napp=hello"] --> S["Selector\napp=hello"]
+    S --> R["Matched Pods"]
+    R --> SV["Service / ReplicaSet"]
+```
+
+![day-08-mermaid](illustrations/day-08-mermaid.png)
+![day-08-diagram](illustrations/day-08-diagram.png)
+
 IMG: 一群繫著不同顏色圍巾的泡泡散在樹上，一支放大鏡照出來的光圈裡只有繫紅圍巾的那三顆 ｜ 出場角色：泡泡、小鳥、彩色圍巾、放大鏡、巢樹 ｜ 亮橘重點：放大鏡的光圈範圍
 
 答案是圍巾。在 Service、Deployment、ReplicaSet 這些 selector 場景，K8s 主要靠**每顆泡泡身上繫的圍巾**找目標；Namespace、名字和 owner reference 也各自有用途。

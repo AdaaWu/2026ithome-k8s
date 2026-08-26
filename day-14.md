@@ -6,6 +6,21 @@
 
 ![day-14-01](illustrations/day-14-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart LR
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    S["Service\nselector: app=hello"] --> ES["EndpointSlice"]
+    ES --> P1["Ready Pod"]
+    ES --> P2["Ready Pod"]
+    ES -. "ready=false / excluded from traffic" .-> P3["Not Ready Pod"]
+```
+
+![day-14-mermaid](illustrations/day-14-mermaid.png)
+![day-14-diagram](illustrations/day-14-diagram.png)
+
 IMG: 一根圖騰柱站在中央，旁邊三顆泡泡其中一顆正在破掉、同時有一顆新泡泡補上，柱子後方的名單短暫顯示沒有 Ready 泡泡 ｜ 出場角色：圖騰柱、泡泡、小鳥、巢樹 ｜ 亮橘重點：柱子仍在但後端名單暫時為空
 
 這是整個第三幕的核心問題，先把它講死：

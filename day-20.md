@@ -6,6 +6,22 @@
 
 ![day-20-01](illustrations/day-20-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    S["Secret data"] --> B["base64 encoding"]
+    B --> A["API / etcd storage"]
+    S --> E["env or volume injection"]
+    E --> C["Container process"]
+    A -. "protect with access control + encryption at rest" .-> P["Security controls"]
+```
+
+![day-20-mermaid](illustrations/day-20-mermaid.png)
+![day-20-diagram](illustrations/day-20-diagram.png)
+
 IMG: 一個上鎖的小盒子，但鎖是玩具鎖，旁邊一隻小鳥用爪子輕輕一撥就打開了 ｜ 出場角色：上鎖小盒、小鳥 ｜ 亮橘重點：被輕鬆撥開的那把玩具鎖
 
 今天最重要的一句話，先講：

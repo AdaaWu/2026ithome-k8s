@@ -6,6 +6,22 @@
 
 ![day-10-01](illustrations/day-10-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    D["Deployment"] --> R1["ReplicaSet: old revision"]
+    D --> R2["ReplicaSet: new revision"]
+    R1 --> P1["old Pods"]
+    R2 --> P2["new Pods"]
+    D -. "rolling update" .-> R2
+```
+
+![day-10-mermaid](illustrations/day-10-mermaid.png)
+![day-10-diagram](illustrations/day-10-diagram.png)
+
 IMG: 隊長手持版本卷軸站在中央，左邊舊版泡泡一顆顆消失、右邊新版泡泡一顆顆吹出來 ｜ 出場角色：隊長、泡泡、小鳥、巢樹 ｜ 亮橘重點：新舊泡泡交界處那一格
 
 隊長手上拿的是**版本卷軸**，卷軸上記著你要的每一個版本。它自己不數泡泡 ── 數泡泡是貓頭鷹的事。隊長做的是**指揮貓頭鷹**。

@@ -6,6 +6,21 @@
 
 ![day-16-01](illustrations/day-16-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart LR
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    R["HTTP request\nhost + path"] --> IC["Ingress Controller"]
+    IC --> I["Ingress rules"]
+    I --> S1["Service: hello"]
+    I --> S2["Service: api"]
+```
+
+![day-16-mermaid](illustrations/day-16-mermaid.png)
+![day-16-diagram](illustrations/day-16-diagram.png)
+
 IMG: 島的大門旁立著一塊地圖看板，看板上兩條路線分別指向島內兩根不同的圖騰柱 ｜ 出場角色：大門與地圖看板、圖騰柱、雲之島 ｜ 亮橘重點：看板上分岔出去的那兩條路線
 
 昨天那三種柱子有個共同的限制：**它們只認得埠號，不認得網址。**

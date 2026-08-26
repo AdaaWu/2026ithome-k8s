@@ -6,6 +6,21 @@
 
 ![day-28-01](illustrations/day-28-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    DS["DaemonSet"] --> N["one Pod per eligible Node"]
+    J["Job"] --> JP["Pod(s) until completion"]
+    CJ["CronJob schedule"] --> J2["Job"]
+    J2 --> JP2["Pod(s)"]
+```
+
+![day-28-mermaid](illustrations/day-28-mermaid.png)
+![day-28-diagram](illustrations/day-28-diagram.png)
+
 IMG: 一張三格並排的圖，左格一位守樹隊長在每棵巢樹旁派駐工作，中格一張一次性任務委託單旁有一顆完成後停止的泡泡，右格定時任務鐘在時間到時送出委託單 ｜ 出場角色：守樹隊長、一次性任務委託單、定時任務鐘、巢樹、泡泡、小鳥 ｜ 亮橘重點：三格之間的分隔線
 
 到目前為止你學的隊長、貓頭鷹、編號泡泡管理員，管的都是**長時間活著的服務**。今天這三位管理者管的是另外三種形狀的工作。
@@ -16,7 +31,7 @@ IMG: 一張三格並排的圖，左格一位守樹隊長在每棵巢樹旁派駐
 
 用在什麼地方？**凡是「跟機器綁定」而不是「跟服務綁定」的工作。** 最常見的三種：日誌收集（要讀那台機器上所有容器的日誌）、監控代理（要量那台機器的 CPU 和硬碟）、網路元件。
 
-其實你早就見過它了 ── Day 18 每棵樹底下都有的郵差鼴鼠，就是由 DaemonSet 管理的 Pod。
+其實你早就見過它了 ── Day 18 每棵樹底下都有的道路管理員，就是由 DaemonSet 管理的 Pod。
 
 **一次性任務委託單（Job）── 跑完就結束，而且要確認成功。**
 
@@ -91,7 +106,7 @@ kubectl logs -l app=demo-agent --tail=2
 kubectl get daemonset -n kube-system
 ```
 
-`kube-proxy` 在裡面 ── 你的老朋友郵差鼴鼠。
+`kube-proxy` 在裡面 ── 你的老朋友道路管理員。
 
 **一次性任務委託單。** 建立 `demo-job.yaml`：
 

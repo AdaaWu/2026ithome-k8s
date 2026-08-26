@@ -6,6 +6,22 @@
 
 ![day-26-01](illustrations/day-26-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    M["Metrics API"] --> H["HPA"]
+    H --> D["Deployment replicas"]
+    D --> RS["ReplicaSet"]
+    RS --> P["Pods"]
+    H -. "target utilization = usage / request" .-> M
+```
+
+![day-26-mermaid](illustrations/day-26-mermaid.png)
+![day-26-diagram](illustrations/day-26-diagram.png)
+
 IMG: 碼頭邊排著長長的人龍，自動調節旋鈕把隊長手上的期望副本數調高，右側的控制器再補出一顆新泡泡 ｜ 出場角色：自動調節旋鈕、隊長、數泡泡的貓頭鷹、海邊碼頭、泡泡、小鳥 ｜ 亮橘重點：旋鈕指向期望副本數的橘色連線
 
 昨天你畫了飯碗的水位線，今天那條線終於有第二個用途。
@@ -36,7 +52,7 @@ IMG: 自動調節旋鈕旁有一個指針錶，錶面指向高處，橘色箭頭
 
 縮容則是刻意設計成更慢的 ── 預設要**連續五分鐘**確認用量真的降下來了才會開始收泡泡。這叫穩定窗口，目的是防止流量一抖動就瘋狂擴縮，那比不擴容還糟。
 
-所以 HPA 不是給你擋突發尖峰用的。**它擋的是「持續十分鐘的流量上升」，不是「三秒鐘的爆量」。** 那種要靠事先多開泡泡。
+所以 HPA 不是給你擋瞬間尖峰用的。**它適合處理持續一段時間的負載變化，不是保證接住三秒鐘的爆量。** 這類尖峰要靠事先保留容量、佇列或其他流量控制策略。
 
 ## 動手 5 分鐘
 

@@ -6,6 +6,20 @@
 
 ![day-15-01](illustrations/day-15-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart LR
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    LB["LoadBalancer"] --> NP["NodePort"]
+    NP --> CIP["ClusterIP"]
+    CIP --> P["Selected Pods"]
+```
+
+![day-15-mermaid](illustrations/day-15-mermaid.png)
+![day-15-diagram](illustrations/day-15-diagram.png)
+
 IMG: 一張島的剖面圖，由外而內三個入口依序排開：海邊碼頭、樹幹上的小門、島內路標 ｜ 出場角色：海邊碼頭、樹幹上的小門、島內路標、圖騰柱、巢樹、雲之島 ｜ 亮橘重點：三個入口由外而內的排列順序
 
 昨天那根柱子其實有型號。你沒指定，所以拿到預設款。ClusterIP、NodePort、LoadBalancer 是同一個 Service 的不同 `type`，不是三種平行獨立資源；差別主要在於**外面的人可以從多遠的地方打進來。**

@@ -1,4 +1,4 @@
-# Day 4：燈塔村在忙什麼 ── 櫃台、記憶樹、引路鳥、巡邏隊長
+# Day 4：燈塔村在忙什麼 ── 櫃台、記憶樹、選樹官、巡邏隊長
 
 ## 痛點
 
@@ -6,7 +6,23 @@
 
 ![day-04-01](illustrations/day-04-01.png)
 
-IMG: 燈塔村的平面圖，哨子、記憶樹、引路鳥、巡邏隊長的箭頭全部先指向中央的燈塔櫃台 ｜ 出場角色：燈塔櫃台、記憶樹、引路鳥、巡邏隊長、哨子 ｜ 亮橘重點：中央的燈塔櫃台
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    K["kubectl"] --> A["API Server"]
+    A <--> E["etcd"]
+    A --> S["Scheduler"]
+    A --> CM["Controller Manager"]
+    A --> L["kubelet"]
+```
+
+![day-04-mermaid](illustrations/day-04-mermaid.png)
+![day-04-diagram](illustrations/day-04-diagram.png)
+
+IMG: 燈塔村的平面圖，哨子、記憶樹、選樹官、巡邏隊長的箭頭全部先指向中央的燈塔櫃台 ｜ 出場角色：燈塔櫃台、記憶樹、選樹官、巡邏隊長、哨子 ｜ 亮橘重點：中央的燈塔櫃台
 
 島上有一區叫燈塔村，住著四個角色。它們主要負責協調與決策；真正執行容器、掛載儲存和處理網路，還需要巢樹上的元件配合。
 
@@ -14,7 +30,7 @@ IMG: 燈塔村的平面圖，哨子、記憶樹、引路鳥、巡邏隊長的箭
 
 **記憶樹（etcd）。** Kubernetes API 物件主要持久化在這裡。你要什麼、現在有什麼，核心狀態都記在這棵樹上。櫃台自己不記，它每次都去問記憶樹。記憶樹倒了，島就失憶了 ── 正式環境備份 etcd 就是在備份這個。
 
-**引路鳥（Scheduler）。** 專門處理一件事：有新泡泡要掛，但還沒決定掛哪棵樹。引路鳥看每棵樹還剩多少資源，挑一棵，把答案寫回櫃台。就這樣，它不負責真的把泡泡掛上去。
+**選樹官（Scheduler）。** 專門處理一件事：有新泡泡要掛，但還沒決定掛哪棵樹。選樹官看每棵樹可配置的資源與其他條件，挑一棵，把答案寫回櫃台。就這樣，它不負責真的把泡泡掛上去。
 
 **巡邏隊長（Controller Manager）。** 拿著清單一直繞島巡邏，比對「你說要的」跟「島上實際有的」。你說要三顆泡泡，現在只有兩顆，它就補一顆。這個比對動作永不停止。
 
@@ -28,7 +44,7 @@ IMG: 燈塔村的平面圖，哨子、記憶樹、引路鳥、巡邏隊長的箭
 
 IMG: 巡邏隊長舉著寫有「要 3 顆」的清單，對照樹上只有 2 顆泡泡 ｜ 出場角色：巡邏隊長、巢樹、泡泡 ｜ 亮橘重點：清單上的數字和樹上泡泡數量的落差
 
-最後補一句分工：燈塔村只出一張嘴。引路鳥決定泡泡掛哪棵樹，但它不會親手去掛；巡邏隊長發現少一顆，也只是去櫃台登記「要補一顆」。真正把泡泡吹出來的是樹上的**管家松鼠**（kubelet），每棵樹上都住著一隻，盯著櫃台看有沒有自己這棵樹的活。決定跟執行是分開的，這也是為什麼燈塔村掛掉的時候，已經在跑的服務不會馬上跟著死。
+最後補一句分工：燈塔村只出一張嘴。選樹官決定泡泡掛哪棵樹，但它不會親手去掛；巡邏隊長發現少一顆，也只是去櫃台登記「要補一顆」。真正把泡泡吹出來的是樹上的**管家松鼠**（kubelet），每棵樹上都住著一隻，盯著櫃台看有沒有自己這棵樹的活。決定跟執行是分開的，這也是為什麼燈塔村掛掉的時候，已經在跑的服務不會馬上跟著死。
 
 ## 動手 5 分鐘
 
@@ -40,21 +56,21 @@ IMG: 巡邏隊長舉著寫有「要 3 顆」的清單，對照樹上只有 2 顆
 kubectl get pods -n kube-system
 ```
 
-你會在清單裡看到 `kube-apiserver-hello-control-plane`（櫃台）、`etcd-hello-control-plane`（記憶樹）、`kube-scheduler-hello-control-plane`（引路鳥）、`kube-controller-manager-hello-control-plane`（巡邏隊長）。四個角色，四顆泡泡，都是 `Running`。
+你會在清單裡看到 `kube-apiserver-hello-control-plane`（櫃台）、`etcd-hello-control-plane`（記憶樹）、`kube-scheduler-hello-control-plane`（選樹官）、`kube-controller-manager-hello-control-plane`（巡邏隊長）。四個角色，四顆泡泡，都是 `Running`。
 
 原來燈塔村自己也是用泡泡跑的。
 
 ![day-04-shot-01](screenshots/day-04-shot-01.png)
 
-橘色標出來的四顆，就是櫃台、記憶樹、引路鳥、巡邏隊長。
+橘色標出來的四顆，就是櫃台、記憶樹、選樹官、巡邏隊長。
 
-看看引路鳥當初把你的 hello 泡泡派去哪：
+看看選樹官當初把你的 hello 泡泡派去哪：
 
 ```bash
 kubectl describe pod hello | sed -n '/Events:/,$p'
 ```
 
-Events 裡有一行 `Successfully assigned default/hello to hello-control-plane`，發出這行的角色是 `default-scheduler`。這就是引路鳥做完決定的簽名。
+Events 裡有一行 `Successfully assigned default/hello to hello-control-plane`，發出這行的角色是 `default-scheduler`。這就是選樹官做完決定的簽名。
 
 驗證「所有事情都經過櫃台」：
 
@@ -74,7 +90,7 @@ kubectl get --raw='/readyz?verbose' | head -20
 
 最後回答一個你現在一定會想到的問題：**燈塔村掛掉會怎樣？**
 
-分兩種情況。已經在跑的服務**通常還能繼續** ── 樹上的管家松鼠不需要櫃台就能繼續照顧現有的泡泡，郵差鼴鼠挖好的地道也還在，是否無感要看 kubelet、Runtime、網路與應用程式狀態。
+分兩種情況。已經在跑的服務**通常還能繼續** ── 樹上的管家松鼠不需要櫃台就能繼續照顧現有的泡泡，道路管理員整理好的地道規則也還在，是否無感要看 kubelet、Runtime、網路與應用程式狀態。
 
 但你會失去「改變」的能力：不能部署、不能擴容，泡泡破了也**沒有人會補**，因為負責發現這件事的巡邏隊長不在了。所以正式環境通常會替燈塔村與記憶樹做高可用與備份，而記憶樹是所有東西裡最需要定期備份的 ── 它一失憶，整座島就不知道自己該長什麼樣子。
 

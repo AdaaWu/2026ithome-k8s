@@ -6,6 +6,22 @@
 
 ![day-13-01](illustrations/day-13-01.png)
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
+flowchart TD
+    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
+    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
+    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
+    C["Cluster"] --> D["Namespace: dev"]
+    C --> P["Namespace: default"]
+    D --> R1["Deployment: hello"]
+    P --> R2["Deployment: hello"]
+    C --> N["Node\ncluster-scoped"]
+```
+
+![day-13-mermaid](illustrations/day-13-mermaid.png)
+![day-13-diagram](illustrations/day-13-diagram.png)
+
 IMG: 島上一道木籬把樹分成左右兩區，兩區各有一棵名字一模一樣的巢樹 ｜ 出場角色：圍籬、巢樹、泡泡、小鳥、雲之島 ｜ 亮橘重點：木籬兩側那兩棵同名的樹
 
 圍籬做的事情很單純：**在同一座島上，畫出幾個各自獨立的命名區域。**
@@ -14,7 +30,7 @@ IMG: 島上一道木籬把樹分成左右兩區，兩區各有一棵名字一模
 
 **第一，圍籬是邏輯隔離，不是實體隔離。**
 
-看圖 ── 木籬左右兩區的樹還是種在同一座島上。泡泡跑在哪棵樹上，完全由引路鳥決定，跟它屬於哪個圍籬無關。所以你不能靠 Namespace 來達成「這個團隊只准用這幾台機器」，那是另外的機制。
+看圖 ── 木籬左右兩區的樹還是種在同一座島上。泡泡跑在哪棵樹上，完全由選樹官決定，跟它屬於哪個圍籬無關。所以你不能靠 Namespace 來達成「這個團隊只准用這幾台機器」，那是另外的機制。
 
 **更關鍵的是：預設情況下，圍籬擋不住網路。** dev 區的泡泡打得到 prod 區的泡泡。圍籬隔的是「名字」和「權限管理的範圍」，不是封包。這是新手最大的誤解，一定要記牢。
 

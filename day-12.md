@@ -1,4 +1,5 @@
-# Day 12：泡泡起不來怎麼辦 ── describe、logs、events 三件套
+# Day 12：泡泡（Pod）起不來怎麼辦 ── describe、logs、events 三件套
+
 
 ## 痛點
 
@@ -21,7 +22,7 @@ flowchart TD
 ![day-12-mermaid](illustrations/day-12-mermaid.png)
 ![day-12-diagram](illustrations/day-12-diagram.png)
 
-IMG: 一顆掛著問號的泡泡，底下分出三條路徑，分別通往三個工具 ｜ 出場角色：泡泡、小鳥、哨子 ｜ 亮橘重點：三條路徑最左邊那條的起點
+IMG: 一顆掛著問號的泡泡（Pod），底下分出三條路徑，分別通往三個工具 ｜ 出場角色：泡泡（Pod）、小鳥（Container）、哨子（kubectl） ｜ 亮橘重點：三條路徑最左邊那條的起點
 
 這篇是整季最實用的一篇。面試官問「Pod 起不來你會怎麼查」，這篇可以當成基本排查骨架。
 
@@ -29,11 +30,11 @@ IMG: 一顆掛著問號的泡泡，底下分出三條路徑，分別通往三個
 
 **第一步 `get` ── 看狀態字串。** 狀態字串本身就是最強的線索，它幾乎已經告訴你問題出在哪一層了。跳過這步直接看 logs 是新手最常見的浪費。
 
-**第二步 `describe` ── 看最下面的 Events。** Events 是這顆泡泡的病歷，按時間記錄了排程、拉 image、掛載、啟動的每一步。**如果容器根本沒起來，通常要先看 Events；若仍找不到原因，再查 Node、kubelet、Runtime 或儲存系統的 logs。**
+**第二步 `describe` ── 看最下面的 Events。** Events 是這顆泡泡（Pod）的病歷，按時間記錄了排程、拉 image、掛載、啟動的每一步。**如果容器根本沒起來，通常要先看 Events；若仍找不到原因，再查 Node、kubelet、Runtime 或儲存系統的 logs。**
 
 **第三步 `logs` ── 讀容器自己印出來的東西。** 只有當容器**曾經跑起來過**，logs 才有內容。容器都還沒啟動，logs 當然是空的。
 
-一句話記住這個順序背後的邏輯：**Events 是 K8s 對這顆泡泡做了什麼，logs 是你的程式自己說了什麼。** 分不清這兩者，你就會一直在錯的地方找答案。
+一句話記住這個順序背後的邏輯：**Events 是 K8s 對這顆泡泡（Pod）做了什麼，logs 是你的程式自己說了什麼。** 分不清這兩者，你就會一直在錯的地方找答案。
 
 接著是三個你一定會遇到的狀態，各自的意思和解法：
 
@@ -41,17 +42,17 @@ IMG: 一顆掛著問號的泡泡，底下分出三條路徑，分別通往三個
 
 **CrashLoopBackOff ── 容器起得來，但一直死。** 這代表容器反覆退出並進入 backoff；常見原因是程式、command、設定或 probe，但不能只靠這個狀態判定 K8s 沒問題。`BackOff` 的意思是 K8s 重啟它、它又死、K8s 等更久再試，間隔會越拉越長。這是三種狀態裡最常需要看 logs 的一種。查法：`kubectl logs <pod> --previous` ── 加 `--previous` 才看得到**上一次死掉那輪**的輸出，這是關鍵，不加你只會看到剛重啟的空白。
 
-**Pending ── 泡泡還沒被掛到任何一棵樹上。** 問題不在你的程式，在島上。選樹官找不到合適的樹：資源不夠、沒有符合條件的節點、或是在等一個還沒準備好的倉庫（PVC，Day 22 會遇到）。查法：`describe` 的 Events 會有 `FailedScheduling`，後面寫得很清楚是哪個條件不滿足。
+**Pending ── 泡泡（Pod）還沒被掛到任何一棵樹上。** 問題不在你的程式，在島上。選樹官（Scheduler）找不到合適的樹：資源不夠、沒有符合條件的節點、或是在等一個還沒準備好的倉庫（PVC，Day 22 會遇到）。查法：`describe` 的 Events 會有 `FailedScheduling`，後面寫得很清楚是哪個條件不滿足。
 
 ![day-12-02](illustrations/day-12-02.png)
 
-IMG: 三顆泡泡並排，第一顆外面掛著一個空的 image 標籤，第二顆裡面的小鳥反覆倒下又站起，第三顆懸在半空還沒碰到樹枝 ｜ 出場角色：泡泡、小鳥、巢樹 ｜ 亮橘重點：第三顆泡泡和樹枝之間那段沒接上的空隙
+IMG: 三顆泡泡（Pod）並排，第一顆外面掛著一個空的 image 標籤，第二顆裡面的小鳥（Container）反覆倒下又站起，第三顆懸在半空還沒碰到樹枝 ｜ 出場角色：泡泡（Pod）、小鳥（Container）、巢樹（Node） ｜ 亮橘重點：第三顆泡泡（Pod）和樹枝之間那段沒接上的空隙
 
 再補一個判斷技巧：看 `get pods` 的 **RESTARTS 欄位**。數字一直往上跳，代表容器有起來過但活不久，往 CrashLoopBackOff 那條路查；數字是 0 但狀態不是 Running，代表根本還沒跑起來，往 Events 那條路查。
 
 ## 動手 5 分鐘
 
-前面十一天我們有一個健康的 hello 隊長。今天故意做出三種壞掉的泡泡，把三種狀態各查一次。**這些都是拋棄式的測試泡泡，跟 hello 無關，查完就刪。**
+前面十一天我們有一個健康的 hello 部署管家（Deployment）。今天故意做出三種壞掉的泡泡（Pod），把三種狀態各查一次。**這些都是拋棄式的測試泡泡（Pod），跟 hello 無關，查完就刪。**
 
 先製造 ImagePullBackOff：
 
@@ -97,7 +98,7 @@ kubectl logs broken-crash --previous
 
 ![day-12-shot-01](screenshots/day-12-shot-01.png)
 
-三顆壞泡泡各自的狀態、以及對應那條路查出來的答案。順帶一提，`--previous` 要等它**真的重啟過一輪**才有東西可看 ── 剛壞掉的頭幾秒打會拿到 `unable to retrieve container logs`，等它進入 `CrashLoopBackOff` 再打就對了。
+三顆壞泡泡（Pod）各自的狀態、以及對應那條路查出來的答案。順帶一提，`--previous` 要等它**真的重啟過一輪**才有東西可看 ── 剛壞掉的頭幾秒打會拿到 `unable to retrieve container logs`，等它進入 `CrashLoopBackOff` 再打就對了。
 
 順便看它的重啟間隔：
 
@@ -120,7 +121,7 @@ STATUS 停在 `Pending` 不動，因為島上沒有任何一棵樹繫著 `disk=s
 kubectl describe pod broken-pending | tail -8
 ```
 
-Events：`0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector`。選樹官在跟你說「我找不到樹」。
+Events：`0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector`。選樹官（Scheduler）在跟你說「我找不到樹」。
 
 三個查完了，收工清乾淨：
 
@@ -129,15 +130,15 @@ kubectl delete pod broken-image broken-crash broken-pending
 kubectl get pods
 ```
 
-只剩下三顆健康的 hello 泡泡。
+只剩下三顆健康的 hello 泡泡（Pod）。
 
-最後給你一個查問題時很好用的視角。Events 除了掛在單一泡泡上，也可以整座島一起看，按時間排：
+最後給你一個查問題時很好用的視角。Events 除了掛在單一泡泡（Pod）上，也可以整座島一起看，按時間排：
 
 ```bash
 kubectl get events --sort-by=.lastTimestamp
 ```
 
-這行會把最近島上發生過的所有事情倒出來，包含剛剛那三顆測試泡泡的死亡紀錄。當你不確定是哪個資源出事、或是懷疑「剛剛到底發生了什麼」的時候，先打這行看全景，再回頭 describe 特定對象，會比一個一個猜快很多。
+這行會把最近島上發生過的所有事情倒出來，包含剛剛那三顆測試泡泡（Pod）的死亡紀錄。當你不確定是哪個資源出事、或是懷疑「剛剛到底發生了什麼」的時候，先打這行看全景，再回頭 describe 特定對象，會比一個一個猜快很多。
 
 一個小提醒：Events 預設只保留一小時左右就會被清掉。所以出事當下先把畫面存起來，別想說等一下再回來查 ── 等一下它就不見了。
 

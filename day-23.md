@@ -1,8 +1,9 @@
 # Day 23：資料實戰 ── 幫 hello service 接上一個資料庫
 
+
 ## 痛點
 
-你手上有前端、有柱子、有看板、有倉庫、有小盒。但它們到現在還是各自獨立的零件，沒有組成一個像樣的系統。
+你手上有前端、有柱子、有看板、有倉庫（PersistentVolume，PV）、有小盒。但它們到現在還是各自獨立的零件，沒有組成一個像樣的系統。
 
 ![day-23-01](illustrations/day-23-01.png)
 
@@ -23,35 +24,35 @@ flowchart LR
 ![day-23-mermaid](illustrations/day-23-mermaid.png)
 ![day-23-diagram](illustrations/day-23-diagram.png)
 
-IMG: 雙層架構的島景，前端三顆泡泡連到一根圖騰柱，柱子後面一顆資料庫泡泡，泡泡下方連著地面的倉庫 ｜ 出場角色：泡泡、小鳥、圖騰柱、島上的倉庫、借用單 ｜ 亮橘重點：資料庫泡泡與地面倉庫之間那條連線
+IMG: 雙層架構的島景，前端三顆泡泡（Pod）連到一根圖騰柱（Service），柱子後面一顆資料庫泡泡（Pod），泡泡（Pod）下方連著地面的倉庫（PersistentVolume，PV） ｜ 出場角色：泡泡（Pod）、小鳥（Container）、圖騰柱（Service）、島上的倉庫（PersistentVolume，PV）、借用單（PersistentVolumeClaim，PVC） ｜ 亮橘重點：資料庫泡泡（Pod）與地面倉庫（PersistentVolume，PV）之間那條連線
 
 今天不學新東西，把第四幕的零件組成你的第一個真實架構。
 
 從上往下看圖，這座島現在長這樣：
 
-**前端層。** 三顆 hello 泡泡，可以隨便破、隨便擴、隨便換版本。它們**不存任何東西**，所以死一百次都無所謂。
+**前端層。** 三顆 hello 泡泡（Pod），可以隨便破、隨便擴、隨便換版本。它們**不存任何東西**，所以死一百次都無所謂。
 
-**中間層。** 一根 `hello-db` 圖騰柱。這根柱子的存在，讓前端可以只認一個名字，不必知道資料庫泡泡在哪棵樹、IP 是多少。
+**中間層。** 一根 `hello-db` 圖騰柱（Service）。這根柱子的存在，讓前端可以只認一個名字，不必知道資料庫泡泡（Pod）在哪棵樹、IP 是多少。
 
-**資料層。** 一顆 Postgres 泡泡，接著地面上的倉庫。**它是最不能隨便處理的東西之一**，因為東西都在它手上。
+**資料層。** 一顆 Postgres 泡泡（Pod），接著地面上的倉庫（PersistentVolume，PV）。**它是最不能隨便處理的東西之一**，因為東西都在它手上。
 
 三個關鍵的連接方式，每個都是前面學過的：
 
-**第一，前端用名字找資料庫。** 前端的設定裡寫的是 `hello-db` 這五個字，不是 IP。這是 Day 14 那個內建 DNS 的價值 ── 資料庫泡泡重建一百次、IP 換一百次，前端的設定一個字都不用改。
+**第一，前端用名字找資料庫。** 前端的設定裡寫的是 `hello-db` 這五個字，不是 IP。這是 Day 14 那個內建 DNS 的價值 ── 資料庫泡泡（Pod）重建一百次、IP 換一百次，前端的設定一個字都不用改。
 
 **第二，密碼從小盒來。** Postgres 的密碼不寫在 YAML 裡，用 `secretKeyRef` 從 Day 20 的小盒撈。這樣同一份 YAML 才能推上 git。
 
-**第三，資料放在倉庫。** Day 22 的借用單掛進資料庫泡泡。泡泡破了資料還在。
+**第三，資料放在倉庫（PersistentVolume，PV）。** Day 22 的借用單（PersistentVolumeClaim，PVC）掛進資料庫泡泡（Pod）。泡泡（Pod）破了資料還在。
 
 ![day-23-02](illustrations/day-23-02.png)
 
-IMG: 前端一顆泡泡朝著一根寫著名字的圖騰柱喊話，柱子後面連著資料庫泡泡 ｜ 出場角色：泡泡、小鳥、圖騰柱 ｜ 亮橘重點：柱子上那個被喊的名字
+IMG: 前端一顆泡泡（Pod）朝著一根寫著名字的圖騰柱（Service）喊話，柱子後面連著資料庫泡泡（Pod） ｜ 出場角色：泡泡（Pod）、小鳥（Container）、圖騰柱（Service） ｜ 亮橘重點：柱子上那個被喊的名字
 
-先誠實說一件事：**用 Deployment 跑資料庫，正式環境是不夠的。** 資料庫需要固定的身分和固定的倉庫，那是 Day 27 那位「編號泡泡管理員（StatefulSet）」的工作。今天先用你熟悉的東西把架構跑通，Day 27 再告訴你為什麼要換。
+先誠實說一件事：**用 Deployment 跑資料庫，正式環境是不夠的。** 資料庫需要固定的身分和固定的倉庫（PersistentVolume，PV），那是 Day 27 那位「編號泡泡（StatefulSet Pod）管理員（StatefulSet）」的工作。今天先用你熟悉的東西把架構跑通，Day 27 再告訴你為什麼要換。
 
 ## 動手 5 分鐘
 
-前二十二天我們有前端三件套加一座本機測試用倉庫。今天長出第二層；資料庫另外使用一個明確的本機 PV，避免把 Kind 是否內建 StorageClass 當成前提。
+前二十二天我們有前端三件套加一座本機測試用倉庫（PersistentVolume，PV）。今天長出第二層；資料庫另外使用一個明確的本機 PV，避免把 Kind 是否內建 StorageClass 當成前提。
 
 先把密碼放進 Day 20 那個小盒。編輯 `hello-secret.yaml`：
 
@@ -70,7 +71,7 @@ stringData:
 kubectl apply -f hello-secret.yaml
 ```
 
-資料庫要自己的倉庫。建立 `hello-db-pvc.yaml`：
+資料庫要自己的倉庫（PersistentVolume，PV）。建立 `hello-db-pvc.yaml`：
 
 ```yaml
 apiVersion: v1
@@ -142,7 +143,7 @@ spec:
             claimName: hello-db-data
 ```
 
-三個地方值得停下來看。`replicas: 1` ── 資料庫不能像前端那樣隨便多開，兩顆同時寫同一個倉庫會壞掉。`secretKeyRef` 是從小盒撈**單一一把鑰匙**（Day 20 的 `secretRef` 是整盒倒進去）。`PGDATA` 指到子目錄，這是 Postgres 掛外部儲存時的標準做法，不加它初始化會失敗。
+三個地方值得停下來看。`replicas: 1` ── 資料庫不能像前端那樣隨便多開，兩顆同時寫同一個倉庫（PersistentVolume，PV）會壞掉。`secretKeyRef` 是從小盒撈**單一一把鑰匙**（Day 20 的 `secretRef` 是整盒倒進去）。`PGDATA` 指到子目錄，這是 Postgres 掛外部儲存時的標準做法，不加它初始化會失敗。
 
 最後一根柱子。建立 `hello-db-service.yaml`：
 
@@ -168,7 +169,7 @@ kubectl apply -f hello-db-pv.yaml -f hello-db-pvc.yaml -f hello-db-deployment.ya
 kubectl get pods,svc,pvc
 ```
 
-等三十秒，`hello-db` 泡泡變成 `Running`。第一次啟動要初始化資料庫，慢一點正常。
+等三十秒，`hello-db` 泡泡（Pod）變成 `Running`。第一次啟動要初始化資料庫，慢一點正常。
 
 確認它真的起來了：
 
@@ -194,26 +195,26 @@ INSERT INTO greetings (msg) VALUES ('hello from day 23');
 SELECT * FROM greetings;
 ```
 
-一行資料。打 `\q` 離開，客人泡泡自動消失。
+一行資料。打 `\q` 離開，客人泡泡（Pod）自動消失。
 
-**驗證資料真的活在倉庫裡。把資料庫泡泡整顆砍掉：**
+**驗證資料真的活在倉庫（PersistentVolume，PV）裡。把資料庫泡泡（Pod）整顆砍掉：**
 
 ```bash
 kubectl delete pod -l app=hello-db
 kubectl get pods -l app=hello-db
 ```
 
-貓頭鷹立刻補了一顆全新的泡泡，名字不一樣了。等它 `Running`，再連一次：
+貓頭鷹立刻補了一顆全新的泡泡（Pod），名字不一樣了。等它 `Running`，再連一次：
 
 ```bash
 kubectl run psql-client --rm -it --image=postgres:16-alpine --env="PGPASSWORD=super-secret-123" -- psql -h hello-db -U postgres -c "SELECT * FROM greetings;"
 ```
 
-**`hello from day 23` 還在。** 新泡泡、新 IP、新容器，這次 demo 中資料仍然存在，因為它寫在地面上的倉庫；PVC 提供持久化位置，但不等於備份或資料一致性保證。
+**`hello from day 23` 還在。** 新泡泡（Pod）、新 IP、新容器，這次 demo 中資料仍然存在，因為它寫在地面上的倉庫（PersistentVolume，PV）；PVC 提供持久化位置，但不等於備份或資料一致性保證。
 
 ![day-23-shot-01](screenshots/day-23-shot-01.png)
 
-前端一組、資料庫一組，各有各的柱子；資料庫泡泡換過一輪，資料原封不動。
+前端一組、資料庫一組，各有各的柱子；資料庫泡泡（Pod）換過一輪，資料原封不動。
 
 最後把整座島看一遍：
 
@@ -221,7 +222,7 @@ kubectl run psql-client --rm -it --image=postgres:16-alpine --env="PGPASSWORD=su
 kubectl get all
 ```
 
-前端隊長、前端柱子、資料庫隊長、資料庫柱子。**這是你第一個像樣的架構。**
+前端部署管家（Deployment）、前端柱子、資料庫部署管家（Deployment）、資料庫柱子。**這是你第一個像樣的架構。**
 
 順便驗證一件很重要的事：資料庫確實只有島內看得到。
 
@@ -244,7 +245,7 @@ ls *.yaml
 
 ## 帶走一句話
 
-**前端隨便死，資料庫的倉庫不能死。**
+**前端隨便死，資料庫的倉庫（PersistentVolume，PV）不能死。**
 
 ## 參考資源
 

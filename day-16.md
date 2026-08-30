@@ -1,5 +1,6 @@
 # Day 16：大門地圖看板 Ingress ── 一個網域分流到多個服務
 
+
 ## 痛點
 
 你有五個服務要對外。開五個 NodePort，就是五個難記的埠號；開五個 LoadBalancer，就是五份帳單。
@@ -21,7 +22,7 @@ flowchart LR
 ![day-16-mermaid](illustrations/day-16-mermaid.png)
 ![day-16-diagram](illustrations/day-16-diagram.png)
 
-IMG: 島的大門旁立著一塊地圖看板，看板上兩條路線分別指向島內兩根不同的圖騰柱 ｜ 出場角色：大門與地圖看板、圖騰柱、雲之島 ｜ 亮橘重點：看板上分岔出去的那兩條路線
+IMG: 島的大門旁立著一塊地圖看板，看板上兩條路線分別指向島內兩根不同的圖騰柱（Service） ｜ 出場角色：大門與地圖看板、圖騰柱（Service）、雲之島（Cluster） ｜ 亮橘重點：看板上分岔出去的那兩條路線
 
 昨天那三種柱子有個共同的限制：**它們只認得埠號，不認得網址。**
 
@@ -41,13 +42,13 @@ IMG: 島的大門旁立著一塊地圖看板，看板上兩條路線分別指向
 
 **Ingress 這個資源本身不會動。** 你寫的那份 YAML 只是一張規則表，它需要有人真的去讀它、然後真的去轉發封包。那個「有人」叫做 **Ingress Controller**，而它**預設不存在**，要你自己另外裝。
 
-這跟你到目前為止學的所有東西都不一樣。隊長、貓頭鷹、柱子都是島上內建的，寫了就會動。Ingress 不是。**你寫完 Ingress 卻發現完全沒反應，沒裝或沒對上 Ingress Controller 是常見原因之一；也要檢查 class、Service、DNS 與 port mapping。**
+這跟你到目前為止學的所有東西都不一樣。部署管家（Deployment）、貓頭鷹、柱子都是島上內建的，寫了就會動。Ingress 不是。**你寫完 Ingress 卻發現完全沒反應，沒裝或沒對上 Ingress Controller 是常見原因之一；也要檢查 class、Service、DNS 與 port mapping。**
 
-Controller 有很多牌子，最常見的是 ingress-nginx（就是拿 Nginx 改的）。裝好之後它自己也是跑在島上的一組泡泡加一根柱子 ── 看板其實是島上的一位居民，不是憑空存在的設施。
+Controller 有很多牌子，最常見的是 ingress-nginx（就是拿 Nginx 改的）。裝好之後它自己也是跑在島上的一組泡泡（Pod）加一根柱子 ── 看板其實是島上的一位居民，不是憑空存在的設施。
 
 ![day-16-02](illustrations/day-16-02.png)
 
-IMG: 地圖看板後面站著一位讀看板的居民，居民手上的指示牌指向其中一根圖騰柱 ｜ 出場角色：大門與地圖看板、圖騰柱、泡泡 ｜ 亮橘重點：讀看板那位居民本身
+IMG: 地圖看板後面站著一位讀看板的居民，居民手上的指示牌指向其中一根圖騰柱（Service） ｜ 出場角色：大門與地圖看板、圖騰柱（Service）、泡泡（Pod） ｜ 亮橘重點：讀看板那位居民本身
 
 還有一個界線要劃清楚：**標準 Ingress API 主要描述 HTTP/HTTPS 路由。** 資料庫、Redis 或自訂 TCP 流量要看 Controller 是否提供額外的 TCP/UDP 能力；gRPC 通常可透過 HTTP/2 支援，那些還是得走昨天的柱子。看板是「網站的入口」，不是「島的萬用入口」。
 
@@ -98,7 +99,7 @@ kubectl apply -f hello-service.yaml
 kubectl get pods,svc
 ```
 
-三顆泡泡加一根柱子，兩行指令復原。
+三顆泡泡（Pod）加一根柱子，兩行指令復原。
 
 現在裝 Controller：
 
@@ -121,7 +122,7 @@ kubectl wait --namespace ingress-nginx \
 kubectl get pods -n ingress-nginx
 ```
 
-Controller 自己就是一顆泡泡，住在 `ingress-nginx` 這道圍籬裡。
+Controller 自己就是一顆泡泡（Pod），住在 `ingress-nginx` 這道圍籬裡。
 
 ![day-16-shot-02](screenshots/day-16-shot-02.png)
 

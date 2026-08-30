@@ -1,8 +1,9 @@
-# Day 20：上鎖的小盒子 ── Secret 與它其實沒那麼安全的真相
+# Day 20：上鎖的小盒子（Secret） ── Secret 與它其實沒那麼安全的真相
+
 
 ## 痛點
 
-資料庫密碼不能放便條本，那該放哪？你聽說 K8s 有個叫 Secret 的東西，名字聽起來很安全。
+資料庫密碼不能放便條本（ConfigMap），那該放哪？你聽說 K8s 有個叫 Secret 的東西，名字聽起來很安全。
 
 ![day-20-01](illustrations/day-20-01.png)
 
@@ -22,7 +23,7 @@ flowchart TD
 ![day-20-mermaid](illustrations/day-20-mermaid.png)
 ![day-20-diagram](illustrations/day-20-diagram.png)
 
-IMG: 一個上鎖的小盒子，但鎖是玩具鎖，旁邊一隻小鳥用爪子輕輕一撥就打開了 ｜ 出場角色：上鎖小盒、小鳥 ｜ 亮橘重點：被輕鬆撥開的那把玩具鎖
+IMG: 一個上鎖的小盒子（Secret），但鎖是玩具鎖，旁邊一隻小鳥（Container）用爪子輕輕一撥就打開了 ｜ 出場角色：上鎖小盒、小鳥（Container） ｜ 亮橘重點：被輕鬆撥開的那把玩具鎖
 
 今天最重要的一句話，先講：
 
@@ -34,7 +35,7 @@ base64 是**編碼**，不是**加密**。編碼的目的是讓資料能安全�
 
 這是新手對 K8s 最大的誤解，而且後果很嚴重：以為東西放進 Secret 就安全了，於是把 Secret 的 YAML 直接推上公開的 git repo。**那跟把密碼用明文推上去，實質上是同一件事。**
 
-那 Secret 到底有什麼用？它跟便條本的差別在三個地方：
+那 Secret 到底有什麼用？它跟便條本（ConfigMap）的差別在三個地方：
 
 **第一，它不會被隨手印出來。** `kubectl describe` 一份 Secret，值的位置只會顯示 `8 bytes`。你 demo 時不會手滑把密碼投影到螢幕上。
 
@@ -44,7 +45,7 @@ base64 是**編碼**，不是**加密**。編碼的目的是讓資料能安全�
 
 ![day-20-02](illustrations/day-20-02.png)
 
-IMG: 兩個並排的容器，左邊便條本內容全部攤開可見，右邊小盒的內容被一塊布蓋住只露出形狀 ｜ 出場角色：便條本、上鎖小盒 ｜ 亮橘重點：右邊那塊蓋住內容的布
+IMG: 兩個並排的容器，左邊便條本（ConfigMap）內容全部攤開可見，右邊小盒的內容被一塊布蓋住只露出形狀 ｜ 出場角色：便條本（ConfigMap）、上鎖小盒 ｜ 亮橘重點：右邊那塊蓋住內容的布
 
 用法上，Secret 跟 ConfigMap **幾乎一模一樣**：一樣可以當環境變數，一樣可以掛成檔案，YAML 結構只差 `kind` 和幾個欄位名。昨天學的東西今天全部能用，這是好消息。
 
@@ -52,7 +53,7 @@ IMG: 兩個並排的容器，左邊便條本內容全部攤開可見，右邊小
 
 ## 動手 5 分鐘
 
-前十九天我們有一本明文的便條本。今天建一個小盒，然後親手把它撬開。
+前十九天我們有一本明文的便條本（ConfigMap）。今天建一個小盒，然後親手把它撬開。
 
 最快的建法是用指令，K8s 會自動幫你做 base64：
 
@@ -132,7 +133,7 @@ echo "hello-secret.yaml" >> .gitignore
 kubectl apply -f hello-secret.yaml
 ```
 
-接到泡泡上。改 `hello-deployment.yaml`，在 `envFrom` 底下多加兩行：
+接到泡泡（Pod）上。改 `hello-deployment.yaml`，在 `envFrom` 底下多加兩行：
 
 ```yaml
           envFrom:
@@ -150,9 +151,9 @@ kubectl rollout status deployment/hello
 kubectl exec deploy/hello -- env | grep DB_PASSWORD
 ```
 
-`DB_PASSWORD=super-secret-123`。小鳥拿到密碼了。
+`DB_PASSWORD=super-secret-123`。小鳥（Container）拿到密碼了。
 
-最後看一個容易被忽略的地方 ── 密碼在泡泡裡也是明文：
+最後看一個容易被忽略的地方 ── 密碼在泡泡（Pod）裡也是明文：
 
 ```bash
 kubectl exec deploy/hello -- printenv DB_PASSWORD
@@ -172,7 +173,7 @@ kubectl get secrets -A --field-selector type!=Opaque | head -5
 
 型號的意義在於**它規定了裡面必須有哪些 key**。填錯 key，櫃台會直接退件，不會等到用的時候才爆炸。
 
-還有一個和昨天共通的坑要提醒：**改了 Secret，跑著的泡泡一樣不會自動更新。** 以環境變數注入的值不會因為 Secret 改變而自動更新，掛成檔案的會延遲更新但程式不知道。所以換密碼之後，記得補一行昨天學的：
+還有一個和昨天共通的坑要提醒：**改了 Secret，跑著的泡泡（Pod）一樣不會自動更新。** 以環境變數注入的值不會因為 Secret 改變而自動更新，掛成檔案的會延遲更新但程式不知道。所以換密碼之後，記得補一行昨天學的：
 
 ```bash
 kubectl rollout restart deployment/hello

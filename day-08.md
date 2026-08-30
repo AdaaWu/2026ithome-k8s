@@ -1,8 +1,9 @@
 # Day 8：彩色圍巾 Label，K8s 到底怎麼認出誰是誰？
 
+
 ## 痛點
 
-島上很快就會有幾十顆泡泡。K8s 沒有資料夾、沒有目錄結構，那它到底怎麼分辨哪幾顆是你的服務？
+島上很快就會有幾十顆泡泡（Pod）。K8s 沒有資料夾、沒有目錄結構，那它到底怎麼分辨哪幾顆是你的服務？
 
 ![day-08-01](illustrations/day-08-01.png)
 
@@ -20,25 +21,25 @@ flowchart LR
 ![day-08-mermaid](illustrations/day-08-mermaid.png)
 ![day-08-diagram](illustrations/day-08-diagram.png)
 
-IMG: 一群繫著不同顏色圍巾的泡泡散在樹上，一支放大鏡照出來的光圈裡只有繫紅圍巾的那三顆 ｜ 出場角色：泡泡、小鳥、彩色圍巾、放大鏡、巢樹 ｜ 亮橘重點：放大鏡的光圈範圍
+IMG: 一群繫著不同顏色圍巾的泡泡（Pod）散在樹上，一支放大鏡照出來的光圈裡只有繫紅圍巾的那三顆 ｜ 出場角色：泡泡（Pod）、小鳥（Container）、彩色圍巾、放大鏡、巢樹（Node） ｜ 亮橘重點：放大鏡的光圈範圍
 
-答案是圍巾。在 Service、Deployment、ReplicaSet 這些 selector 場景，K8s 主要靠**每顆泡泡身上繫的圍巾**找目標；Namespace、名字和 owner reference 也各自有用途。
+答案是圍巾。在 Service、Deployment、ReplicaSet 這些 selector 場景，K8s 主要靠**每顆泡泡（Pod）身上繫的圍巾**找目標；Namespace、名字和 owner reference 也各自有用途。
 
-圍巾就是 Label，格式是 `key: value`，例如 `app: hello`。一顆泡泡可以繫很多條：`app: hello`、`env: dev`、`tier: frontend`，各代表一個分類角度。
+圍巾就是 Label，格式是 `key: value`，例如 `app: hello`。一顆泡泡（Pod）可以繫很多條：`app: hello`、`env: dev`、`tier: frontend`，各代表一個分類角度。
 
-拿著放大鏡去找特定圍巾的動作叫 **Selector**。「幫我找出所有繫著 `app: hello` 的泡泡」── 就這麼一句話，回傳一組泡泡。
+拿著放大鏡去找特定圍巾的動作叫 **Selector**。「幫我找出所有繫著 `app: hello` 的泡泡（Pod）」── 就這麼一句話，回傳一組泡泡（Pod）。
 
 看圖上那個光圈：光圈主要由 selector 與圍巾決定，但 Namespace 和 selector 的種類也會影響搜尋範圍。
 
 今天這件事看起來平凡，但它是後面所有東西的地基：
 
-- 貓頭鷹（ReplicaSet）靠圍巾數泡泡夠不夠（Day 9）
-- 隊長（Deployment）靠圍巾知道哪些泡泡歸它管（Day 10）
+- 貓頭鷹（ReplicaSet）靠圍巾數泡泡（Pod）夠不夠（Day 9）
+- 部署管家（Deployment）靠 selector 與 owner references 管理它建立的 ReplicaSet 與泡泡（Pod）（Day 10）
 - 圖騰柱（Service）靠圍巾決定流量要送給誰（Day 14）
 
 ![day-08-02](illustrations/day-08-02.png)
 
-IMG: 同一顆泡泡身上同時繫著三條不同顏色的圍巾，三支放大鏡各自照出其中一條 ｜ 出場角色：泡泡、小鳥、彩色圍巾、放大鏡 ｜ 亮橘重點：三條圍巾同時繫在同一顆泡泡上
+IMG: 同一顆泡泡（Pod）身上同時繫著三條不同顏色的圍巾，三支放大鏡各自照出其中一條 ｜ 出場角色：泡泡（Pod）、小鳥（Container）、彩色圍巾、放大鏡 ｜ 亮橘重點：三條圍巾同時繫在同一顆泡泡（Pod）上
 
 圍巾要怎麼取名？沒有硬規定，但有一組大家都在用的慣例，照抄就好：`app` 放服務名稱、`env` 放環境（dev/staging/prod）、`tier` 放層級（frontend/backend）、`version` 放版本。重點不是名字多漂亮，是**整個團隊用同一套**，因為放大鏡照的是字串，大小寫差一個字都算不同條圍巾。
 
@@ -46,7 +47,7 @@ IMG: 同一顆泡泡身上同時繫著三條不同顏色的圍巾，三支放大
 
 ## 動手 5 分鐘
 
-昨天我們有一份 `hello-pod.yaml` 建出來的泡泡，但它身上沒繫圍巾。今天幫它繫上，然後用放大鏡找它。
+昨天我們有一份 `hello-pod.yaml` 建出來的泡泡（Pod），但它身上沒繫圍巾。今天幫它繫上，然後用放大鏡找它。
 
 先看現在有沒有圍巾：
 
@@ -54,7 +55,7 @@ IMG: 同一顆泡泡身上同時繫著三條不同顏色的圍巾，三支放大
 kubectl get pods --show-labels
 ```
 
-LABELS 那欄是空的（或只有 `<none>`）。這顆泡泡目前誰都找不到它。
+LABELS 那欄是空的（或只有 `<none>`）。這顆泡泡（Pod）目前誰都找不到它。
 
 改 `hello-pod.yaml`，在 `metadata` 底下加兩行：
 
@@ -96,20 +97,20 @@ hello 出現在清單裡。
 kubectl get pods -l app=world
 ```
 
-`No resources found in default namespace.` 泡泡明明還在跑，只是不在光圈裡。**記住這個畫面**，之後你的 Service 沒流量、Deployment 數字對不上，這是很常見、值得先檢查的原因之一。
+`No resources found in default namespace.` 泡泡（Pod）明明還在跑，只是不在光圈裡。**記住這個畫面**，之後你的 Service 沒流量、Deployment 數字對不上，這是很常見、值得先檢查的原因之一。
 
 ![day-08-shot-01](screenshots/day-08-shot-01.png)
 
-泡泡好好地跑著，放大鏡卻照不到 ── 而且沒有任何錯誤訊息。
+泡泡（Pod）好好地跑著，放大鏡卻照不到 ── 而且沒有任何錯誤訊息。
 
-再多建一顆繫不同圍巾的泡泡，感受一下分類：
+再多建一顆繫不同圍巾的泡泡（Pod），感受一下分類：
 
 ```bash
 kubectl run other --image=nginx:alpine --labels="app=other"
 kubectl get pods --show-labels
 ```
 
-兩顆泡泡、兩條不同圍巾。分別照照看：
+兩顆泡泡（Pod）、兩條不同圍巾。分別照照看：
 
 ```bash
 kubectl get pods -l app=hello
@@ -118,7 +119,7 @@ kubectl get pods -l 'app in (hello,other)'
 
 第一行只出現 hello，第二行兩顆都出現。Selector 除了 `=`，還吃 `in`、`!=`、`!key`（沒繫這條圍巾的）這幾種條件。
 
-也可以不改檔案，直接在跑著的泡泡上加圍巾：
+也可以不改檔案，直接在跑著的泡泡（Pod）上加圍巾：
 
 ```bash
 kubectl label pod hello env=dev
@@ -133,9 +134,9 @@ kubectl get pods -l env=dev --show-labels
 kubectl get pods -L app,env
 ```
 
-`-L`（大寫）跟 `-l`（小寫）不一樣：小寫是拿放大鏡篩選，大寫是把指定的圍巾多印成一欄。泡泡一多的時候，這行比 `--show-labels` 好讀很多。
+`-L`（大寫）跟 `-l`（小寫）不一樣：小寫是拿放大鏡篩選，大寫是把指定的圍巾多印成一欄。泡泡（Pod）一多的時候，這行比 `--show-labels` 好讀很多。
 
-收工前把測試用的泡泡清掉：
+收工前把測試用的泡泡（Pod）清掉：
 
 ```bash
 kubectl delete pod other
@@ -160,16 +161,16 @@ kubectl get pod hello -o jsonpath='{.metadata.annotations}{"\n"}'
 
 再補一個圍巾的實際用途，它比你想的更常用到：**批次操作。**
 
-放大鏡不只能用來查，也能用來**一次對一群泡泡下手**：
+放大鏡不只能用來查，也能用來**一次對一群泡泡（Pod）下手**：
 
 ```bash
 kubectl delete pods -l app=other
 kubectl logs -l app=hello --tail=5
 ```
 
-第一行刪掉所有繫 `app=other` 圍巾的泡泡，不管它們叫什麼名字、有幾顆。第二行一次撈出一整組泡泡的日誌。
+第一行刪掉所有繫 `app=other` 圍巾的泡泡（Pod），不管它們叫什麼名字、有幾顆。第二行一次撈出一整組泡泡（Pod）的日誌。
 
-這在正式環境非常實用 ── 你不會想在三十顆泡泡的環境裡，一個一個複製貼上那串亂碼名字。**圍巾標好，整組操作就是一行的事；圍巾沒標好，你只能一顆一顆手動處理。**
+這在正式環境非常實用 ── 你不會想在三十顆泡泡（Pod）的環境裡，一個一個複製貼上那串亂碼名字。**圍巾標好，整組操作就是一行的事；圍巾沒標好，你只能一顆一顆手動處理。**
 
 ## 帶走一句話
 

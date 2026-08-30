@@ -1,5 +1,6 @@
 # Day 17：網路實戰 ── 從瀏覽器打到你的 hello service
 
+
 ## 痛點
 
 分開看你每個資源都懂，但中間任何一段斷掉，你還是只會看到瀏覽器上冷冰冰的一行 404。
@@ -22,11 +23,11 @@ flowchart LR
 ![day-17-mermaid](illustrations/day-17-mermaid.png)
 ![day-17-diagram](illustrations/day-17-diagram.png)
 
-IMG: 一條由左到右的完整路徑，從瀏覽器出發，經過大門地圖看板、圖騰柱，最後抵達泡泡裡的小鳥 ｜ 出場角色：大門與地圖看板、圖騰柱、泡泡、小鳥 ｜ 亮橘重點：整條路徑由左到右的貫穿線
+IMG: 一條由左到右的完整路徑，從瀏覽器出發，經過大門地圖看板、圖騰柱（Service），最後抵達泡泡（Pod）裡的小鳥（Container） ｜ 出場角色：大門與地圖看板、圖騰柱（Service）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：整條路徑由左到右的貫穿線
 
 今天觀念只有三句話。
 
-第一，**這條路有四站**：看板 → 柱子 → 名單 → 泡泡。第二，**每一站的連接方式都不一樣** ── 看板靠服務名稱找柱子，柱子靠圍巾找泡泡。第三，**斷在哪一站，症狀就不一樣**，所以你根本不需要猜，一站一站問下去就好。
+第一，**這條路有四站**：看板 → 柱子 → 名單 → 泡泡（Pod）。第二，**每一站的連接方式都不一樣** ── 看板靠服務名稱找柱子，柱子靠圍巾找泡泡（Pod）。第三，**斷在哪一站，症狀就不一樣**，所以你根本不需要猜，一站一站問下去就好。
 
 剩下的全部用手做。今天結束時你會有一套可以背下來的檢查流程。
 
@@ -53,11 +54,11 @@ kubectl apply -f hello-ingress.yaml
 
 （如果昨天最後你把 Ingress 改成了 host 規則，先把 `hello-ingress.yaml` 改回 `/hello(/|$)(.*)` 那版，今天用 path 規則。）
 
-等三十秒讓泡泡起來，然後打開瀏覽器輸入 `http://localhost/hello`。Welcome 頁出現，整條路通了。
+等三十秒讓泡泡（Pod）起來，然後打開瀏覽器輸入 `http://localhost/hello`。Welcome 頁出現，整條路通了。
 
-**接下來是重點：由內而外，一站一站驗證。** 從離小鳥最近的地方開始查，才不會白費力氣。
+**接下來是重點：由內而外，一站一站驗證。** 從離小鳥（Container）最近的地方開始查，才不會白費力氣。
 
-**第一站，小鳥自己活著嗎？**
+**第一站，小鳥（Container）自己活著嗎？**
 
 ```bash
 kubectl get pods -l app=hello
@@ -65,20 +66,20 @@ kubectl get pods -l app=hello
 
 三顆 `Running`、READY 是 `1/1`。READY 不是 `1/1` 就別往下查了，先回頭看 Day 12。
 
-**第二站，泡泡的門牌打得通嗎？**
+**第二站，泡泡（Pod）的門牌打得通嗎？**
 
 ```bash
 kubectl get pods -l app=hello -o wide
 kubectl run probe --rm -it --image=busybox:1.36 -- sh
 ```
 
-進去之後，直接打其中一顆泡泡的 IP：
+進去之後，直接打其中一顆泡泡（Pod）的 IP：
 
 ```bash
 wget -qO- http://10.244.0.x
 ```
 
-HTML 吐出來 ── 泡泡本身沒問題。**先別離開這個 shell。**
+HTML 吐出來 ── 泡泡（Pod）本身沒問題。**先別離開這個 shell。**
 
 **第三站，柱子轉得到嗎？**
 
@@ -110,7 +111,7 @@ kubectl get endpointslices -l kubernetes.io/service-name=hello
 kubectl describe ingress hello
 ```
 
-看 `Rules` 區塊，`/hello` 對應到 `hello:80`，後面括號裡會列出三個泡泡的 IP ── **看板已經穿透到最底層了**。如果括號裡是空的或寫 `<error: services "hello" not found>`，問題出在第四站。
+看 `Rules` 區塊，`/hello` 對應到 `hello:80`，後面括號裡會列出三個泡泡（Pod）的 IP ── **看板已經穿透到最底層了**。如果括號裡是空的或寫 `<error: services "hello" not found>`，問題出在第四站。
 
 五站都綠燈，這條路就是通的。
 
@@ -171,7 +172,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost/hello
 
 ![day-17-02](illustrations/day-17-02.png)
 
-IMG: 同一條路徑上三個不同位置各有一個斷點，每個斷點旁標著不同的數字牌 ｜ 出場角色：大門與地圖看板、圖騰柱、泡泡、小鳥 ｜ 亮橘重點：三個斷點上那三塊數字牌
+IMG: 同一條路徑上三個不同位置各有一個斷點，每個斷點旁標著不同的數字牌 ｜ 出場角色：大門與地圖看板、圖騰柱（Service）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：三個斷點上那三塊數字牌
 
 最後給你看一個東西，看完你對看板就不會有任何神祕感了。昨天說看板背後住著一位居民，那位居民其實就是一台 Nginx。它把你寫的 Ingress YAML 翻譯成一份 `nginx.conf`：
 
@@ -179,7 +180,7 @@ IMG: 同一條路徑上三個不同位置各有一個斷點，每個斷點旁標
 kubectl exec -n ingress-nginx deploy/ingress-nginx-controller -- cat /etc/nginx/nginx.conf | grep -B2 -A8 "hello"
 ```
 
-你會看到熟悉的 `upstream`、`location`、`proxy_pass` ── **就是你以前手寫過的那種設定檔**。差別只在於：以前泡泡一換 IP 你就得手動改這個檔案然後 reload，現在有人幫你二十四小時盯著名單，改完自動 reload。
+你會看到熟悉的 `upstream`、`location`、`proxy_pass` ── **就是你以前手寫過的那種設定檔**。差別只在於：以前泡泡（Pod）一換 IP 你就得手動改這個檔案然後 reload，現在有人幫你二十四小時盯著名單，改完自動 reload。
 
 這就是整個第三幕的價值。K8s 沒有發明新的網路魔法，它只是把你原本手動做的那件事，變成一直有人在做。
 

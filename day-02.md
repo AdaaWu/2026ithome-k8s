@@ -1,4 +1,5 @@
-# Day 2：5 分鐘登島，用 Kind 蓋出你的第一座雲之島
+# Day 2：5 分鐘登島，用 Kind 蓋出你的第一座雲之島（Cluster）
+
 
 ## 痛點
 
@@ -23,15 +24,19 @@ flowchart TD
 ![day-02-mermaid](illustrations/day-02-mermaid.png)
 ![day-02-diagram](illustrations/day-02-diagram.png)
 
-IMG: 一座空盪盪的島上長出第一棵巢樹，樹枝上掛著一顆剛吹出來的泡泡，泡泡裡有一隻小鳥 ｜ 出場角色：雲之島、巢樹、泡泡、小鳥 ｜ 亮橘重點：樹上那顆新長出來的泡泡
+IMG: 一座空盪盪的島上長出第一棵巢樹（Node），樹枝上掛著一顆剛吹出來的泡泡（Pod），泡泡（Pod）裡有一隻小鳥（Container） ｜ 出場角色：雲之島（Cluster）、巢樹（Node）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：樹上那顆新長出來的泡泡（Pod）
 
-Kind 的名稱來自 Kubernetes IN Docker。它把 Kubernetes 節點以容器方式在本機跑起來；本篇以 Docker 作為容器執行環境，所以你需要 Docker 和 Kind。Kind 也支援其他相容的容器執行環境，但那不是今天的重點。
+Kind 的名稱來自 Kubernetes IN Docker。
+它把 Kubernetes 節點以容器方式在本機跑起來；本篇以 Docker 作為容器執行環境，所以你需要 Docker 和 Kind。Kind 也支援其他相容的容器執行環境，但那不是今天的重點。
 
-這件事之所以重要，是因為它把「一座叢集」變成免洗的。蓋壞了砍掉重蓋，三十秒的事。學東西最怕的就是不敢亂動，Kind 讓你可以放心亂動。
+這件事之所以重要，是因為它把「一座叢集」變成免洗的。
+蓋壞了砍掉重蓋，三十秒的事。學東西最怕的就是不敢亂動，Kind 讓你可以放心亂動。
 
-對照圖上：整座島是叢集，島上那棵樹是節點，樹上掛的泡泡是 Pod，泡泡裡的小鳥是容器。今天我們要讓這座島從空無一物，變成有一棵樹、樹上有一顆泡泡。
+對照圖上：整座島是叢集，島上那棵樹是節點，樹上掛的泡泡（Pod）是 Pod，泡泡（Pod）裡的小鳥（Container）是容器。
 
-還有一個角色你今天就會用到：**哨子**。哨子就是 `kubectl`，你對島上下的每一個指令都從它發出去。島是 Kind 蓋的，但之後你跟島做日常操作，通常靠哨子。
+今天我們要讓這座島從空無一物，變成有一棵樹、樹上有一顆泡泡（Pod）。
+
+還有一個角色你今天就會用到：**哨子（kubectl）**。哨子（kubectl）就是 `kubectl`，你對島上下的每一個指令都從它發出去。島是 Kind 蓋的，但之後你跟島做日常操作，通常靠哨子（kubectl）。
 
 這裡有個新手常卡的點：Kind 和 kubectl 是兩個不同的東西，各裝各的。
 Kind 只負責蓋島跟拆島，蓋完就退到一邊；kubectl 負責之後所有的日常操作。
@@ -40,7 +45,7 @@ Kind 蓋完島會自動幫你把 kubectl 指到這座新島上，所以你不用
 
 ![day-02-02](illustrations/day-02-02.png)
 
-IMG: 一支哨子朝著島吹出聲波，島上的巢樹被聲波點亮 ｜ 出場角色：哨子、雲之島、巢樹 ｜ 亮橘重點：哨子吹出的聲波
+IMG: 一支哨子（kubectl）朝著島吹出聲波，島上的巢樹（Node）被聲波點亮 ｜ 出場角色：哨子（kubectl）、雲之島（Cluster）、巢樹（Node） ｜ 亮橘重點：哨子（kubectl）吹出的聲波
 
 ## 動手 5 分鐘
 
@@ -79,9 +84,9 @@ kind create cluster --name hello
 kubectl get nodes
 ```
 
-你會看到一列 `hello-control-plane`，STATUS 是 `Ready`。這就是圖上那棵巢樹。如果 STATUS 是 `NotReady`，等十秒再打一次，它還在開機。
+你會看到一列 `hello-control-plane`，STATUS 是 `Ready`。這就是圖上那棵巢樹（Node）。如果 STATUS 是 `NotReady`，等十秒再打一次，它還在開機。
 
-吹出第一顆泡泡，跑起這 30 天都會用的 Nginx hello 服務：
+吹出第一顆泡泡（Pod），跑起這 30 天都會用的 Nginx hello 服務：
 
 ```bash
 kubectl run hello --image=nginx:alpine
@@ -100,9 +105,9 @@ kubectl port-forward pod/hello 8080:80
 
 ![day-02-shot-01](screenshots/day-02-shot-01.png)
 
-這頁長得很陽春，但它是從你剛蓋好的叢集裡送出來的 ── 島上第一顆泡泡開始工作了。
+這頁長得很陽春，但它是從你剛蓋好的叢集裡送出來的 ── 島上第一顆泡泡（Pod）開始工作了。
 
-如果它說 `address already in use`，代表 8080 被別的程式佔了，把指令改成 `8081:80`，網址也跟著改成 8081。前面那個數字是你電腦上的埠、後面那個是泡泡裡的埠，改前面不會影響服務本身。
+如果它說 `address already in use`，代表 8080 被別的程式佔了，把指令改成 `8081:80`，網址也跟著改成 8081。前面那個數字是你電腦上的埠、後面那個是泡泡（Pod）裡的埠，改前面不會影響服務本身。
 
 另外兩個常見狀況先寫在這裡，省得你自己撞：Pod 一直停在 `ContainerCreating` 超過一分鐘，通常是網路太慢還在拉 image，先等；瀏覽器打不開但 port-forward 沒報錯，先確認網址打的是 `http` 不是 `https`，Nginx 這裡只開 80。
 
@@ -114,17 +119,17 @@ kubectl port-forward pod/hello 8080:80
 
 但這不影響你學：**你這 30 天打的每一個指令、寫的每一份 YAML，搬到正式環境時，核心資源寫法大致相同，但儲存、網路、權限與叢集設定通常要調整。** 差別主要在底下有幾棵樹、樹是什麼做的，以及環境相關設定。這也是 K8s 最值錢的地方 ── 你的操作方式跟底下跑在誰家的機房完全無關。
 
-還有一件事順手做掉。你電腦上可以同時有好幾座島，哨子靠 context 決定要對哪一座說話：
+還有一件事順手做掉。你電腦上可以同時有好幾座島，哨子（kubectl）靠 context 決定要對哪一座說話：
 
 ```bash
 kubectl config get-contexts
 ```
 
-前面有星號的那一行，就是哨子現在對著的島。之後你如果同時開了公司的叢集和自己的 Kind，記得先看這行再打指令。
+前面有星號的那一行，就是哨子（kubectl）現在對著的島。之後你如果同時開了公司的叢集和自己的 Kind，記得先看這行再打指令。
 
 ## 帶走一句話
 
-**島是 Kind 蓋的，之後都靠哨子說話。**
+**島是 Kind 蓋的，之後都靠哨子（kubectl）說話。**
 
 ## 參考資源
 

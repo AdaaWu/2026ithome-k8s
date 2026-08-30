@@ -1,4 +1,5 @@
-# Day 28：三個管理者一次認識 ── 守樹隊長、一次性任務委託單、定時任務鐘
+# Day 28：三個管理者一次認識 ── 守樹隊長（DaemonSet）、一次性任務委託單（Job）、定時任務鐘（CronJob）
+
 
 ## 痛點
 
@@ -21,13 +22,13 @@ flowchart TD
 ![day-28-mermaid](illustrations/day-28-mermaid.png)
 ![day-28-diagram](illustrations/day-28-diagram.png)
 
-IMG: 一張三格並排的圖，左格一位守樹隊長在每棵巢樹旁派駐工作，中格一張一次性任務委託單旁有一顆完成後停止的泡泡，右格定時任務鐘在時間到時送出委託單 ｜ 出場角色：守樹隊長、一次性任務委託單、定時任務鐘、巢樹、泡泡、小鳥 ｜ 亮橘重點：三格之間的分隔線
+IMG: 一張三格並排的圖，左格一位守樹隊長（DaemonSet）在每棵巢樹（Node）旁派駐工作，中格一張一次性任務委託單（Job）旁有一顆完成後停止的泡泡（Pod），右格定時任務鐘（CronJob）在時間到時送出委託單 ｜ 出場角色：守樹隊長（DaemonSet）、一次性任務委託單（Job）、定時任務鐘（CronJob）、巢樹（Node）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：三格之間的分隔線
 
-到目前為止你學的隊長、貓頭鷹、編號泡泡管理員，管的都是**長時間活著的服務**。今天這三位管理者管的是另外三種形狀的工作。
+到目前為止你學的部署管家（Deployment）、貓頭鷹、編號泡泡（StatefulSet Pod）管理員，管的都是**長時間活著的服務**。今天這三位管理者管的是另外三種形狀的工作。
 
 **守樹隊長（DaemonSet）── 每棵樹派駐一份，不多不少。**
 
-它不看你要幾顆，它看島上有幾棵樹。三棵樹就派駐三個 Pod，你加第四棵樹，它自動在新樹上補一個；樹拔掉了，那個 Pod 也跟著消失。管理者是 DaemonSet，Pod 裡的小鳥仍然只代表 Container。
+它不看你要幾顆，它看島上有幾棵樹。三棵樹就派駐三個 Pod，你加第四棵樹，它自動在新樹上補一個；樹拔掉了，那個 Pod 也跟著消失。管理者是 DaemonSet，Pod 裡的小鳥（Container）仍然只代表 Container。
 
 用在什麼地方？**凡是「跟機器綁定」而不是「跟服務綁定」的工作。** 最常見的三種：日誌收集（要讀那台機器上所有容器的日誌）、監控代理（要量那台機器的 CPU 和硬碟）、網路元件。
 
@@ -35,9 +36,9 @@ IMG: 一張三格並排的圖，左格一位守樹隊長在每棵巢樹旁派駐
 
 **一次性任務委託單（Job）── 跑完就結束，而且要確認成功。**
 
-Job 跟前面所有東西最大的差別：**它會結束，而且結束是正常的。** 泡泡跑完變成 `Completed`，沒有人會去重啟它。
+Job 跟前面所有東西最大的差別：**它會結束，而且結束是正常的。** 泡泡（Pod）跑完變成 `Completed`，沒有人會去重啟它。
 
-這件事看起來平凡，但很重要 ── 如果你用 Deployment 跑一個一分鐘就跑完的腳本，隊長會以為它一直死掉，然後無限重啟，你會得到一個 `CrashLoopBackOff`（Day 12 那個狀態）。**一次性、需要由 Kubernetes 追蹤完成狀態的工作，通常用 Job；定期工作則考慮 CronJob。**
+這件事看起來平凡，但很重要 ── 如果你用 Deployment 跑一個一分鐘就跑完的腳本，部署管家（Deployment）會以為它一直死掉，然後無限重啟，你會得到一個 `CrashLoopBackOff`（Day 12 那個狀態）。**一次性、需要由 Kubernetes 追蹤完成狀態的工作，通常用 Job；定期工作則考慮 CronJob。**
 
 Job 還幫你處理兩件事：失敗會重試（`backoffLimit` 決定幾次），以及可以要求「總共要成功幾次」、「可以同時跑幾個」。資料遷移、批次匯入、一次性的修補腳本，都是它的守備範圍。
 
@@ -47,9 +48,9 @@ CronJob 自己不做事，它只做一件事：**時間到了通常會建立一�
 
 ![day-28-02](illustrations/day-28-02.png)
 
-IMG: 定時任務鐘在時間到時送出一張一次性任務委託單，委託單再建立一顆裡面有小鳥的泡泡 ｜ 出場角色：定時任務鐘、一次性任務委託單、泡泡、小鳥 ｜ 亮橘重點：委託單由時鐘送出的那一刻
+IMG: 定時任務鐘（CronJob）在時間到時送出一張一次性任務委託單（Job），委託單再建立一顆裡面有小鳥（Container）的泡泡（Pod） ｜ 出場角色：定時任務鐘（CronJob）、一次性任務委託單（Job）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：委託單由時鐘送出的那一刻
 
-三者的關係很好記：**CronJob 建立 Job，Job 再建立 Pod。** 這裡的任務委託單是資源，不是小鳥；真正執行工作的 Container 仍然待在 Pod 裡。
+三者的關係很好記：**CronJob 建立 Job，Job 再建立 Pod。** 這裡的任務委託單（Job）是資源，不是小鳥（Container）；真正執行工作的 Container 仍然待在 Pod 裡。
 
 備份、報表、清理過期資料、對帳 ── 這些以前你寫在 crontab 裡的東西，全部搬到這裡。搬過來的好處是：它跑在叢集上，不綁死在某一台機器；那台機器掛了，工作照跑。
 
@@ -57,7 +58,7 @@ IMG: 定時任務鐘在時間到時送出一張一次性任務委託單，委託
 
 前二十七天我們的島上只有長時間活著的服務。今天讓三種新形狀的工作各跑一次。
 
-**守樹隊長。** 建立 `demo-daemonset.yaml`：
+**守樹隊長（DaemonSet）。** 建立 `demo-daemonset.yaml`：
 
 ```yaml
 apiVersion: apps/v1
@@ -84,7 +85,7 @@ spec:
                   fieldPath: spec.nodeName
 ```
 
-**沒有 `replicas` 這個欄位** ── 這是 DaemonSet 最好認的特徵，數量不是你決定的。（`fieldRef` 是個實用小技巧：讓泡泡知道自己站在哪棵樹上。）
+**沒有 `replicas` 這個欄位** ── 這是 DaemonSet 最好認的特徵，數量不是你決定的。（`fieldRef` 是個實用小技巧：讓泡泡（Pod）知道自己站在哪棵樹上。）
 
 ```bash
 kubectl apply -f demo-daemonset.yaml
@@ -100,7 +101,7 @@ kubectl logs -l app=demo-agent --tail=2
 
 印出 `agent alive on hello-control-plane`。
 
-順便看看島上原本就有的守樹隊長：
+順便看看島上原本就有的守樹隊長（DaemonSet）：
 
 ```bash
 kubectl get daemonset -n kube-system
@@ -108,7 +109,7 @@ kubectl get daemonset -n kube-system
 
 `kube-proxy` 在裡面 ── 你的老朋友道路管理員。
 
-**一次性任務委託單。** 建立 `demo-job.yaml`：
+**一次性任務委託單（Job）。** 建立 `demo-job.yaml`：
 
 ```yaml
 apiVersion: batch/v1
@@ -126,7 +127,7 @@ spec:
           command: ["sh", "-c", "echo 'migrating...'; sleep 5; echo 'done'; exit 0"]
 ```
 
-`apiVersion` 是 `batch/v1` ── 新的家族。`restartPolicy` **必填**，只能是 `OnFailure` 或 `Never`，不能是預設的 `Always`（那是「永遠活著」的意思，跟一次性任務委託單的本質衝突）。
+`apiVersion` 是 `batch/v1` ── 新的家族。`restartPolicy` **必填**，只能是 `OnFailure` 或 `Never`，不能是預設的 `Always`（那是「永遠活著」的意思，跟一次性任務委託單（Job）的本質衝突）。
 
 ```bash
 kubectl apply -f demo-job.yaml
@@ -140,9 +141,9 @@ kubectl get job demo-migrate
 kubectl logs job/demo-migrate
 ```
 
-COMPLETIONS 是 `1/1`。日誌留著，泡泡不會被自動清掉，你隨時可以回來看它做了什麼。
+COMPLETIONS 是 `1/1`。日誌留著，泡泡（Pod）不會被自動清掉，你隨時可以回來看它做了什麼。
 
-**定時任務鐘。** 建立 `demo-cronjob.yaml`：
+**定時任務鐘（CronJob）。** 建立 `demo-cronjob.yaml`：
 
 ```yaml
 apiVersion: batch/v1
@@ -177,7 +178,7 @@ kubectl get jobs
 kubectl get pods
 ```
 
-**憑空多出一個 Job 和一個 `Completed` 的泡泡。** 再等一分鐘，又多一組。`successfulJobsHistoryLimit: 3` 是說只留最近三次的紀錄，不然跑一個月你會有四萬個泡泡。
+**憑空多出一個 Job 和一個 `Completed` 的泡泡（Pod）。** 再等一分鐘，又多一組。`successfulJobsHistoryLimit: 3` 是說只留最近三次的紀錄，不然跑一個月你會有四萬個泡泡（Pod）。
 
 ![day-28-shot-01](screenshots/day-28-shot-01.png)
 
@@ -195,7 +196,7 @@ kubectl delete -f demo-daemonset.yaml -f demo-job.yaml -f demo-cronjob.yaml
 
 ## 帶走一句話
 
-**CronJob 建立 Job，Job 再建立 Pod；小鳥仍然待在泡泡裡。**
+**CronJob 建立 Job，Job 再建立 Pod；小鳥（Container）仍然待在泡泡（Pod）裡。**
 
 ## 參考資源
 

@@ -1,4 +1,5 @@
-# Day 5：你手上的哨子 ，kubectl 最常用的 8 個指令
+# Day 5：你手上的哨子（kubectl） ，kubectl 最常用的 8 個指令
+
 
 ## 痛點
 
@@ -21,9 +22,9 @@ flowchart LR
 ![day-05-mermaid](illustrations/day-05-mermaid.png)
 ![day-05-diagram](illustrations/day-05-diagram.png)
 
-IMG: 一隻人類的手拿著哨子吹出聲波，聲波傳到遠處的燈塔櫃台 ｜ 出場角色：哨子、燈塔櫃台 ｜ 亮橘重點：從哨子傳到櫃台的聲波
+IMG: 一隻人類的手拿著哨子（kubectl）吹出聲波，聲波傳到遠處的燈塔櫃台（API Server） ｜ 出場角色：哨子（kubectl）、燈塔櫃台（API Server） ｜ 亮橘重點：從哨子（kubectl）傳到櫃台的聲波
 
-哨子是你唯一的溝通工具。昨天我們看過，它做的事情就是把你打的字翻成 HTTP 請求送到燈塔櫃台。
+哨子（kubectl）是你唯一的溝通工具。昨天我們看過，它做的事情就是把你打的字翻成 HTTP 請求送到燈塔櫃台（API Server）。
 
 今天這篇是給你收藏當小抄的。八個指令，記住的順序不是字母，是你實際工作的順序：**先看、再查、再讀、再改、再刪**。
 
@@ -35,11 +36,11 @@ IMG: 一隻人類的手拿著哨子吹出聲波，聲波傳到遠處的燈塔櫃
 
 ![day-05-02](illustrations/day-05-02.png)
 
-IMG: 哨子吹出的聲波先抵達燈塔櫃台，櫃台再把訊息轉往島上的巢樹 ｜ 出場角色：哨子、燈塔櫃台、巢樹 ｜ 亮橘重點：櫃台這一站的轉手動作
+IMG: 哨子（kubectl）吹出的聲波先抵達燈塔櫃台（API Server），櫃台再把訊息轉往島上的巢樹（Node） ｜ 出場角色：哨子（kubectl）、燈塔櫃台（API Server）、巢樹（Node） ｜ 亮橘重點：櫃台這一站的轉手動作
 
 ## 動手 5 分鐘
 
-前四天我們有一座島、一顆叫 hello 的泡泡。今天不加東西，把八個指令在它身上各打一次。
+前四天我們有一座島、一顆叫 hello 的泡泡（Pod）。今天不加東西，把八個指令在它身上各打一次。
 
 **1. get ── 看有什麼、狀態如何。** 最常打的指令，沒有之一。
 
@@ -49,7 +50,7 @@ kubectl get pods -o wide
 kubectl get all
 ```
 
-`get all` 會把這個 Namespace 裡的主要資源一次列出來。現在只有一顆泡泡，之後會越來越熱鬧。
+`get all` 會把這個 Namespace 裡的主要資源一次列出來。現在只有一顆泡泡（Pod），之後會越來越熱鬧。
 
 **2. describe ── 查一個資源的完整狀況，重點是最下面的 Events。**
 
@@ -57,7 +58,7 @@ kubectl get all
 kubectl describe pod hello
 ```
 
-輸出很長，先看最後面的 Events 區塊。它按時間記錄了這顆泡泡發生過什麼事：被派到哪棵樹、image 拉了沒、容器起來了沒。
+輸出很長，先看最後面的 Events 區塊。它按時間記錄了這顆泡泡（Pod）發生過什麼事：被派到哪棵樹、image 拉了沒、容器起來了沒。
 
 **3. logs ── 讀容器裡面印出來的東西。**
 
@@ -91,7 +92,7 @@ kubectl get pods
 kubectl run hello --image=nginx:alpine
 ```
 
-**6. exec ── 鑽進小鳥肚子裡。**
+**6. exec ── 鑽進小鳥（Container）肚子裡。**
 
 ```bash
 kubectl exec -it hello -- sh
@@ -99,7 +100,7 @@ kubectl exec -it hello -- sh
 
 提示字元變成 `/ #`，你人就在容器裡了。打 `ls /usr/share/nginx/html` 看得到 `index.html`。`exit` 出來。
 
-**7. port-forward ── 把泡泡的埠接到你的電腦上。**
+**7. port-forward ── 把泡泡（Pod）的埠接到你的電腦上。**
 
 ```bash
 kubectl port-forward pod/hello 8080:80
@@ -143,7 +144,7 @@ alias k=kubectl
 echo 'source <(kubectl completion zsh)' >> ~/.zshrc
 ```
 
-（bash 使用者把 `zsh` 換成 `bash`。）重開終端機之後，打 `kubectl get pod hel` 按 Tab，它會自動補完整個泡泡名字。
+（bash 使用者把 `zsh` 換成 `bash`。）重開終端機之後，打 `kubectl get pod hel` 按 Tab，它會自動補完整個泡泡（Pod）名字。
 
 最後提醒一件小事但很重要：**幾乎每個指令後面都可以加 `--help`**，而且 K8s 的 help 寫得非常好，範例都能直接複製貼上。
 

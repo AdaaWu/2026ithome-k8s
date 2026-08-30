@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "day-13.md",
+                "file": "day-10.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "day-13"
+              "title": "day-10"
             }
           }
         ],
@@ -93,7 +93,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200
   },
   "right": {
     "id": "9b179e95006d630c",
@@ -186,6 +186,19 @@
   },
   "active": "8b366afc11fb6ff3",
   "lastOpenFiles": [
+    "day-09.md",
+    "day-08.md",
+    "day-07.md",
+    "day-06.md",
+    "day-05.md",
+    "day-04.md",
+    "day-03.md",
+    "day-02.md",
+    "day-01.md",
+    "day-13.md",
+    "day-14.md",
+    "k8s-series-spec.md",
+    "k8s-series-tasks.md",
     "illustrations/day-30-diagram.png",
     "illustrations/day-29-diagram.png",
     "illustrations/day-28-diagram.png",
@@ -199,29 +212,16 @@
     "day-20.md",
     "day-24.md",
     "day-30.md",
-    "day-09.md",
-    "day-08.md",
-    "day-07.md",
-    "day-03.md",
-    "day-02.md",
-    "day-01.md",
-    "day-05.md",
-    "day-04.md",
     "illustrations/day-23-diagram.png",
     "illustrations/day-22-diagram.png",
     "illustrations/day-21-diagram.png",
-    "illustrations/day-20-diagram.png",
     "day-23.md",
     "day-22.md",
     "day-18.md",
     "day-17.md",
     "day-21.md",
     "day-16.md",
-    "day-06.md",
-    "k8s-series-spec.md",
-    "k8s-series-tasks.md",
     "day-15.md",
-    "day-13.md",
     "nvim.log",
     "screenshots",
     "illustrations"

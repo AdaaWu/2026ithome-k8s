@@ -1,4 +1,4 @@
-# Day 3：雲之島全景圖 ── Cluster、Node、Pod 一張圖說完
+# Day 3：雲之島全景圖， Cluster、Node、Pod 一張圖說完
 
 ## 痛點
 

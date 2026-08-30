@@ -1,4 +1,4 @@
-# Day 10：隊長的版本卷軸 ── Deployment 怎麼滾動更新
+# Day 10：隊長的版本卷軸，Deployment 怎麼滾動更新
 
 ## 痛點
 

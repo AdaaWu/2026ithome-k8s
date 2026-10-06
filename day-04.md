@@ -1,65 +1,74 @@
-# Day 4：燈塔村在忙什麼 ？櫃台、記憶樹（etcd）、選樹官（Scheduler）、巡邏隊長（Controller Manager）
+# Day 4：燈塔村在忙什麼？Control Plane 中的核心角色 - API Server、etcd、Scheduler、Controller Manager
 
 
 ## 痛點
 
-昨天你打了 `kubectl get pods -A`，看到一堆自己沒建過的泡泡（Pod）。那些是誰？誰在管這座島？
+昨天打了 `kubectl get pods -A`，看到一堆自己沒建過的泡泡（Pod）。
+那些是誰？誰在管這座島？
+
+## 燈塔村 Control Plane 
+
+島上有一區叫燈塔村 (Control Plane)，住著四個核心管理角色。
 
 ![day-04-01](illustrations/day-04-01.png)
+這是燈塔村的平面圖：全部先指向中央的燈塔櫃台（API Server）。
 
-```mermaid
-%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
-flowchart TD
-    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
-    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
-    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
-    K["kubectl"] --> A["API Server"]
-    A <--> E["etcd"]
-    A --> S["Scheduler"]
-    A --> CM["Controller Manager"]
-    A --> L["kubelet"]
-```
+**燈塔櫃台（API Server）**
+島上唯一的窗口。吹哨子（kubectl）下的控制面指令，先到 API Server；其他控制面角色通常也透過櫃台讀寫叢集狀態。
 
-![day-04-mermaid](illustrations/day-04-mermaid.png)
+看圖上的箭頭：沒有任何一條線繞過櫃台。
+實際意義是，只要能跟櫃台說話，就能操作整座島。
+
+**記憶樹（etcd）**
+Kubernetes API 物件主要持久化在這裡。要什麼、現在有什麼，核心狀態都記在這棵樹上。
+
+燈塔櫃台（API Server），每次都去問記憶樹（etcd）。
+記憶樹（etcd）倒了，島就失憶了，正式環境備份 etcd 就是在備份這個。
+
+**選樹官（Scheduler）**
+專門處理一件事：有新泡泡（Pod）要掛，但還沒決定掛哪棵樹，並且看每棵樹可配置的資源與其他條件，挑一棵，把答案寫回櫃台。
+就這樣，它不負責真的把泡泡（Pod）掛上去。
+
+**巡邏隊長（Controller Manager）**
+拿著清單一直繞島巡邏，持續比對「你想要的結果」與「實際島上現況有的」。
+
+ **Controller Manager** 裡面包含多種控制器，其中的 Deployment controller 會負責讓 Deployment 這類資源的期望狀態逐步實現。
+
 ![day-04-diagram](illustrations/day-04-diagram.png)
 
-IMG: 燈塔村的平面圖，哨子（kubectl）、記憶樹（etcd）、選樹官（Scheduler）、巡邏隊長（Controller Manager）的箭頭全部先指向中央的燈塔櫃台（API Server） ｜ 出場角色：燈塔櫃台（API Server）、記憶樹（etcd）、選樹官（Scheduler）、巡邏隊長（Controller Manager）、哨子（kubectl） ｜ 亮橘重點：中央的燈塔櫃台（API Server）
 
-島上有一區叫燈塔村，住著四個角色。它們主要負責協調與決策；真正執行容器、掛載儲存和處理網路，還需要巢樹（Node）上的元件配合。
 
-**燈塔櫃台（API Server）。** 島上唯一的窗口。你吹哨子（kubectl）下的控制面指令，先到櫃台；其他控制面角色通常也透過櫃台讀寫叢集狀態。看圖上的箭頭：沒有任何一條線是繞過櫃台的。這件事的實際意義是，你只要能跟櫃台說話，就能操作整座島。
-
-**記憶樹（etcd）。** Kubernetes API 物件主要持久化在這裡。你要什麼、現在有什麼，核心狀態都記在這棵樹上。櫃台自己不記，它每次都去問記憶樹（etcd）。記憶樹（etcd）倒了，島就失憶了 ── 正式環境備份 etcd 就是在備份這個。
-
-**選樹官（Scheduler）。** 專門處理一件事：有新泡泡（Pod）要掛，但還沒決定掛哪棵樹。選樹官（Scheduler）看每棵樹可配置的資源與其他條件，挑一棵，把答案寫回櫃台。就這樣，它不負責真的把泡泡（Pod）掛上去。
-
-**巡邏隊長（Controller Manager）。** 拿著清單一直繞島巡邏，比對「你說要的」跟「島上實際有的」。你說要三顆泡泡（Pod），現在只有兩顆，它就補一顆。這個比對動作永不停止。
-
-這裡的「巡邏隊長」是控制平面元件 **Controller Manager** 的總稱，不是某一種工作負載。它裡面包含多種控制器；其中的 Deployment controller，會負責讓 Deployment 這類資源的期望狀態逐步實現。Day 10 會登場、手持版本捲軸的「部署管家（Deployment）」，指的是 **Deployment 資源本身**，兩者不要混在一起。
-
-這帶出今天真正要記住的觀念：**宣告式**。
-
-你說的是「我要三顆泡泡（Pod）」，不是「去吹一顆泡泡（Pod）」。前者是描述結果，後者是描述動作。差別在哪？描述動作的話，泡泡（Pod）破了就沒了，因為你的指令早就執行完了。描述結果的話，泡泡（Pod）破了巡邏隊長（Controller Manager）會發現數字不對，自己補回來。
-
-你之後寫的每一份 YAML，都是在跟櫃台描述結果。Day 9 你會親眼看到，手動刪掉一顆泡泡（Pod），它自己長回來。
+## 宣告式
 
 ![day-04-02](illustrations/day-04-02.png)
+巡邏隊長（Controller Manager）舉著寫有「要 3 顆」的清單，對照樹上只有 2 顆泡泡（Pod），中間這個落差就是它要補上的工作。
 
-IMG: 巡邏隊長（Controller Manager）舉著寫有「要 3 顆」的清單，對照樹上只有 2 顆泡泡（Pod） ｜ 出場角色：巡邏隊長（Controller Manager）、巢樹（Node）、泡泡（Pod） ｜ 亮橘重點：清單上的數字和樹上泡泡（Pod）數量的落差
+我們描述「我要三顆泡泡（Pod）」這個目標，系統再持續把現況對齊到這個目標。
 
-最後補一句分工：燈塔村只出一張嘴。選樹官（Scheduler）決定泡泡（Pod）掛哪棵樹，但它不會親手去掛；巡邏隊長（Controller Manager）發現少一顆，也只是去櫃台登記「要補一顆」。真正把泡泡（Pod）吹出來的是樹上的**管家松鼠（kubelet）**（kubelet），每棵樹上都住著一隻，盯著櫃台看有沒有自己這棵樹的活。決定跟執行是分開的，這也是為什麼燈塔村掛掉的時候，已經在跑的服務不會馬上跟著死。
+差別在哪？
+描述動作的話，泡泡（Pod）破了就沒了，因為指令早就執行完了。
+描述結果的話，泡泡（Pod）破了，巡邏隊長（Controller Manager）會發現數字不對，自己補回來。
+
+之後寫的每一份 YAML，都是在跟櫃台（API Server）描述結果，分工上：燈塔村 (Control Plane) 只出一張嘴。
+
+選樹官（Scheduler）決定泡泡（Pod）掛哪棵樹，巡邏隊長（Controller Manager）發現數量不足後，會向櫃台（API Server) 登記補充需求。
+
+真正把泡泡（Pod）吹出來的是樹上的**管家松鼠（kubelet）**，每棵樹上都住著一隻，盯著櫃台看有沒有自己這棵樹的活。
+
+決定跟執行是分開的，這也是為什麼燈塔村  (Control Plane) 掛掉的時候，已經在跑的服務不會馬上跟著死。
+
 
 ## 動手 5 分鐘
 
-昨天我們看完了島、樹、泡泡（Pod）三層。今天不加資源，只去燈塔村點名。
+昨天我們看完了島、樹 (Node)、泡泡（Pod）三層。今天不加資源，只去燈塔村 (Control Plane) 點名。
 
-燈塔村的成員全住在 `kube-system` 這個區域：
+燈塔村 (Control Plane) 的成員全住在 `kube-system` 這個區域：
 
 ```bash
 kubectl get pods -n kube-system
 ```
 
-你會在清單裡看到 `kube-apiserver-hello-control-plane`（櫃台）、`etcd-hello-control-plane`（記憶樹（etcd））、`kube-scheduler-hello-control-plane`（選樹官（Scheduler））、`kube-controller-manager-hello-control-plane`（巡邏隊長（Controller Manager））。四個角色，四顆泡泡（Pod），都是 `Running`。
+你會在清單裡看到 `kube-apiserver-hello-control-plane` 櫃台（API Server）、`etcd-hello-control-plane` 記憶樹（etcd）、`kube-scheduler-hello-control-plane` 選樹官（Scheduler）、`kube-controller-manager-hello-control-plane` 巡邏隊長（Controller Manager）。四個角色，四顆泡泡（Pod），都是 `Running`。
 
 原來燈塔村自己也是用泡泡（Pod）跑的。
 
@@ -93,7 +102,7 @@ kubectl get --raw='/readyz?verbose' | head -20
 
 最後回答一個你現在一定會想到的問題：**燈塔村掛掉會怎樣？**
 
-分兩種情況。已經在跑的服務**通常還能繼續** ── 樹上的管家松鼠（kubelet）不需要櫃台就能繼續照顧現有的泡泡（Pod），道路管理員整理好的地道規則也還在，是否無感要看 kubelet、Runtime、網路與應用程式狀態。
+分兩種情況。已經在跑的服務**通常還能繼續** ── 樹上的管家松鼠（kubelet）不需要櫃台就能繼續照顧現有的泡泡（Pod），道路管理員（kube-proxy）整理好的地道規則也還在，是否無感要看 kubelet、Runtime、網路與應用程式狀態。
 
 但你會失去「改變」的能力：不能部署、不能擴容，泡泡（Pod）破了也**沒有人會補**，因為負責發現這件事的巡邏隊長（Controller Manager）不在了。所以正式環境通常會替燈塔村與記憶樹（etcd）做高可用與備份，而記憶樹（etcd）是所有東西裡最需要定期備份的 ── 它一失憶，整座島就不知道自己該長什麼樣子。
 
@@ -107,9 +116,9 @@ kubectl get pod hello -o yaml | head -20
 
 ## 帶走一句話
 
-**你只描述結果，巡邏隊長（Controller Manager）負責追平。**
+**你只描述結果，巡邏隊長（Controller Manager）負責把現實調整成你的期望。**
 
 ## 參考資源
 
-- [Kubernetes Components](https://kubernetes.io/docs/concepts/architecture/components/)
+- [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components)
 - [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)

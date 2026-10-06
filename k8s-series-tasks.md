@@ -46,13 +46,13 @@
 - **必講**：YAML 四大欄位（apiVersion / kind / metadata / spec）逐行拆解；`kubectl apply -f hello-pod.yaml`；`kubectl delete pod` 之後它不會自己回來（伏筆給 Day 9）。
 - **圖**：YAML 文字與泡泡圖對照，哪一行對應圖上哪個部位。
 
-### Day 8：彩色圍巾 Label ── K8s 到底怎麼認出誰是誰？
+### Day 8：彩色貼紙 Label ── K8s 到底怎麼認出誰是誰？
 - **必講**：Label 是 key=value；Selector 靠 Label 找目標；這是後面 Service、Deployment 全部的運作基礎。
 - **動手**：加上 `app: hello`；`kubectl get pods -l app=hello`；示範標錯就找不到人。
-- **圖**：一群泡泡繫著不同顏色圍巾，放大鏡只照出紅圍巾那幾顆；亮橘重點放放大鏡光圈。
+- **圖**：一群泡泡貼著不同顏色貼紙，放大鏡只照出貼紅色貼紙的那幾顆；亮橘重點放放大鏡光圈。
 
 ### Day 9：泡泡破了誰來補？ ── 數泡泡的貓頭鷹 ReplicaSet
-- **必講**：期望數量 vs 實際數量；貓頭鷹靠圍巾（Label）數泡泡；手動刪掉一顆會自動補回來。
+- **必講**：期望數量 vs 實際數量；貓頭鷹靠貼紙（Label）數泡泡；手動刪掉一顆會自動補回來。
 - **動手**：建 ReplicaSet、刪一顆 Pod、看它自己長回來。
 - **圖**：貓頭鷹拿計數器，一顆泡泡破掉、旁邊立刻補吹一顆；亮橘重點放新吹出來的泡泡。
 

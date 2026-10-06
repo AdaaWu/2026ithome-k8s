@@ -1,58 +1,61 @@
-# Day 28：三個管理者一次認識 ── 守樹隊長（DaemonSet）、一次性任務委託單（Job）、定時任務鐘（CronJob）
+# Day 28：一次認識三個管理者，守樹隊長（DaemonSet）、一次性任務委託單（Job）、定時任務鐘（CronJob）
 
 
 ## 痛點
 
-不是所有工作都長得像網站。有些要每台機器跑一份，有些跑完就該結束，有些要每天半夜自己醒來。
+叢集裡的工作也包含常駐代理、一次性任務與定時任務。
+有些要每台機器跑一份，有些跑完就該結束，有些要每天半夜自己醒來。
 
 ![day-28-01](illustrations/day-28-01.png)
+三格並排：左格守樹隊長（DaemonSet）在每棵巢樹（Node）旁派駐工作，中格一張一次性任務委託單（Job）旁有一顆完成後停止的泡泡（Pod），右格定時任務鐘（CronJob）在時間到時送出委託單。
 
-```mermaid
-%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
-flowchart TD
-    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
-    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
-    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
-    DS["DaemonSet"] --> N["one Pod per eligible Node"]
-    J["Job"] --> JP["Pod(s) until completion"]
-    CJ["CronJob schedule"] --> J2["Job"]
-    J2 --> JP2["Pod(s)"]
-```
 
-![day-28-mermaid](illustrations/day-28-mermaid.png)
+## 三種形狀的工作
+
 ![day-28-diagram](illustrations/day-28-diagram.png)
 
-IMG: 一張三格並排的圖，左格一位守樹隊長（DaemonSet）在每棵巢樹（Node）旁派駐工作，中格一張一次性任務委託單（Job）旁有一顆完成後停止的泡泡（Pod），右格定時任務鐘（CronJob）在時間到時送出委託單 ｜ 出場角色：守樹隊長（DaemonSet）、一次性任務委託單（Job）、定時任務鐘（CronJob）、巢樹（Node）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：三格之間的分隔線
+到目前為止學的部署管家（Deployment）、貓頭鷹（ReplicaSet）、編號泡泡（StatefulSet Pod）管理員，管的都是**長時間活著的服務**。
+今天這三位管理者管的是另外三種形狀的工作。
 
-到目前為止你學的部署管家（Deployment）、貓頭鷹、編號泡泡（StatefulSet Pod）管理員，管的都是**長時間活著的服務**。今天這三位管理者管的是另外三種形狀的工作。
+**守樹隊長（DaemonSet）：每棵樹派駐一份，不多不少**
 
-**守樹隊長（DaemonSet）── 每棵樹派駐一份，不多不少。**
+它不看你要幾顆，它看島上有幾棵樹。
+三棵樹就派駐三個 Pod，加第四棵樹，它自動在新樹上補一個；樹拔掉了，那個 Pod 也跟著消失。
+管理者是 DaemonSet，Pod 裡的小鳥（Container）仍然只代表 Container。
 
-它不看你要幾顆，它看島上有幾棵樹。三棵樹就派駐三個 Pod，你加第四棵樹，它自動在新樹上補一個；樹拔掉了，那個 Pod 也跟著消失。管理者是 DaemonSet，Pod 裡的小鳥（Container）仍然只代表 Container。
+用在**跟機器綁定、需要每台巢樹（Node）各跑一份**的工作。
+最常見的三種：日誌收集（要讀那台機器上所有容器的日誌）、監控代理（要量那台機器的 CPU 和硬碟）、網路元件。
 
-用在什麼地方？**凡是「跟機器綁定」而不是「跟服務綁定」的工作。** 最常見的三種：日誌收集（要讀那台機器上所有容器的日誌）、監控代理（要量那台機器的 CPU 和硬碟）、網路元件。
+其實早就見過它了，Day 18 每棵樹底下都有的道路管理員（kube-proxy），就是由 DaemonSet 管理的 Pod。
 
-其實你早就見過它了 ── Day 18 每棵樹底下都有的道路管理員，就是由 DaemonSet 管理的 Pod。
+**一次性任務委託單（Job）：跑完就結束，而且要確認成功**
 
-**一次性任務委託單（Job）── 跑完就結束，而且要確認成功。**
+Job 跟前面所有東西最大的差別：**它會結束，而且結束是正常的。**
+泡泡（Pod）跑完變成 `Completed`，沒有人會去重啟它。
 
-Job 跟前面所有東西最大的差別：**它會結束，而且結束是正常的。** 泡泡（Pod）跑完變成 `Completed`，沒有人會去重啟它。
+這件事看起來平凡，但很重要。
+用 Deployment 跑一個一分鐘就跑完的腳本，部署管家（Deployment）會以為它一直死掉，然後無限重啟，最後得到一個 `CrashLoopBackOff`（Day 12 那個狀態）。
+**一次性、需要由 Kubernetes 追蹤完成狀態的工作，通常用 Job；定期工作則考慮 CronJob。**
 
-這件事看起來平凡，但很重要 ── 如果你用 Deployment 跑一個一分鐘就跑完的腳本，部署管家（Deployment）會以為它一直死掉，然後無限重啟，你會得到一個 `CrashLoopBackOff`（Day 12 那個狀態）。**一次性、需要由 Kubernetes 追蹤完成狀態的工作，通常用 Job；定期工作則考慮 CronJob。**
+Job 還處理兩件事：失敗會重試（`backoffLimit` 決定幾次），以及可以要求「總共要成功幾次」、「可以同時跑幾個」。
+資料遷移、批次匯入、一次性的修補腳本，都是它的守備範圍。
 
-Job 還幫你處理兩件事：失敗會重試（`backoffLimit` 決定幾次），以及可以要求「總共要成功幾次」、「可以同時跑幾個」。資料遷移、批次匯入、一次性的修補腳本，都是它的守備範圍。
+**定時任務鐘（CronJob）：到時間建立一份 Job**
 
-**定時任務鐘（CronJob）── 到時間建立一份 Job。**
+CronJob 自己不做事，它只做一件事：**時間到了通常會建立一個 Job，但 `concurrencyPolicy`、suspend、錯過排程與 deadline 設定都可能改變行為。**
+語法就是熟悉的那五個欄位 `分 時 日 月 週`。
 
-CronJob 自己不做事，它只做一件事：**時間到了通常會建立一個 Job，但 `concurrencyPolicy`、suspend、錯過排程與 deadline 設定都可能改變行為。** 語法就是你熟悉的那五個欄位 `分 時 日 月 週`。
+
+## 三者的關係
 
 ![day-28-02](illustrations/day-28-02.png)
+定時任務鐘（CronJob）在時間到時送出一張一次性任務委託單（Job），委託單再建立一顆裡面有小鳥（Container）的泡泡（Pod）。
 
-IMG: 定時任務鐘（CronJob）在時間到時送出一張一次性任務委託單（Job），委託單再建立一顆裡面有小鳥（Container）的泡泡（Pod） ｜ 出場角色：定時任務鐘（CronJob）、一次性任務委託單（Job）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：委託單由時鐘送出的那一刻
+三者的關係很好記：**CronJob 建立 Job，Job 再建立 Pod。**
+這裡的任務委託單（Job）是資源，真正執行工作的 Container 仍然待在 Pod 裡。
 
-三者的關係很好記：**CronJob 建立 Job，Job 再建立 Pod。** 這裡的任務委託單（Job）是資源，不是小鳥（Container）；真正執行工作的 Container 仍然待在 Pod 裡。
-
-備份、報表、清理過期資料、對帳 ── 這些以前你寫在 crontab 裡的東西，全部搬到這裡。搬過來的好處是：它跑在叢集上，不綁死在某一台機器；那台機器掛了，工作照跑。
+備份、報表、清理過期資料、對帳，這些以前寫在 crontab 裡的東西，全部搬到這裡。
+搬過來的好處是：它跑在叢集上，不綁死在某一台機器；那台機器掛了，工作照跑。
 
 ## 動手 5 分鐘
 
@@ -107,7 +110,7 @@ kubectl logs -l app=demo-agent --tail=2
 kubectl get daemonset -n kube-system
 ```
 
-`kube-proxy` 在裡面 ── 你的老朋友道路管理員。
+`kube-proxy` 在裡面 ── 你的老朋友道路管理員（kube-proxy）。
 
 **一次性任務委託單（Job）。** 建立 `demo-job.yaml`：
 
@@ -134,7 +137,7 @@ kubectl apply -f demo-job.yaml
 kubectl get pods -w
 ```
 
-看著它 `Running` 五秒，然後變成 **`Completed`** ── 不是 `Error`，不是 `CrashLoopBackOff`，是**正常結束**。`Ctrl+C` 離開。
+看著它 `Running` 五秒，然後變成 **`Completed`**，代表任務正常結束。`Ctrl+C` 離開。
 
 ```bash
 kubectl get job demo-migrate

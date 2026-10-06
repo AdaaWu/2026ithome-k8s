@@ -1,60 +1,60 @@
-# Day 25：資源需求牌與資源上限線 ── Request 與 Limit
+# Day 25：Request 與 Limit，資源需求牌與資源上限線
 
 
 ## 痛點
 
-某天有個服務吃光了整台機器的記憶體，旁邊三個不相干的服務跟著陪葬。你想問：K8s 怎麼會讓這種事發生？
+某天有個服務吃光了整台機器的記憶體，旁邊三個不相干的服務跟著陪葬。
+問題是：K8s 怎麼會讓這種事發生？
 
 ![day-25-01](illustrations/day-25-01.png)
+泡泡（Pod）一側掛著資源需求牌（Resource Request），另一側有一條資源上限線（Resource Limit），小鳥（Container）吃到超過上限的那一刻就被拉走。
 
-```mermaid
-%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
-flowchart TD
-    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
-    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
-    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
-    R["resources.requests"] --> Sch["Scheduler: placement"]
-    L["resources.limits"] --> K["kubelet / cgroups"]
-    K --> CPU["CPU: throttle"]
-    K --> Mem["Memory: OOM kill"]
-```
 
-![day-25-mermaid](illustrations/day-25-mermaid.png)
+## 飯碗上的兩條線
+
 ![day-25-diagram](illustrations/day-25-diagram.png)
 
-IMG: 一顆泡泡（Pod）旁掛著資源需求牌，另一側有一條資源上限線；小鳥（Container）吃到超過上限的飯正被拉走 ｜ 出場角色：資源需求牌、資源上限線、小鳥（Container）、泡泡（Pod） ｜ 亮橘重點：小鳥（Container）超過資源上限的那一刻
+會發生慘案，是因為沒有畫線。**不設限制的泡泡（Pod），預設可以吃光整棵樹。**
 
-因為你沒有畫線。**不設限制的泡泡（Pod），預設可以吃光整棵樹。**
+看圖上那個飯碗，兩條線各有名字。
 
-看圖上那個飯碗，兩條線各有名字：
+**Request（下面那條線）：我保證要吃到這麼多**
 
-**Request（下面那條線）── 我保證要吃到這麼多。**
+這條線是給**選樹官（Scheduler）**看的。
+Day 4 講過選樹官（Scheduler）決定新泡泡（Pod）掛哪棵樹，它憑什麼決定？就憑這條線。
+它把每棵樹上所有泡泡（Pod）的 Request 加起來，跟樹的總容量比一比，還放得下才把新泡泡（Pod）掛上去。
 
-這條線是給**選樹官（Scheduler）**看的。Day 4 講過選樹官（Scheduler）決定新泡泡（Pod）掛哪棵樹，它憑什麼決定？就憑這條線。它把每棵樹上所有泡泡（Pod）的 Request 加起來，跟樹的總容量比一比，還放得下才把新泡泡（Pod）掛上去。
+這裡最容易被誤解：**一般資源 fit 判斷主要看 Request；即時實際用量屬於執行期間的觀測值，排程還會考慮 affinity、taint、topology 等條件。**
+一棵樹上的泡泡（Pod）實際只用了 10% 的 CPU，但 Request 加起來已經滿了，選樹官（Scheduler）就是不會再放新泡泡（Pod）進去，結果是一顆 `Pending` 的泡泡（Day 12 那三種狀態之一）。
 
-**這是今天最容易被誤解的地方：一般資源 fit 判斷主要看 Request，而不是即時實際用量；但排程還會考慮 affinity、taint、topology 等條件。** 一棵樹上的泡泡（Pod）實際只用了 10% 的 CPU，但 Request 加起來已經滿了，選樹官（Scheduler）就是不會再放新泡泡（Pod）進去 ── 你會得到一顆 `Pending` 的泡泡（Day 12 那三種狀態之一）。
+**Limit（上面那條線）：最多只准吃到這麼多**
 
-**Limit（上面那條線）── 最多只准吃到這麼多。**
+這條線是給**管家松鼠（kubelet）**看的，它負責在樹上執行。
+超過會怎樣？**CPU 和記憶體的下場完全不同，這個差別非常重要。**
 
-這條線是給**管家松鼠（kubelet）**看的，它負責在樹上執行。超過會怎樣？**CPU 和記憶體的下場完全不同，這個差別非常重要：**
+**CPU 超過 → 被限速（throttle）。**
+CPU 是可壓縮資源，通常會被限速；但程式仍可能因 timeout、probe failure 或其他錯誤退出。
 
-**CPU 超過 → 被限速（throttle）。** CPU 是可壓縮資源，通常會被限速；但程式仍可能因 timeout、probe failure 或其他錯誤退出。
+**記憶體超過 → 直接被砍（OOMKilled）。**
+記憶體是不可壓縮的，沒辦法「少給一點」。超過 Limit 那一刻，容器直接被殺，然後重啟。
 
-**記憶體超過 → 直接被砍（OOMKilled）。** 記憶體是不可壓縮的，沒辦法「少給一點」。超過 Limit 那一刻，容器直接被殺，然後重啟。
+因此記憶體超限常見 `OOMKilled`；CPU 壓力則通常表現為限速，也可能間接造成服務失敗。
 
-所以你會在 `kubectl get pods` 看到 `OOMKilled`，而不是一個對稱的 `CPUKilled`；CPU 壓力仍可能間接造成服務失敗。
+
+## 不設會怎樣
 
 ![day-25-02](illustrations/day-25-02.png)
+兩顆泡泡（Pod）並排：左邊的資源上限線（Resource Limit）讓小鳥（Container）吃飯速度變慢但還在吃，右邊的小鳥（Container）超過記憶體上限後直接被抓走。
 
-IMG: 兩顆泡泡（Pod）並排，左邊的資源上限線讓小鳥（Container）吃飯速度變慢但還在吃，右邊的小鳥（Container）超過記憶體上限後被抓走 ｜ 出場角色：資源上限線、小鳥（Container）、泡泡（Pod） ｜ 亮橘重點：右邊那隻被抓走的小鳥（Container）
+不設兩條線，有兩件事都很糟。
 
-那不設會怎樣？兩件事都很糟：
+**第一，選樹官（Scheduler）完全不知道你要多少**，只好當它不佔空間，於是把一堆泡泡（Pod）塞到同一棵樹上，最後大家一起餓死。
 
-**第一，選樹官（Scheduler）完全不知道你要多少**，只好當你不佔空間，於是把一堆泡泡（Pod）塞到同一棵樹上，最後大家一起餓死。
+**第二，泡泡（Pod）可以吃光整棵樹**，連累鄰居，就是開頭那個慘案。
 
-**第二，你的泡泡（Pod）可以吃光整棵樹**，連累鄰居 ── 就是開頭那個慘案。
+實務上的起手式：**Request 應依監控、壓測與容量目標設定；Limit 則要依服務的 burst 特性與失敗代價評估，沒有通用的兩倍規則。**
 
-最後給你一個實務上的起手式：**Request 應依監控、壓測與容量目標設定；Limit 則要依服務的 burst 特性與失敗代價評估，沒有通用的兩倍規則。** 然後記憶體的 Request 和 Limit 建議設成**一樣**，因為記憶體超標的代價是被砍，不是變慢，你不會想賭那個空間。
+記憶體的 Request 和 Limit 可依服務的穩定用量與 burst 需求評估；超限會有被 OOM 終止的風險。
 
 ## 動手 5 分鐘
 
@@ -99,7 +99,7 @@ kubectl get pod -l app=hello -o jsonpath='{.items[0].spec.containers[0].resource
 裝 metrics-server 才看得到實際用量。這也是明天 HPA 要用的東西，今天先裝：
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml
 kubectl patch deployment metrics-server -n kube-system --type=json \
   -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 kubectl wait --for=condition=available --timeout=90s deployment/metrics-server -n kube-system
@@ -185,7 +185,7 @@ kubectl get pod -l app=hello -o jsonpath='{.items[0].status.qosClass}{"\n"}'
 
 印出 `Burstable`。三個等級是這樣分的：**Request 和 Limit 完全相等是 `Guaranteed`（最不容易被犧牲）、有設但不相等是 `Burstable`、什麼都沒設是 `BestEffort`（最先被犧牲）**。
 
-這個等級決定了一件事：當一棵樹真的快撐不住的時候，管家松鼠（kubelet）會**從最低等級開始趕泡泡（Pod）下車**。所以「什麼都不設」不只是放任你的服務吃光資源，同時也讓它變成第一個被踢的人 ── 兩邊都吃虧。
+當一棵樹真的快撐不住時，管家松鼠（kubelet）會**從最低等級開始趕泡泡（Pod）下車**。未設定資源的服務同時缺少預留量，也較容易成為驅逐對象。
 
 你今天的設定是 `Burstable`（CPU 的兩條線不一樣）。想升到 `Guaranteed`，把 CPU 的 request 和 limit 也設成相同的值就好。
 

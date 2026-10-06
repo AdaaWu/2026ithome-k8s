@@ -1,52 +1,58 @@
-# Day 7：手寫第一個 Pod YAML，把你的服務放進泡泡（Pod）
+# Day 7：手寫第一個 Pod YAML，把服務放進泡泡（Pod）
 
 
 ## 痛點
 
-`kubectl run` 很方便，但你沒辦法把它交給同事、放進 git、或是隔三個月後看懂當時設定了什麼。
+`kubectl run` 很方便，但沒辦法把它交給同事、放進 git，或是隔三個月後看懂當時設定了什麼。
 
 ![day-07-01](illustrations/day-07-01.png)
+左邊是一張攤開的 YAML 卷軸，右邊是一顆泡泡（Pod），四條對照線把卷軸上的四個段落分別連到泡泡（Pod）的名牌、外壁、內部的小鳥（Container），以及小鳥（Container）身上的埠號。
 
-```mermaid
-%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
-flowchart TD
-    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
-    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
-    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
-    Y["YAML manifest"] --> AV["apiVersion"]
-    Y --> K["kind"]
-    Y --> M["metadata"]
-    Y --> S["spec"]
-    S --> P["Pod"]
-    P --> C["Container"]
-```
 
-![day-07-mermaid](illustrations/day-07-mermaid.png)
+## YAML 的四個欄位
+
 ![day-07-diagram](illustrations/day-07-diagram.png)
 
-IMG: 左邊一張攤開的 YAML 卷軸，右邊一顆泡泡（Pod），四條線把卷軸上的四個段落分別連到泡泡（Pod）的名牌、外壁、內部的小鳥（Container）和小鳥（Container）身上的埠號 ｜ 出場角色：泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：卷軸和泡泡（Pod）之間那四條對照線
+YAML 只是把原本用指令講的話，改成寫下來。
+看圖上那四條線，今天的 Pod YAML 先從四個常見的最上層欄位開始。
 
-YAML 只是把你原本用指令講的話，改成寫下來。看圖上那四條線，今天的 Pod YAML 先從四個常見的最上層欄位開始：
+**apiVersion：要用哪一版的規格書**
+Pod 這種最基本的資源寫 `v1`。
+之後會看到 `apps/v1`、`networking.k8s.io/v1`，各有各的家族。這欄寫錯，櫃台第一關就退件。
 
-**apiVersion ── 你要用哪一版的規格書。** Pod 這種最基本的資源寫 `v1`。之後你會看到 `apps/v1`、`networking.k8s.io/v1`，各有各的家族。這欄寫錯，櫃台第一關就退件。
+**kind：要建的是什麼東西**
+今天是 `Pod`，之後會有 `Deployment`、`Service`。
+注意大小寫，K8s 認得很嚴格。
 
-**kind ── 你要建的是什麼東西。** 今天是 `Pod`。之後會有 `Deployment`、`Service`。注意大小寫，K8s 認得很嚴格。
+**metadata：這個東西叫什麼、有什麼標記**
+至少要有 `name`。
+之後 `labels` 也放這裡，那是 Day 8 的主角。
 
-**metadata ── 這個東西叫什麼、有什麼標記。** 至少要有 `name`。之後 `labels` 也放這裡，那是 Day 8 的主角。
+**spec：希望它長什麼樣子**
+這是最長的一段，也是每種資源長得最不一樣的一段。
+Pod 的 spec 裡最重要的就是 `containers`：泡泡（Pod）裡要放哪幾隻小鳥（Container）、各自跑什麼 image、開哪個埠。
 
-**spec ── 你希望它長什麼樣子。** 這是最長的一段，也是每種資源長得最不一樣的一段。Pod 的 spec 裡最重要的就是 `containers`：泡泡（Pod）裡要放哪幾隻小鳥（Container）、各自跑什麼 image、開哪個埠。
+記住這個順序：**規格書、種類、名牌、內容。**
+之後看的每一份 YAML，不管多長，拆開來都是這四塊。
 
-記住這個順序：**規格書、種類、名牌、內容。** 你之後看的每一份 YAML，不管多長，拆開來都是這四塊。
 
-寫 YAML 只有一個地方會反覆咬你：**縮排**。K8s 的 YAML 一律用空格，不能用 Tab，貼上去前先確認編輯器沒幫你轉成 Tab。縮排代表從屬關係 ── 縮進去就是「屬於上面那一層」，所以 `containers` 縮在 `spec` 底下，`image` 又縮在 `containers` 底下。看圖上那四條線的高低差，就是縮排在畫的東西。
+## 縮排
+
+寫 YAML 只有一個地方要超級注意：**縮排**。
+
+K8s 的 YAML 一律用空格，不能用 Tab，貼上去前先確認編輯器沒幫你轉成 Tab。
+
+縮排代表從屬關係，縮進去就是「屬於上面那一層」，所以 `containers` 縮在 `spec` 底下，`image` 又縮在 `containers` 底下。
 
 ![day-07-02](illustrations/day-07-02.png)
+YAML 卷軸由上而下是四段階梯狀縮排，最深的一階正好對到泡泡（Pod）裡的小鳥（Container），圖上那四條線的高低差畫的就是縮排。
 
-IMG: 一張 YAML 卷軸由上而下四段階梯狀縮排，最深的一階正好對到泡泡（Pod）裡的小鳥（Container） ｜ 出場角色：泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：最深那一階的縮排位置
+還有一件事今天要親眼看到：用 YAML 建出來的泡泡（Pod），刪掉之後**不會自己回來**。
 
-還有一件事今天要親眼看到：你用 YAML 建出來的泡泡（Pod），刪掉之後**不會自己回來**。你不是說「我要一顆泡泡（Pod）一直在」，你是說「請建一顆泡泡（Pod）」。
+這份 YAML 只描述「請建一顆泡泡 Pod」。
 
 差別在哪，Day 9 揭曉。
+
 
 ## 動手 5 分鐘
 
@@ -114,7 +120,7 @@ kubectl get pods
 kubectl apply -f hello-pod.yaml
 ```
 
-這就是今天最重要的體感：**你手上這份 YAML 描述的是「一顆泡泡（Pod）」，不是「永遠有一顆泡泡（Pod）」。** 沒有人在幫你盯著它。
+這就是今天最重要的體感：**這份 YAML 描述一顆泡泡（Pod）的建立內容，沒有控制器持續維持數量。**
 
 順便試一個 apply 的好習慣，先看會改到什麼再真的改：
 
@@ -150,11 +156,11 @@ kubectl run hello --image=nginx:alpine --dry-run=client -o yaml > hello-pod.yaml
 
 差別聽起來很小，但意義完全不同：**`create` 是動作，`apply` 是結果。** 這正是 Day 4 那個宣告式的落地方式。所以這 30 天你會看到我幾乎只用 `apply`，因為同一行指令可以重複執行，通常會把它管理的欄位維持在相同目標狀態。
 
-這個特性有個名字叫**冪等**，它是所有自動化部署的前提 ── 你的 CI 不需要自己記住現在是第一次部署還是第一百次，而是交給 API Server 依宣告內容對齊狀態。
+這個特性叫**冪等**，是自動化部署的前提。CI 不必記住部署次數，API Server 會依宣告內容對齊狀態。
 
 ## 帶走一句話
 
-**YAML 只有四塊：規格書、種類、名牌、內容。**
+YAML 只有四塊：規格書（apiVersion）、種類（kind）、名牌（metadata）、內容（spec）。
 
 ## 參考資源
 

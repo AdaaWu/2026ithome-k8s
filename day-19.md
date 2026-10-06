@@ -1,60 +1,63 @@
-# Day 19：掛在泡泡（Pod）外的便條本（ConfigMap） ── ConfigMap
+# Day 19：掛在泡泡 Pod 外的便條本 ConfigMap
 
 
-## 痛點
+## 沒有 ConfigMap 怎麼辦
 
-改一個資料庫位址、換一個功能開關，你就得重 build 一次 image、重推一次 registry、重跑一次部署。
+改一個資料庫位址、換一個功能開關，就得重 build 一次 image、重推一次 registry、重跑一次部署。
 
 ![day-19-01](illustrations/day-19-01.png)
+一顆泡泡（Pod）外面掛著一本便條本（ConfigMap），泡泡（Pod）裡的小鳥（Container）探頭出來讀上面的字，設定就從這裡餵進去。
 
-```mermaid
-%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
-flowchart TD
-    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
-    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
-    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
-    CM["ConfigMap"] --> E["envFrom → environment snapshot"]
-    CM --> V["volume → projected files"]
-    E --> C["Container"]
-    V --> C
-    CM -. "change does not restart Pod" .-> C
-```
 
-![day-19-mermaid](illustrations/day-19-mermaid.png)
+## 設定為什麼不能寫死在 image 裡
+
 ![day-19-diagram](illustrations/day-19-diagram.png)
 
-IMG: 一顆泡泡（Pod）外面掛著一本便條本（ConfigMap），泡泡（Pod）裡的小鳥（Container）探頭出來讀上面的字 ｜ 出場角色：便條本（ConfigMap）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：掛在泡泡（Pod）外的那本便條本（ConfigMap）
+**因為那會讓 dev 和 prod 變成兩個不同的 image**
 
-先講清楚為什麼設定不能寫死在 image 裡。
+兩個不同的 image 就是兩份不同的程式。
+在 dev 測過的東西，嚴格來說沒有在 prod 上測過。
+這是所有部署事故的溫床。
 
-**因為那會讓 dev 和 prod 變成兩個不同的 image。** 而兩個不同的 image 就是兩份不同的程式，你在 dev 測過的東西，嚴格來說沒有在 prod 上測過。這是所有部署事故的溫床。
+正確的做法是：**同一個 image 跑在所有環境，環境的差異從外面餵進去。**
 
-正確的做法是：**同一個 image 跑在所有環境，環境的差異從外面餵進去。** 看圖上便條本（ConfigMap）的位置 ── 它掛在泡泡（Pod）外面，不在 image 裡。同一隻小鳥（Container），換一本便條本（ConfigMap）就變成另一個環境。
+看圖上便條本（ConfigMap）的位置，它掛在泡泡（Pod）外面，不在 image 裡。
+同一隻小鳥（Container），換一本便條本（ConfigMap）就變成另一個環境。
 
-便條本（ConfigMap）的內容就是一堆 `key: value`，用法有兩種：
 
-**用法一，變成環境變數。** 適合單一的值：資料庫位址、功能開關、log 等級。小鳥（Container）啟動時讀 `process.env.XXX` 就拿到了。
+## 兩種用法
 
-**用法二，掛成檔案。** 適合整份設定檔：`nginx.conf`、`application.yml`。便條本（ConfigMap）的每一個 key 會變成一個檔名，value 變成檔案內容，整包掛進泡泡（Pod）裡的某個目錄。
+便條本（ConfigMap）的內容就是一堆 `key: value`，用法有兩種。
+
+**用法一，變成環境變數**
+適合單一的值：資料庫位址、功能開關、log 等級。
+小鳥（Container）啟動時讀 `process.env.XXX` 就拿到了。
+
+**用法二，掛成檔案**
+適合整份設定檔：`nginx.conf`、`application.yml`。
+便條本（ConfigMap）的每一個 key 會變成一個檔名，value 變成檔案內容，整包掛進泡泡（Pod）裡的某個目錄。
 
 兩種都很常用，判準很簡單：**單一的值用環境變數，整份檔案用掛載。**
 
-接下來是今天最重要的一段，**這個坑幾乎每個人都踩過一次**：
+
+## 幾乎每個人都踩過的坑
 
 **改了 ConfigMap，正在跑的泡泡（Pod）不會自動重啟。**
 
-這代表你改完設定、apply 完、看起來一切正常，但服務其實還在用舊設定。而且兩種用法的行為還不一樣，更容易混淆：
+這代表改完設定、apply 完、看起來一切正常，但服務其實還在用舊設定。
+而且兩種用法的行為還不一樣，更容易混淆：
 
 - **以環境變數注入的值，不會因為 ConfigMap 改變而自動更新。** 環境變數是容器啟動那一刻決定的，之後改便條本（ConfigMap）一點用都沒有，非重啟不可。
-- **掛成檔案的，內容通常會在 kubelet 的同步週期後更新，但不是即時保證。** 另外，掛載的 ConfigMap 會以投影檔案的方式更新；每次請求才讀磁碟的（例如 Nginx 提供的靜態檔）會跟著變，只在啟動時讀一次設定的（例如 `nginx.conf` 本身）則不會自動套用。
+- **掛成檔案的，內容通常會在 kubelet 的同步週期後更新，但不是即時保證。** 掛載的 ConfigMap 會以投影檔案的方式更新；每次請求才讀磁碟的（例如 Nginx 提供的靜態檔）會跟著變，只在啟動時讀一次設定的（例如 `nginx.conf` 本身）則不會自動套用。
 
-所以規則是：**改完 ConfigMap，就要讓泡泡（Pod）重新來過。**
+所以規則是：環境變數更新後必須重建或重啟 Pod；檔案掛載則要確認應用程式是否會重新讀取檔案。
 
 ![day-19-02](illustrations/day-19-02.png)
+便條本（ConfigMap）上的字被換掉，旁邊的泡泡（Pod）卻毫無反應，小鳥（Container）眼前還是那份舊內容。
 
-IMG: 一本便條本（ConfigMap）上的字被換掉，旁邊的泡泡（Pod）卻毫無反應、小鳥（Container）還在看著舊的內容 ｜ 出場角色：便條本（ConfigMap）、泡泡（Pod）、小鳥（Container） ｜ 亮橘重點：小鳥（Container）眼前那份舊內容
-
-最後一個實務提醒：**便條本（ConfigMap）是明文的。** 任何看得到這道圍籬的人都讀得到裡面每一個字。所以密碼、金鑰、token 一律不能放這裡 ── 那是明天的主題。
+最後一個實務提醒：**便條本（ConfigMap）是明文的。**
+任何看得到這道圍籬（Namespace）的人都讀得到裡面每一個字。
+密碼、金鑰、token 一律不能放這裡，那是明天的主題。
 
 ## 動手 5 分鐘
 
@@ -196,7 +199,7 @@ kubectl create configmap nginx-conf --from-file=./nginx.conf --dry-run=client -o
 
 ## 帶走一句話
 
-**改完便條本（ConfigMap），一定要叫泡泡（Pod）重來一次。**
+**改 ConfigMap 後，依注入方式決定是否重啟 Pod。**
 
 ## 參考資源
 

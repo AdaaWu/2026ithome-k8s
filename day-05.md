@@ -1,42 +1,47 @@
-# Day 5：你手上的哨子（kubectl） ，kubectl 最常用的 8 個指令
+# Day 5：你手上的哨子，kubectl 最常用的 8 個指令
 
 
 ## 痛點
 
 kubectl 的指令有上百個，官方文件一頁列不完。
-但你日常會用到的其實就那幾個，剩下的用到再查。
+但日常會用到的其實就那幾個，剩下的用到再查。
 
 ![day-05-01](illustrations/day-05-01.png)
+一隻手拿著哨子（kubectl）吹出聲波，聲波一路傳到遠處的燈塔櫃台（API Server）。
 
-```mermaid
-%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
-flowchart LR
-    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
-    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
-    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
-    K["kubectl"] --> A["API Server"]
-    A --> R["Kubernetes API resource"]
-    K -. "logs / exec / port-forward" .-> A
-```
 
-![day-05-mermaid](illustrations/day-05-mermaid.png)
+## 哨子怎麼傳話
+
 ![day-05-diagram](illustrations/day-05-diagram.png)
 
-IMG: 一隻人類的手拿著哨子（kubectl）吹出聲波，聲波傳到遠處的燈塔櫃台（API Server） ｜ 出場角色：哨子（kubectl）、燈塔櫃台（API Server） ｜ 亮橘重點：從哨子（kubectl）傳到櫃台的聲波
+哨子（kubectl）是使用者最常用的操作工具。
+昨天看過，它做的事情就是把打的字翻成 HTTP 請求送到燈塔櫃台（API Server）。
 
-哨子（kubectl）是你唯一的溝通工具。昨天我們看過，它做的事情就是把你打的字翻成 HTTP 請求送到燈塔櫃台（API Server）。
+今天這篇很適合收藏當小抄。
+八個指令依照實際工作的順序記：**先看、再查、再讀、再改、再刪**。
 
-今天這篇是給你收藏當小抄的。八個指令，記住的順序不是字母，是你實際工作的順序：**先看、再查、再讀、再改、再刪**。
+- 看是 `get`
+- 查是 `describe`
+- 讀是 `logs`
+- 改是 `apply`
+- 刪是 `delete`
 
-看是 `get`，查是 `describe`，讀是 `logs`，改是 `apply`，刪是 `delete`。另外三個是進階但很常用的 `exec`、`port-forward`、`get -o yaml`。
+另外三個是進階但很常用的 `exec`、`port-forward`、`get -o yaml`。
 
-八個記熟，你就能應付九成的日常狀況。至於為什麼是這八個，因為 Day 12 教你查問題的時候，用的就是其中前三個。
+八個記熟，就能應付九成的日常狀況。
+至於為什麼是這八個，因為 Day 12 教查問題的時候，用的就是其中前三個。
 
-還有兩件事先講，可以省你很多打字時間。第一，常見資源支援縮寫：`pods` 可以打 `po`、`deployments` 打 `deploy`、`services` 打 `svc`。第二，所有指令預設只看 `default` 這個區域，要看別區加 `-n <名字>`，要看全部加 `-A` ── 你昨天在燈塔村用過。
+還有兩件事先講，可以省下很多打字時間。
+
+**常見資源支援縮寫**
+`pods` 可以打 `po`、`deployments` 打 `deploy`、`services` 打 `svc`。
+
+**預設只看 default 這個區域**
+要看別區加 `-n <名字>`，要看全部加 `-A`，昨天在燈塔村用過。
 
 ![day-05-02](illustrations/day-05-02.png)
+哨子（kubectl）吹出的聲波先抵達燈塔櫃台（API Server），櫃台再把訊息轉往島上的巢樹（Node），櫃台這一站的轉手動作是關鍵。
 
-IMG: 哨子（kubectl）吹出的聲波先抵達燈塔櫃台（API Server），櫃台再把訊息轉往島上的巢樹（Node） ｜ 出場角色：哨子（kubectl）、燈塔櫃台（API Server）、巢樹（Node） ｜ 亮橘重點：櫃台這一站的轉手動作
 
 ## 動手 5 分鐘
 
@@ -152,11 +157,11 @@ echo 'source <(kubectl completion zsh)' >> ~/.zshrc
 kubectl get --help
 ```
 
-你不需要記住所有參數，你只需要記住去哪裡找。
+不需要記住所有參數，重點是記住去哪裡找。
 
 最後再補一個觀念，它能解釋為什麼八個指令就夠用。
 
-**這八個指令涵蓋大量日常資源操作，但 `logs`、`exec`、`rollout` 等指令各有適用範圍。** `kubectl get` 不只能看 Pod，也能看 Deployment、Service、Ingress、Secret ── 只要把後面的名詞換掉就好。`describe`、`delete`、`get -o yaml` 也一樣。
+**這八個指令涵蓋大量日常資源操作；`logs`、`exec`、`rollout` 仍有各自的適用範圍。** `get`、`describe`、`delete` 與 `get -o yaml` 可以換成 Deployment、Service、Ingress、Secret 等資源名稱。
 
 ```bash
 kubectl get pods

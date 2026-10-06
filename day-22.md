@@ -1,66 +1,75 @@
-# Day 22：島上的倉庫（PersistentVolume，PV）與借用單（PersistentVolumeClaim，PVC） ── PV 與 PVC
+# Day 22：島上的倉庫與借用單 PV 與 PVC
 
 
 ## 痛點
 
-昨天你證明了泡泡（Pod）破掉資料就沒了。但你的資料庫不能這樣，它需要一個「泡泡（Pod）死了東西還在」的地方。
+昨天證明了泡泡（Pod）破掉資料就沒了。
+但資料庫不能這樣，它需要一個「泡泡 Pod 掛了東西還在」的地方。
 
 ![day-22-01](illustrations/day-22-01.png)
+一座倉庫（PersistentVolume，PV）蓋在島的地面上，一張借用單（PersistentVolumeClaim，PVC）把樹上的泡泡（Pod）和地面的倉庫（PV）連起來。
 
-```mermaid
-%%{init: {"theme":"base","look":"handDrawn","handDrawnSeed":7,"themeVariables":{"background":"#DFF3FA","primaryColor":"#FFFDF7","primaryTextColor":"#4D4036","primaryBorderColor":"#7A6A5A","lineColor":"#8B7B6A","secondaryColor":"#FFDDB8","tertiaryColor":"#DDEFD9","fontFamily":"Hannotate SC, Klee One, Comic Sans MS, sans-serif","fontSize":"17px"},"flowchart":{"curve":"basis","htmlLabels":true,"padding":28,"nodeSpacing":48,"rankSpacing":64}}}%%
-flowchart TD
-    classDef default fill:#FFFDF7,stroke:#7A6A5A,stroke-width:2px,color:#4D4036
-    classDef accent fill:#FFDDB8,stroke:#E58F65,stroke-width:2px,color:#5A3828
-    classDef success fill:#DDEFD9,stroke:#78A66B,stroke-width:2px,color:#30452C
-    PVC["PersistentVolumeClaim"] --> PV["PersistentVolume"]
-    PV --> B["Backing storage"]
-    Pod["Pod"] --> M["volumeMount"]
-    PVC --> V["Pod volume reference"]
-    V --> M
-    class PVC,PV,B,V,M accent
-```
 
-![day-22-mermaid](illustrations/day-22-mermaid.png)
+## 倉庫蓋在地面上
+
 ![day-22-diagram](illustrations/day-22-diagram.png)
 
-IMG: 一座倉庫（PersistentVolume，PV）蓋在島的地面上，一張借用單（PersistentVolumeClaim，PVC）把樹上的泡泡（Pod）和地面的倉庫（PersistentVolume，PV）連起來 ｜ 出場角色：島上的倉庫（PersistentVolume，PV）、借用單（PersistentVolumeClaim，PVC）、泡泡（Pod）、小鳥（Container）、巢樹（Node） ｜ 亮橘重點：倉庫（PersistentVolume，PV）蓋在地面上的位置
+看圖上倉庫（PV）的位置。
+它**不在泡泡（Pod）裡**，它蓋在地面上。
+這一個構圖差異就是今天的全部重點：泡泡（Pod）在樹上生生滅滅，倉庫（PV）在地上動都不動。
 
-看圖上倉庫（PersistentVolume，PV）的位置。它**不在泡泡（Pod）裡**，它蓋在地面上。這一個構圖差異就是今天的全部重點 ── 泡泡（Pod）在樹上生生滅滅，倉庫（PersistentVolume，PV）在地上動都不動。
+這裡有三個角色，各司其職。
 
-這裡有三個角色，各司其職：
+**PV：對叢集可用的儲存資源抽象**
+它可能是雲端的一顆硬碟、機房的一台 NFS、或是筆電上的一個資料夾。
+它是**島級**的東西，不屬於任何圍籬（Namespace），也不屬於任何泡泡（Pod）。
+把泡泡（Pod）刪光時，倉庫（PV）通常仍可保留；PVC 與 PV 的回收策略會決定底層資料是否繼續存在。
 
-**PV（島上的倉庫（PersistentVolume，PV））── 對叢集可用的儲存資源抽象。** 它可能是雲端的一顆硬碟、機房的一台 NFS、或是你筆電上的一個資料夾。它是**島級**的東西，不屬於任何圍籬，也不屬於任何泡泡（Pod）。你把泡泡（Pod）刪光時，倉庫（PersistentVolume，PV）通常仍可保留；PVC 與 PV 的回收策略會決定底層資料是否繼續存在。
+**PVC：一張「我要借多大、要怎麼用」的申請單**
+它才是屬於圍籬（Namespace）的東西，跟應用綁在一起。
 
-**PVC（借用單（PersistentVolumeClaim，PVC））── 一張「我要借多大、要怎麼用」的申請單。** 它才是屬於圍籬的東西，跟你的應用綁在一起。
+**Pod：拿著借用單（PVC）去用倉庫（PV）的人**
+注意：**在 PVC 的模型裡，泡泡（Pod）通常不直接指定底層倉庫（PV）**，它只指定借用單（PVC）。
 
-**Pod ── 拿著借用單（PersistentVolumeClaim，PVC）去用倉庫（PersistentVolume，PV）的人。** 注意：**在 PVC 的模型裡，泡泡（Pod）通常不直接指定底層倉庫（PersistentVolume，PV）**，它只指定借用單（PersistentVolumeClaim，PVC）。
+泡泡（Pod）裡看到的食盆（Volume Mount）是 **Volume Mount**。
+當它透過 PVC 接到 PV 時，泡泡（Pod）可以被替換，但倉庫（PV）裡的資料仍可能保留。
+這和沒有外接持久儲存的 `emptyDir` 不同。
 
-泡泡（Pod）裡看到的食盆是 **Volume Mount**；當它透過 PVC 接到 PV 時，泡泡（Pod）可以被替換，但倉庫（PersistentVolume，PV）裡的資料仍可能保留。這和沒有外接持久儲存的 `emptyDir` 不同。
 
-為什麼要多一張單子這麼麻煩？因為它把兩件事分開了：
+## 為什麼要多一張單子
 
-**「有什麼倉庫（PersistentVolume，PV）」是管理員的事，「我要多大空間」是開發者的事。**
+因為它把兩件事分開了：**「有什麼倉庫（PV）」是管理員的事，「我要多大空間」是開發者的事。**
 
-寫應用的人不需要知道公司用的是 AWS EBS 還是機房的 NFS，他只要說「我要 1 GB、可以讀寫」。單子送出去，K8s 自己去找一個符合條件的倉庫（PersistentVolume，PV）綁上。同一份 YAML 因此能跑在筆電、跑在測試機、跑在正式環境 ── 底下換成不同的儲存設備時，應用程式可維持使用 PVC，但 StorageClass、容量、權限與拓撲等環境設定仍可能需要調整。
+寫應用的人不需要知道公司用的是 AWS EBS 還是機房的 NFS，只要說「我要 1 GB、可以讀寫」。
+單子送出去，K8s 自己去找一個符合條件的倉庫（PV）綁上。
 
-這個「找到並綁上」的動作叫 **Binding**，一旦綁定就是**一對一**：這張單子綁走這個倉庫（PersistentVolume，PV），別人不能再借。你會在狀態欄看到 `Bound` 這個字。
+同一份 YAML 因此能跑在筆電、跑在測試機、跑在正式環境。
+底下換成不同的儲存設備時，應用程式可維持使用 PVC，但 StorageClass、容量、權限與拓撲等環境設定仍可能需要調整。
+
+這個「找到並綁上」的動作叫 **Binding**，一旦綁定就是**一對一**：這張單子綁走這個倉庫（PV），別人不能再借。
+狀態欄會看到 `Bound` 這個字。
 
 ![day-22-02](illustrations/day-22-02.png)
+借用單（PVC）從樹上的泡泡（Pod）垂下來，接到地面倉庫（PV）的門口，倉庫門上貼著「已借出」。
 
-IMG: 一張借用單（PersistentVolumeClaim，PVC）從樹上的泡泡（Pod）垂下來，接到地面倉庫（PersistentVolume，PV）的門口，倉庫（PersistentVolume，PV）門上貼著「已借出」 ｜ 出場角色：借用單（PersistentVolumeClaim，PVC）、島上的倉庫（PersistentVolume，PV）、泡泡（Pod）、巢樹（Node） ｜ 亮橘重點：倉庫（PersistentVolume，PV）門上「已借出」那張標籤
 
-那誰來蓋倉庫（PersistentVolume，PV）？兩種做法：
+## 誰來蓋倉庫
 
-**手動蓋（靜態）** ── 管理員先建一批 PV 放著，等人來借。
+**手動蓋（靜態）**
+管理員先建一批 PV 放著，等人來借。
 
-**自動蓋（動態）** ── 你送出借用單（PersistentVolumeClaim，PVC），由 StorageClass 指定的 provisioner 建立符合條件的儲存。StorageClass 只描述類別與參數，不是它自己建立底層 volume。雲端環境常用動態供應；但原生 Kind 不保證內建 StorageClass，今天為了讓步驟可重現，採用手動建立一個本機測試用 PV。
+**自動蓋（動態）**
+送出借用單（PVC），由 StorageClass 指定的 provisioner 建立符合條件的儲存。
+StorageClass 只描述類別與參數，不是它自己建立底層 volume。
+雲端環境常用動態供應；但原生 Kind 不保證內建 StorageClass，今天為了讓步驟可重現，採用手動建立一個本機測試用 PV。
 
-最後一個必須知道的行為：**刪掉借用單（PersistentVolumeClaim，PVC），倉庫（PersistentVolume，PV）不一定跟著刪。** 這由 PV 的回收策略決定，`Delete` 是連倉庫（PersistentVolume，PV）一起銷毀，`Retain` 是留著資料等人工處理。正式環境的資料庫請用 `Retain`，這是那種「錯一次就回不來」的設定。
+最後一個必須知道的行為：**刪掉借用單（PVC），倉庫（PV）不一定跟著刪。**
+這由 PV 的回收策略決定，`Delete` 是連倉庫（PV）一起銷毀，`Retain` 是留著資料等人工處理。
+正式環境的資料庫請用 `Retain`，這是那種「錯一次就回不來」的設定。
 
 ## 動手 5 分鐘
 
-昨天的食盆隨著泡泡（Pod）一起碎掉。今天改用倉庫（PersistentVolume，PV），做同一個實驗，看結果怎麼不一樣。
+昨天的食盆（Volume Mount）隨著泡泡（Pod）一起碎掉。今天改用倉庫（PV），做同一個實驗，看結果怎麼不一樣。
 
 先看看島上是否有動態供應器（不同 Kind／版本結果可能不同）：
 
@@ -90,7 +99,7 @@ spec:
 
 這個 `hostPath` 是 Kind 節點容器裡的本機資料夾，只適合單節點練習；它不是跨節點高可用儲存，也不能當成正式資料庫的備份。
 
-送出借用單（PersistentVolumeClaim，PVC）。建立 `hello-pvc.yaml`：
+送出借用單（PVC）。建立 `hello-pvc.yaml`：
 
 ```yaml
 apiVersion: v1
@@ -98,6 +107,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: hello-data
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteOnce
   resources:
@@ -135,14 +145,14 @@ spec:
         claimName: hello-data
 ```
 
-跟昨天的結構**幾乎一樣**，只有 `volumes` 那段從 `emptyDir: {}` 換成 `persistentVolumeClaim`。泡泡（Pod）指的是**借用單（PersistentVolumeClaim，PVC）的名字**，不是倉庫（PersistentVolume，PV）。
+跟昨天的結構**幾乎一樣**，只有 `volumes` 那段從 `emptyDir: {}` 換成 `persistentVolumeClaim`。泡泡（Pod）指的是**借用單（PVC）的名字**，不是倉庫（PV）。
 
 ```bash
 kubectl apply -f demo-pvc-pod.yaml
 kubectl get pvc,pv
 ```
 
-現在 PVC 變成 `Bound`，而且**憑空多出一個 PV** ── 那座倉庫（PersistentVolume，PV）剛剛被自動蓋出來了。看 PV 的 CLAIM 欄，寫著 `default/hello-data`，一對一綁定。
+現在 PVC 變成 `Bound`，看 PV 的 CLAIM 欄會寫著 `default/hello-data`，代表兩者已一對一綁定。
 
 寫點東西進去：
 
@@ -158,7 +168,7 @@ kubectl delete pod demo-store
 kubectl get pvc,pv
 ```
 
-泡泡（Pod）沒了，但 **PVC 還是 `Bound`、PV 還在**。倉庫（PersistentVolume，PV）蓋在地面上，泡泡（Pod）破了它不會跟著碎。
+泡泡（Pod）沒了，但 **PVC 還是 `Bound`、PV 還在**。倉庫（PV）蓋在地面上，泡泡（Pod）破了它不會跟著碎。
 
 建一顆全新的泡泡（Pod）來接同一張單：
 
@@ -167,21 +177,21 @@ kubectl apply -f demo-pvc-pod.yaml
 kubectl exec demo-store -- cat /data/important.txt
 ```
 
-**檔案還在，時間戳是舊的那個。** 這是全新的泡泡（Pod）、全新的容器，讀到的是上一顆泡泡（Pod）寫的資料。昨天的食盆做不到這件事。
+**檔案還在，時間戳是舊的那個。** 這是全新的泡泡（Pod）、全新的容器，讀到的是上一顆泡泡（Pod）寫的資料。昨天的食盆（Volume Mount）做不到這件事。
 
 ![day-22-shot-01](screenshots/day-22-shot-01.png)
 
 前後兩次讀到的時間戳一模一樣 ── 中間那顆泡泡（Pod）已經被整個刪掉重建了。
 
-最後看一眼倉庫（PersistentVolume，PV）實際在哪：
+最後看一眼倉庫（PV）實際在哪：
 
 ```bash
 kubectl get pv hello-pv -o jsonpath='{.spec.hostPath.path}{"\n"}'
 ```
 
-印出樹上的一個路徑 ── 這次 Kind 的倉庫（PersistentVolume，PV）就是節點容器裡的一個資料夾。**正式環境通常會改用雲端磁碟或其他儲存後端，StorageClass、容量、存取模式與拓撲可能都要重新設計。**
+印出樹上的一個路徑 ── 這次 Kind 的倉庫（PV）就是節點容器裡的一個資料夾。**正式環境通常會改用雲端磁碟或其他儲存後端，StorageClass、容量、存取模式與拓撲可能都要重新設計。**
 
-收工，泡泡（Pod）刪掉，倉庫（PersistentVolume，PV）留著明天用：
+收工，泡泡（Pod）刪掉，倉庫（PV）留著明天用：
 
 ```bash
 kubectl delete pod demo-store
@@ -189,7 +199,7 @@ kubectl delete pod demo-store
 
 ## 帶走一句話
 
-**泡泡（Pod）指的是借用單（PersistentVolumeClaim，PVC），不是倉庫（PersistentVolume，PV）。**
+**泡泡（Pod）指的是借用單（PVC），不是倉庫（PV）。**
 
 ## 參考資源
 

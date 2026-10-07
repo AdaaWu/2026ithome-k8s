@@ -1,13 +1,13 @@
-# Day 29：雲之島全圖，一張圖看完 K8s 怎麼運作
+# Day 29： K8s Cluster 雲之島全圖，一張圖看完 K8s 怎麼運作
 
 
-## 痛點
+## Cluster 雲之島的全景大圖
 
 二十八天下來認識了三十幾個角色。
 現在把它們全部放進同一座島，你講得出誰在哪一站嗎？
 
 ![day-29-01](illustrations/day-29-01.png)
-雲之島（Cluster）的全景大圖，所有角色各就各位：左上燈塔村的燈塔櫃台（API Server）、記憶樹（etcd）、選樹官（Scheduler）、巡邏隊長（Controller Manager），島中央的巢樹（Node）與泡泡（Pod），右側的大門地圖看板（Ingress）與圖騰柱（Service），地面上的倉庫（PersistentVolume，PV），樹底下的道路管理員（kube-proxy），五條路線串起全島。
+所有角色各就各位：左上燈塔村的燈塔櫃台（API Server）、記憶樹（etcd）、選樹官（Scheduler）、巡邏隊長（Controller Manager），島中央的巢樹（Node）與泡泡（Pod），右側的大門地圖看板（Ingress）與圖騰柱（Service），地面上的倉庫（PersistentVolume，PV），樹底下的道路管理員（kube-proxy），五條路線串起全島。
 
 
 ## 全島只有五條線
@@ -15,6 +15,7 @@
 ![day-29-diagram](illustrations/day-29-diagram.png)
 
 今天話少一點，讓圖說話。全島只有五條線，每條線都親手做過。
+
 
 **第一條線：下指令**
 
@@ -26,16 +27,16 @@
 
 **第二條線：燈塔村做決定**
 
-巡邏隊長（Controller Manager）一直在比對「記憶樹（etcd）上寫的」跟「島上實際有的」。
+巡邏隊長（Controller Manager）一直在比對「記憶樹 etcd 上寫的」跟「島上實際有的」。
 發現要三顆但只有零顆，它就交代部署管家（Deployment）；部署管家（Deployment）交代貓頭鷹（ReplicaSet）；貓頭鷹（ReplicaSet）登記三顆泡泡（Pod）。
 這三顆泡泡（Pod）此時還沒有家，選樹官（Scheduler）看每棵樹剩多少資源（就是 Day 25 畫的那條 Request 線），挑一棵，把答案寫回櫃台。
 
 **控制面這條線主要是在協調與更新狀態；真正建立容器、掛載儲存和處理封包，則由 kubelet、Runtime、CSI、CNI 與資料平面元件執行。**
 
-**第三條線：巢樹（Node）執行**
+**第三條線：樹節點（Node）執行**
 
 每棵樹上的管家松鼠（kubelet）盯著櫃台看有沒有自己這棵樹的活。
-看到了就真的去拉 image、真的把泡泡（Pod）吹出來、真的把小鳥（Container）放進去。啄木鳥開始敲、旗子（Readiness Probe）升起來。
+看到了就真的去拉 image、真的把泡泡（Pod）吹出來、真的把小鳥（Container）放進去。管家松鼠（kubelet）開始執行探針檢查，旗子（Readiness Probe）升起來。
 
 **這是全島唯一真的動手的地方。**
 決定和執行分開，所以燈塔村掛掉時，樹上跑著的服務不會跟著死。
@@ -44,8 +45,8 @@
 
 訪客敲島的大門，地圖看板（Ingress）讀網址、挑一根圖騰柱（Service）。
 柱子（Service）拿著貼紙（Label）去對名單（Endpoints），挑一顆貼著正確貼紙的泡泡（Pod）。
-真正維護轉送規則的是樹底下的道路管理員（kube-proxy），它讓柱子（Service）那個虛擬 IP 的封包前往真實的泡泡（Pod） IP。
-封包穿過泡泡（Pod）的門牌，交給裡面的小鳥（Container）。Day 18 那七站，就是這條線。
+真正維護轉送規則的是樹底下的道路管理員（kube-proxy），它讓柱子（Service）那個虛擬 IP 的封包前往真實的泡泡 Pod IP。
+封包穿過 Pod IP，交給裡面的小鳥（Container）。Day 18 那七站，就是這條線。
 
 **第五條線：資料落地**
 
@@ -102,11 +103,11 @@ kubectl get pvc
 
 一條線一個指令，五行就把整座島從頭到尾檢查完。
 
-## 帶走一句話
+## 小結
 
 **K8s 由多個持續調和的迴圈協作。**
 
 ## 參考資源
 
-- [Kubernetes Components](https://kubernetes.io/docs/concepts/architecture/components/)
+- [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/)
 - [Service Networking](https://kubernetes.io/docs/concepts/services-networking/)

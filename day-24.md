@@ -1,9 +1,9 @@
 # Day 24：K8s 三種探針 Probe，存活檢查鈴 Liveness Probe 與小旗子 Readiness Probe、Startup
 
 
-## K8s 
+## K8s Probe
 
-泡泡（Pod）的狀態是 `Running`，但服務其實已經死了。
+Pod 的狀態是 `Running`，但服務其實已經死了。
 K8s 顯示一切正常，使用者卻在對你尖叫。
 
 ![day-24-01](illustrations/day-24-01.png)
@@ -24,7 +24,7 @@ K8s 看不出這種死法，除非我們教它怎麼看。
 
 **存活檢查鈴（Liveness Probe）：你還活著嗎？沒回應就重啟**
 
-啄木鳥固定去敲泡泡（Pod），連續失敗達到設定門檻時，kubelet 會重啟這隻小鳥（Container）。
+管家松鼠（kubelet）定期替泡泡（Pod）做存活檢查（Liveness Probe）；連續失敗達到設定門檻時，就會重啟裡面的小鳥（Container）。
 它管的是「**救不救**」。
 
 **小旗子（Readiness Probe）：你準備好了嗎？沒好就不給流量**
@@ -48,7 +48,7 @@ Startup 探針（Probe）成功之前，liveness 和 readiness 通常不會開�
 
 最常見也最貴的錯誤是：**Liveness 設太敏感，造成無限重啟。**
 
-服務只是暫時變慢（尖峰、GC、下游卡住），啄木鳥敲三下沒回應就重啟它。
+服務只是暫時變慢（尖峰、GC、下游卡住），存活檢查連續失敗達到門檻，管家松鼠就會重啟它。
 重啟要三十秒，這三十秒的流量壓到其他泡泡（Pod）上，其他泡泡（Pod）也變慢，也被重啟，**整組服務被自己的探針（Probe）殺光。**
 明明只是慢，結果變成全滅。
 
@@ -58,7 +58,7 @@ Startup 探針（Probe）成功之前，liveness 和 readiness 通常不會開�
 慢的時候先把旗子（Readiness Probe）降下來，暫停導入流量，給服務恢復時間。
 
 **第二，Liveness 只檢查「這個程序自己」。**
-千萬不要在 Liveness 裡去 ping 資料庫，資料庫抖一下，整組前端會被啄木鳥敲光，而重啟一百次也救不了資料庫。
+千萬不要在 Liveness 裡去 ping 資料庫，資料庫抖一下，整組前端可能都被管家松鼠重啟，而重啟一百次也救不了資料庫。
 **那種檢查放 Readiness。**
 
 三種探針（Probe）的檢查方式都一樣有三種：`httpGet`（打一個網址看狀態碼）、`tcpSocket`（連得上就算活）、`exec`（在容器裡跑指令看回傳值）。
@@ -201,13 +201,13 @@ kubectl get endpointslices -l kubernetes.io/service-name=demo-probe \
 demo-probe-xxx   1/1   Running   1 (5s ago)
 ```
 
-**RESTARTS 變成 1** ── 啄木鳥終於出手了。重啟後容器從 image 重新長出來，index.html 回來了，READY 變回 `1/1`，那個位址也變回 `ready=true`。`Ctrl+C` 離開。
+**RESTARTS 變成 1** ── 管家松鼠依照 Liveness Probe 的結果重啟了容器。重啟後容器從 image 重新長出來，index.html 回來了，READY 變回 `1/1`，那個位址也變回 `ready=true`。`Ctrl+C` 離開。
 
 ![day-24-shot-01](screenshots/day-24-shot-01.png)
 
-`0/1` 但 `Running` 是旗子（Readiness Probe）降下來；五十秒後 RESTARTS 變 1 才是啄木鳥動手。兩者差了整整一個數量級的時間。
+`0/1` 但 `Running` 是旗子（Readiness Probe）降下來；五十秒後 RESTARTS 變 1，代表管家松鼠依 Liveness Probe 重啟了容器。兩者差了整整一個數量級的時間。
 
-看啄木鳥的說法：
+看 kubelet 記錄的探針事件：
 
 ```bash
 kubectl describe pod $POD | grep -E "Liveness probe failed|will be restarted"
@@ -227,7 +227,7 @@ kubectl delete -f demo-probe.yaml
 
 ## 帶走一句話
 
-**旗子（Readiness Probe）管流量，啄木鳥管生死，別搞反。**
+**管家松鼠（kubelet）用 Readiness Probe 管流量資格、用 Liveness Probe 判斷是否重啟；別搞反。**
 
 ## 參考資源
 

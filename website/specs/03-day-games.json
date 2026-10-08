@@ -1,0 +1,152 @@
+[
+  {
+    "day": 1,
+    "gameTitle": "半夜救火員",
+    "gameHint": "先手動救小鳥，再交給島自己補"
+  },
+  {
+    "day": 2,
+    "gameTitle": "五分鐘登島",
+    "gameHint": "照順序吹出正確指令蓋好島"
+  },
+  {
+    "day": 3,
+    "gameTitle": "島嶼點點名",
+    "gameHint": "看指令，點出它查的那一層"
+  },
+  {
+    "day": 4,
+    "gameTitle": "燈塔村接力",
+    "gameHint": "依序點角色，把需求傳到樹上"
+  },
+  {
+    "day": 5,
+    "gameTitle": "哨子點唱機",
+    "gameHint": "組出指令，完成每張任務單"
+  },
+  {
+    "day": 6,
+    "gameTitle": "泡泡室友配對",
+    "gameHint": "把小鳥放進對的泡泡"
+  },
+  {
+    "day": 7,
+    "gameTitle": "YAML 縮排師",
+    "gameHint": "點行調縮排，送櫃台驗收"
+  },
+  {
+    "day": 8,
+    "gameTitle": "放大鏡尋寶",
+    "gameHint": "點出所有符合條件的泡泡"
+  },
+  {
+    "day": 9,
+    "gameTitle": "戳不完的泡泡",
+    "gameHint": "讓 app:hello 泡泡歸零"
+  },
+  {
+    "day": 10,
+    "gameTitle": "滾動換裝秀",
+    "gameHint": "加新減舊，可用數不能掉"
+  },
+  {
+    "day": 11,
+    "gameTitle": "後悔捲軸",
+    "gameHint": "卡住了就捲回上一版"
+  },
+  {
+    "day": 12,
+    "gameTitle": "泡泡急診室",
+    "gameHint": "用對工具，找出泡泡病因"
+  },
+  {
+    "day": 13,
+    "gameTitle": "跨籬喊話",
+    "gameHint": "拼出地址，喊到對的柱子"
+  },
+  {
+    "day": 14,
+    "gameTitle": "名單偵探",
+    "gameHint": "修好柱子名單，讓流量通"
+  },
+  {
+    "day": 15,
+    "gameTitle": "入口開幾層",
+    "gameHint": "選最小夠用的柱子型號"
+  },
+  {
+    "day": 16,
+    "gameTitle": "大門看板",
+    "gameHint": "請守門員、排規則，分流訪客"
+  },
+  {
+    "day": 17,
+    "gameTitle": "狀態碼分診",
+    "gameHint": "看狀態碼，最少檢查找斷點"
+  },
+  {
+    "day": 18,
+    "gameTitle": "封包旅行團",
+    "gameHint": "依序點出封包經過的站"
+  },
+  {
+    "day": 19,
+    "gameTitle": "便條本改了沒",
+    "gameHint": "用最少重啟讓設定生效"
+  },
+  {
+    "day": 20,
+    "gameTitle": "玩具鎖鑑定",
+    "gameHint": "分辨真保護與假安全"
+  },
+  {
+    "day": 21,
+    "gameTitle": "存檔大作戰",
+    "gameHint": "把資料搬進食物桶保住它"
+  },
+  {
+    "day": 22,
+    "gameTitle": "借用單配對",
+    "gameHint": "幫借用單找最剛好的倉庫"
+  },
+  {
+    "day": 23,
+    "gameTitle": "雙層島混沌測試",
+    "gameHint": "接好設定，撐過三場意外"
+  },
+  {
+    "day": 24,
+    "gameTitle": "鈴與旗",
+    "gameHint": "判斷該降旗還是搖鈴"
+  },
+  {
+    "day": 25,
+    "gameTitle": "選樹官塞泡泡",
+    "gameHint": "依 Request 把泡泡掛上樹"
+  },
+  {
+    "day": 26,
+    "gameTitle": "旋鈕心算王",
+    "gameHint": "算出 HPA 要調到幾顆"
+  },
+  {
+    "day": 27,
+    "gameTitle": "編號點名",
+    "gameHint": "照順序建泡泡，接回專屬倉庫"
+  },
+  {
+    "day": 28,
+    "gameTitle": "管理者派工",
+    "gameHint": "把工作交給對的管理者"
+  },
+  {
+    "day": 29,
+    "gameTitle": "全島五條線",
+    "gameHint": "依序點角色，接通五條線"
+  },
+  {
+    "day": 30,
+    "gameTitle": "雲之島值班夜",
+    "gameHint": "連續處理五個島嶼事故"
+  }
+]

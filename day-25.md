@@ -1,7 +1,7 @@
-# Day 25：Request 與 Limit，資源需求牌與資源上限線
+# Day 25：Request 與 Limit，Resource Request、Resource Limit 資源需求與資源上限
 
 
-## 痛點
+## 資源管理
 
 某天有個服務吃光了整台機器的記憶體，旁邊三個不相干的服務跟著陪葬。
 問題是：K8s 怎麼會讓這種事發生？
@@ -9,28 +9,25 @@
 ![day-25-01](illustrations/day-25-01.png)
 泡泡（Pod）一側掛著資源需求牌（Resource Request），另一側有一條資源上限線（Resource Limit），小鳥（Container）吃到超過上限的那一刻就被拉走。
 
-
-## 飯碗上的兩條線
+看圖上那個飯碗，兩條線各有名字。
+## Resource Request、Resource Limit
 
 ![day-25-diagram](illustrations/day-25-diagram.png)
 
 會發生慘案，是因為沒有畫線。**不設限制的泡泡（Pod），預設可以吃光整棵樹。**
-
-看圖上那個飯碗，兩條線各有名字。
-
 **Request（下面那條線）：我保證要吃到這麼多**
 
-這條線是給**選樹官（Scheduler）**看的。
+這條線是給**選樹官（Scheduler）** 看的。
 Day 4 講過選樹官（Scheduler）決定新泡泡（Pod）掛哪棵樹，它憑什麼決定？就憑這條線。
-它把每棵樹上所有泡泡（Pod）的 Request 加起來，跟樹的總容量比一比，還放得下才把新泡泡（Pod）掛上去。
+它把每棵樹上所有泡泡（Pod）的 Request 加起來，跟樹的**可分配容量（Allocatable）** 比一比，還放得下才把新泡泡（Pod）掛上去。
 
 這裡最容易被誤解：**一般資源 fit 判斷主要看 Request；即時實際用量屬於執行期間的觀測值，排程還會考慮 affinity、taint、topology 等條件。**
 一棵樹上的泡泡（Pod）實際只用了 10% 的 CPU，但 Request 加起來已經滿了，選樹官（Scheduler）就是不會再放新泡泡（Pod）進去，結果是一顆 `Pending` 的泡泡（Day 12 那三種狀態之一）。
 
 **Limit（上面那條線）：最多只准吃到這麼多**
 
-這條線是給**管家松鼠（kubelet）**看的，它負責在樹上執行。
-超過會怎樣？**CPU 和記憶體的下場完全不同，這個差別非常重要。**
+這條線是給**管家松鼠（kubelet）** 看的，它負責在樹上執行。
+超過會怎樣？ **CPU 和記憶體的下場完全不同，這個差別非常重要。**
 
 **CPU 超過 → 被限速（throttle）。**
 CPU 是可壓縮資源，通常會被限速；但程式仍可能因 timeout、probe failure 或其他錯誤退出。
@@ -187,7 +184,7 @@ kubectl get pod -l app=hello -o jsonpath='{.items[0].status.qosClass}{"\n"}'
 
 當一棵樹真的快撐不住時，管家松鼠（kubelet）會**從最低等級開始趕泡泡（Pod）下車**。未設定資源的服務同時缺少預留量，也較容易成為驅逐對象。
 
-你今天的設定是 `Burstable`（CPU 的兩條線不一樣）。想升到 `Guaranteed`，把 CPU 的 request 和 limit 也設成相同的值就好。
+你今天的設定是 Burstable（因為 CPU 的 Request 與 Limit 不一樣）。想升到 Guaranteed，必須讓 **CPU 與記憶體的 Request 和 Limit 全部兩兩相等**才行。
 
 ## 帶走一句話
 

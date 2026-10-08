@@ -1,0 +1,42 @@
+/* 雲之島設計 token：溫暖水彩繪本風，亮橘是唯一強調色 */
+:root {
+  /* 色票 */
+  --sky: #cfe6f2;
+  --sky-deep: #8fbfd9;
+  --cloud: #fff8ec;
+  --paper: #f6efe2;
+  --ink: #6b4f3a;
+  --ink-soft: #9a8170;
+  --leaf: #8cbf6e;
+  --leaf-deep: #5e9a4f;
+  --bark: #a0714f;
+  --accent: #f08a24;
+  --accent-soft: #fbd3a8;
+  --danger: #d9534f;
+  --success: #6fae5a;
+  --gold: #e8c46a;
+
+  /* 圓角 */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+
+  /* 陰影：暖棕色調，避免冷灰 */
+  --shadow-soft: 0 2px 8px rgba(107, 79, 58, 0.12);
+  --shadow-pop: 0 6px 18px rgba(107, 79, 58, 0.22);
+
+  /* 字體 */
+  --font-display: "Huninn", "Noto Sans TC", system-ui, sans-serif;
+  --font-body: "Noto Sans TC", system-ui, sans-serif;
+
+  /* 間距 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* 水彩紙紋理：疊在 --paper 上使用，例如 background: var(--paper-texture), var(--paper) */
+  --paper-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.31 0 0 0 0 0.23 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

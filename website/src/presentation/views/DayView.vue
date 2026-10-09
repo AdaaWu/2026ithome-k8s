@@ -8,7 +8,7 @@ import { playSfx } from '@/infrastructure/sfx'
 import CharacterSprite from '@/presentation/components/characters/CharacterSprite.vue'
 import ConfettiBurst from '@/presentation/components/ui/ConfettiBurst.vue'
 import TopBar from '@/presentation/components/ui/TopBar.vue'
-import { resolveDayGame } from '@/presentation/games/registry'
+import { hasCustomGame, resolveDayGame } from '@/presentation/games/registry'
 
 type Phase = 'intro' | 'play' | 'clear'
 
@@ -86,7 +86,7 @@ const nextDay = computed(() => (props.day < TOTAL_DAYS ? props.day + 1 : null))
         <p>{{ level.gameHint }}</p>
       </div>
       <div class="play__stage">
-        <component :is="gameComponent" :key="runId" :character-ids="level.characters" @complete="onComplete" />
+        <component :is="gameComponent" :key="runId" :character-ids="hasCustomGame(level.day) ? undefined : level.characters" @complete="onComplete" />
       </div>
     </section>
 

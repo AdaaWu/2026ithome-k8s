@@ -108,7 +108,7 @@ export const LEVELS: DayLevel[] = [
     image: 'art/day-09-01.webp',
     characters: ['owl', 'bubble', 'sticker', 'magnifier'],
     gameTitle: '戳不完的泡泡',
-    gameHint: '讓 app:hello 泡泡歸零',
+    gameHint: '讓 hello 泡泡歸零',
   },
   {
     day: 10,
@@ -300,7 +300,7 @@ export const LEVELS: DayLevel[] = [
     image: 'art/day-25-01.webp',
     characters: ['request-tag', 'limit-line', 'tree-picker', 'bubble', 'bird'],
     gameTitle: '選樹官塞泡泡',
-    gameHint: '依 Request 把泡泡掛上樹',
+    gameHint: '依 Request 掛泡泡',
   },
   {
     day: 26,

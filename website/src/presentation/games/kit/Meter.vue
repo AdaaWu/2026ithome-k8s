@@ -20,7 +20,7 @@ const COLOR: Record<ChipColor, string> = {
   gray: 'var(--ink-soft)',
 }
 
-const pct = (n: number) => `${Math.max(0, Math.min(100, (n / props.max) * 100))}%`
+const pct = (n: number) => (props.max > 0 ? `${Math.max(0, Math.min(100, (n / props.max) * 100))}%` : '0%')
 </script>
 
 <template>
@@ -33,16 +33,16 @@ const pct = (n: number) => `${Math.max(0, Math.min(100, (n / props.max) * 100))}
       <span class="meter__fill" :style="{ width: pct(value) }" />
       <span v-if="overlay !== undefined" class="meter__overlay" :style="{ width: pct(overlay) }" />
       <span
-        v-for="m in marks"
-        :key="m.at"
+        v-for="(m, i) in marks"
+        :key="i"
         class="meter__mark"
         :style="{ left: pct(m.at), '--mark-color': COLOR[m.color ?? 'gray'] }"
       />
     </div>
     <div v-if="marks?.length" class="meter__labels">
       <small
-        v-for="m in marks"
-        :key="m.at"
+        v-for="(m, i) in marks"
+        :key="i"
         :style="{ left: pct(m.at), color: COLOR[m.color ?? 'gray'] }"
       >{{ m.label }}</small>
     </div>

@@ -33,6 +33,7 @@ const emit = defineEmits<{ tap: [] }>()
   --tag-color: var(--ink-soft);
   position: relative;
   min-height: 34px;
+  min-width: 44px;
   max-width: 100%;
   padding: 4px 12px;
   border: 2px solid var(--tag-color);

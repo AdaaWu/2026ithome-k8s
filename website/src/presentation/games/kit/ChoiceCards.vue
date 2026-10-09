@@ -17,8 +17,9 @@ const wrong = ref<string[]>([])
 const solved = ref<string | null>(null)
 const answers = computed(() => (Array.isArray(props.answer) ? props.answer : [props.answer]))
 
+// 以選項 id 判斷是否換題，父層每次渲染產生新陣列也不會誤重置
 watch(
-  () => props.options,
+  () => props.options.map((o) => o.id).join('|'),
   () => {
     wrong.value = []
     solved.value = null

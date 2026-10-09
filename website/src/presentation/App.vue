@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useGame } from '@/application/useGame'
 
+const REVEAL_DELAY_MS = 2600
+
+const route = useRoute()
 const router = useRouter()
 const { isRuler } = useGame()
 
-// 第一次達成統治大王時，直接帶去領證書
+// 在圖鑑達成時，先讓玩家看完角色變彩色再帶去證書；在關卡達成時由過關頁的按鈕前往
 watch(isRuler, (now, before) => {
-  if (now && !before) void router.push({ name: 'ruler' })
+  if (!now || before || route.name !== 'codex') return
+  setTimeout(() => {
+    if (route.name === 'codex') void router.push({ name: 'ruler' })
+  }, REVEAL_DELAY_MS)
 })
 </script>
 

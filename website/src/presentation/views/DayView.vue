@@ -105,10 +105,11 @@ const nextDay = computed(() => (props.day < TOTAL_DAYS ? props.day + 1 : null))
       <p v-if="!wasClearedBefore" class="clear__progress">
         關卡進度 {{ game.clearedCount.value }} / {{ game.totalDays }}
       </p>
-      <p class="clear__codex-tip">
+      <p v-if="game.unlockedCount.value < game.totalCharacters" class="clear__codex-tip">
         今天的角色都能在 <RouterLink to="/codex">圖鑑</RouterLink> 裡猜猜看，答對就會變彩色喔
       </p>
       <div class="clear__actions">
+        <RouterLink v-if="game.isRuler.value" to="/ruler" class="btn btn--primary" data-test="claim-ruler">👑 領取統治大王證書</RouterLink>
         <RouterLink v-if="nextDay" :to="`/day/${nextDay}`" class="btn btn--primary" data-test="next-day">前往 Day {{ nextDay }} ›</RouterLink>
         <RouterLink v-else to="/codex" class="btn btn--primary">前往圖鑑 ›</RouterLink>
         <button class="btn" @click="startGame">再玩一次</button>
@@ -262,6 +263,8 @@ const nextDay = computed(() => (props.day < TOTAL_DAYS ? props.day + 1 : null))
 }
 
 .clear__card {
+  position: relative;
+  z-index: 60;
   width: 100%;
   padding: 16px;
 }

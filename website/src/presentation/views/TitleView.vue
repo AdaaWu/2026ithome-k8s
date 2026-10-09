@@ -13,6 +13,9 @@ const returning = computed(() => game.progress.value.nickname !== '')
 const editing = ref(!returning.value)
 const draft = ref(game.progress.value.nickname)
 const canStart = computed(() => normalizeNickname(draft.value).length > 0)
+// 以字元計數，emoji 算一個字，與存檔時的截斷規則一致
+const draftLength = computed(() => Array.from(draft.value.trim()).length)
+const tooLong = computed(() => draftLength.value > NICKNAME_MAX_LENGTH)
 
 // 放在 public/ 的原作插圖，用執行期路徑避免被打包器解析
 const ISLAND_ART = 'art/day-29-01.webp'
@@ -80,12 +83,14 @@ function continueGame() {
           id="nickname"
           v-model="draft"
           class="card__input"
-          :maxlength="NICKNAME_MAX_LENGTH * 2"
           placeholder="輸入暱稱（最多 12 字）"
           autocomplete="nickname"
           enterkeyhint="go"
           @keyup.enter="start"
         />
+        <p class="card__count" :class="{ 'is-over': tooLong }">
+          {{ draftLength }} / {{ NICKNAME_MAX_LENGTH }}<template v-if="tooLong">・超過的字不會存</template>
+        </p>
         <button class="btn btn--primary card__cta" :disabled="!canStart" data-test="start" @click="start">
           登島出發 ⛵
         </button>
@@ -318,6 +323,17 @@ function continueGame() {
   font-size: 1.1rem;
   text-align: center;
   color: var(--ink);
+}
+
+.card__count {
+  margin: -6px 0 0;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.card__count.is-over {
+  color: var(--danger);
 }
 
 .card__input:focus {

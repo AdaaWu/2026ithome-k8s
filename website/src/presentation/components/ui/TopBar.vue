@@ -46,8 +46,8 @@ function toggleMute() {
 
 .topbar__btn,
 .topbar__spacer {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex: none;
 }
 

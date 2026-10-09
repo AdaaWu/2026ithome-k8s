@@ -5,6 +5,7 @@ import { useGame } from '@/application/useGame'
 import { NICKNAME_MAX_LENGTH, normalizeNickname } from '@/domain/progress'
 import { playSfx } from '@/infrastructure/sfx'
 import CharacterSprite from '@/presentation/components/characters/CharacterSprite.vue'
+import AudioToggles from '@/presentation/components/ui/AudioToggles.vue'
 
 const router = useRouter()
 const game = useGame()
@@ -54,6 +55,8 @@ function continueGame() {
       <span class="cloud cloud--3" />
       <span v-for="(s, i) in SPARKS" :key="i" class="spark" :style="{ top: s.top, left: s.left, animationDelay: s.delay }" />
     </div>
+
+    <AudioToggles class="title__audio" />
 
     <header class="title__head">
       <p class="title__series">不囉唆圖解 K8s</p>
@@ -214,6 +217,28 @@ function continueGame() {
   50% {
     opacity: 0.9;
     transform: scale(1);
+  }
+}
+
+.title__audio {
+  position: absolute;
+  z-index: 2;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 10px;
+}
+
+.title__audio :deep(.audio-toggle) {
+  border-color: rgb(255 255 255 / 0.9);
+  background: rgb(255 255 255 / 0.55);
+  backdrop-filter: blur(4px);
+  font-size: 1.05rem;
+  box-shadow: 0 2px 8px rgb(60 90 120 / 0.15);
+}
+
+/* 窄螢幕時標頭讓出右上角的開關 */
+@media (max-width: 380px) {
+  .title {
+    padding-top: calc(60px + env(safe-area-inset-top));
   }
 }
 

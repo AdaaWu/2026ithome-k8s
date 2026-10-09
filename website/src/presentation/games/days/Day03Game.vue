@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onUnmounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { playSfx } from '@/infrastructure/sfx'
 import CharacterSprite from '@/presentation/components/characters/CharacterSprite.vue'
-import { GameShell, HintBubble, KChar, TagChip, useHint, useRounds, type CharFx, type GameStatus } from '../kit'
+import { GameShell, HintBubble, KChar, TagChip, useHint, useRounds, useTimeouts, type CharFx, type GameStatus } from '../kit'
 
 // Day 3 島嶼點點名：看指令選出它查的那一層，最後戳破一顆泡泡看它重生
 const emit = defineEmits<{ complete: [] }>()
@@ -67,7 +67,14 @@ const placeOf = (item: SceneItem) => {
 
 const AHA = '島包樹、樹掛泡泡（Pod）、泡泡（Pod）裝小鳥（Container）。K8s 排程的是整顆泡泡，泡泡破了重吹，島和樹不受影響。'
 
-const shuffle = <T,>(list: T[]) => [...list].sort(() => Math.random() - 0.5)
+function shuffle<T>(list: T[]): T[] {
+  const copy = [...list]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j] as T, copy[i] as T]
+  }
+  return copy
+}
 
 const status = ref<GameStatus>('intro')
 const step = ref<'quiz' | 'egg' | 'reborn'>('quiz')
@@ -84,9 +91,7 @@ const poppedPod = ref<string | null>(null)
 const rebornPod = ref<string | null>(null)
 
 let completed = false
-const timers: Array<ReturnType<typeof setTimeout>> = []
-const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms))
-onUnmounted(() => timers.forEach(clearTimeout))
+const { later } = useTimeouts()
 
 const progress = computed(() => ({
   current: rounds.results.value.filter((r) => r !== null).length,
@@ -123,6 +128,7 @@ function answer(layer: Layer) {
 }
 
 function nextRound() {
+  if (status.value !== 'playing') return
   litLayer.value = null
   missCount.value = 0
   locked.value = false
@@ -136,11 +142,14 @@ function popPod(pod: string) {
   poppedPod.value = pod
   playSfx('pop')
   later(() => {
+    if (status.value !== 'playing') return
     podNames[pod] = `web-${Math.random().toString(36).slice(2, 6)}`
     poppedPod.value = null
     rebornPod.value = pod
     hint.show('新泡泡長回來，島和樹沒動', 'good')
-    later(() => (status.value = 'won'), 1400)
+    later(() => {
+      if (status.value === 'playing') status.value = 'won'
+    }, 1400)
   }, 1000)
 }
 
@@ -217,9 +226,10 @@ function finish() {
 .scene {
   position: relative;
   flex: none;
+  left: 50%;
   width: 340px;
   height: 370px;
-  margin: 8px auto 0;
+  margin: 8px 0 0 -170px;
 }
 
 .scene__item {
@@ -282,10 +292,12 @@ function finish() {
   }
 }
 
-/* 舞台以 340px 為準，窄螢幕等比縮小 */
-@media (max-width: 371px) {
+/* 舞台以 340px 為準，窄螢幕等比縮小並收掉多出的高度 */
+@media (max-width: 375px) {
   .scene {
-    zoom: 0.85;
+    transform: scale(0.82);
+    transform-origin: top center;
+    margin-bottom: -67px;
   }
 }
 </style>

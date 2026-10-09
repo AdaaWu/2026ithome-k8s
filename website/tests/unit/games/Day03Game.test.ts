@@ -47,4 +47,16 @@ describe('Day03Game', () => {
     await wrapper.get('[data-test=shell-finish]').trigger('click')
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
+
+  it('同一題連錯 2 次，正確按鈕才會閃', async () => {
+    const wrapper = mount(Day03Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    const right = ANSWER[wrapper.get('[data-test=question]').text()]
+    const wrong = right === 'bird' ? 'island' : 'bird'
+
+    await wrapper.get(`[data-layer=${wrong}]`).trigger('click')
+    expect(wrapper.get(`[data-layer=${right}]`).classes()).not.toContain('is-flash')
+    await wrapper.get(`[data-layer=${wrong}]`).trigger('click')
+    expect(wrapper.get(`[data-layer=${right}]`).classes()).toContain('is-flash')
+  })
 })

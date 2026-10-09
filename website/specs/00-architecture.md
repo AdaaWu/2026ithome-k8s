@@ -19,7 +19,7 @@
 
 ## 分層
 
-依賴方向只能由外往內：`presentation → application → domain`，`infrastructure` 只實作 domain 定義的介面。
+依賴方向只能由外往內：`presentation → application → domain`。`infrastructure` 放跟瀏覽器打交道的東西（localStorage 存檔、WebAudio 音效），由 application 呼叫存檔、presentation 呼叫音效；domain 不碰瀏覽器。
 
 ```
 src/
@@ -61,6 +61,7 @@ src/
 - `GameShell` 的 intro 只是「準備好了嗎？」覆蓋層：收到 `start` 才把 `status` 設為 `'playing'` 並啟動計時；劇情開場與過關頁由 `DayView` 負責
 - 過關時把 `status` 設為 `'won'`，GameShell 顯示 `aha` 與彩紙；玩家按「收下這一課」觸發 `finish`，Day 元件此時才 `emit('complete')`，並以旗標確保只發一次
 - 失敗時把 `status` 設為 `'lost'`，收到 `retry` 就地重置狀態回 `'playing'`，不重新掛載元件
+- 延遲回呼一律用 kit 的 `useTimeouts`，retry 時先 `clearAll()`，回呼開頭確認仍是 `'playing'`
 - 範本：`games/days/Day03Game.vue`
 
 ## 路由

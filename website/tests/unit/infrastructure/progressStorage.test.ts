@@ -25,3 +25,20 @@ describe('progressStorage', () => {
     expect(loadProgress()).toEqual(createEmptyProgress())
   })
 })
+
+describe('progressStorage 防止壞存檔', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('clearedDays 重複或超出 1–30 時會被清掉', () => {
+    const tampered = { ...createEmptyProgress(), clearedDays: [3, 3, 3, 0, 31, 2.5, 7] }
+    localStorage.setItem(SAVE_KEY, JSON.stringify(tampered))
+    expect(loadProgress().clearedDays).toEqual([3, 7])
+  })
+
+  it('角色清單重複時會去重', () => {
+    const tampered = { ...createEmptyProgress(), seenCharacters: ['bird', 'bird'], unlockedCharacters: ['bird', 'bird'] }
+    localStorage.setItem(SAVE_KEY, JSON.stringify(tampered))
+    expect(loadProgress().unlockedCharacters).toEqual(['bird'])
+    expect(loadProgress().seenCharacters).toEqual(['bird'])
+  })
+})

@@ -1,4 +1,4 @@
-import { createEmptyProgress, type GameProgress } from '@/domain/progress'
+import { createEmptyProgress, markDayCleared, type GameProgress } from '@/domain/progress'
 
 export const SAVE_KEY = 'k8s-cloud-island-save-v1'
 
@@ -17,12 +17,22 @@ function isValidProgress(data: unknown): data is GameProgress {
   )
 }
 
+/** 被手動改過的存檔：Day 只留 1–30 且不重複，角色去重 */
+function sanitize(data: GameProgress): GameProgress {
+  const clean = data.clearedDays.reduce(markDayCleared, { ...data, clearedDays: [] })
+  return {
+    ...clean,
+    seenCharacters: [...new Set(data.seenCharacters)],
+    unlockedCharacters: [...new Set(data.unlockedCharacters)],
+  }
+}
+
 export function loadProgress(): GameProgress {
   try {
     const raw = localStorage.getItem(SAVE_KEY)
     if (!raw) return createEmptyProgress()
     const data: unknown = JSON.parse(raw)
-    return isValidProgress(data) ? data : createEmptyProgress()
+    return isValidProgress(data) ? sanitize(data) : createEmptyProgress()
   } catch {
     return createEmptyProgress()
   }

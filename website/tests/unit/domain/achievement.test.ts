@@ -45,3 +45,10 @@ describe('getTitle', () => {
     expect(RULER_TITLE).toBe('K8s 雲之島統治大王')
   })
 })
+
+describe('isIslandRuler 防止重複 Day 灌水', () => {
+  it('30 個重複的 Day 不算全破', () => {
+    const p = progressWith({ clearedDays: Array(30).fill(1), seenCharacters: ALL, unlockedCharacters: ALL })
+    expect(isIslandRuler(p, ALL)).toBe(false)
+  })
+})

@@ -34,6 +34,7 @@ src/
   infrastructure/   外部世界轉接
     progressStorage.ts  localStorage 存檔
     sfx.ts              WebAudio 合成音效
+    audio/              背景音樂：共用 AudioContext、音色、排程引擎與樂譜資料
   application/      用例層，把 domain 規則包成 Vue 可用的狀態
     useGame.ts        全域遊戲狀態與動作
   presentation/     畫面

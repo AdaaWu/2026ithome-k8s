@@ -16,7 +16,7 @@ const COLOR: Record<ChipColor, string> = {
   blue: 'var(--sky-deep)',
   green: 'var(--leaf-deep)',
   yellow: 'var(--gold)',
-  purple: '#a58bc9',
+  purple: 'var(--purple)',
   gray: 'var(--ink-soft)',
 }
 

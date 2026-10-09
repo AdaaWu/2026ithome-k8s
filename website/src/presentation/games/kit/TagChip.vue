@@ -96,6 +96,6 @@ const emit = defineEmits<{ tap: [] }>()
 
 /* tokens 沒有紫色，僅此處使用 */
 .tag--purple {
-  --tag-color: #a58bc9;
+  --tag-color: var(--purple);
 }
 </style>

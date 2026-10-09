@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useGame } from '@/application/useGame'
+import { isSceneId, playScene } from '@/infrastructure/audio/bgm'
 import TitleView from '@/presentation/views/TitleView.vue'
 
 const router = createRouter({
@@ -19,6 +20,11 @@ const router = createRouter({
 router.beforeEach((to) => {
   const { progress } = useGame()
   if (to.name !== 'title' && !progress.value.nickname) return { name: 'title' }
+})
+
+// 路由名稱與音樂場景同名，換頁即換曲
+router.afterEach((to) => {
+  if (isSceneId(to.name)) playScene(to.name)
 })
 
 export default router

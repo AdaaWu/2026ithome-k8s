@@ -1,5 +1,6 @@
 import { defineAsyncComponent, type Component } from 'vue'
 import FallbackGame from './FallbackGame.vue'
+import LoadError from './LoadError.vue'
 
 // 每日小遊戲自動註冊：days/Day03Game.vue → 3
 const loaders = import.meta.glob<{ default: Component }>('./days/Day*Game.vue')
@@ -16,5 +17,5 @@ export function hasCustomGame(day: number): boolean {
 
 export function resolveDayGame(day: number): Component {
   const loader = byDay.get(day)
-  return loader ? defineAsyncComponent(loader) : FallbackGame
+  return loader ? defineAsyncComponent({ loader, errorComponent: LoadError }) : FallbackGame
 }

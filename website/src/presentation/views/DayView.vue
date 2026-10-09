@@ -117,9 +117,14 @@ const nextDay = computed(() => (props.day < TOTAL_DAYS ? props.day + 1 : null))
     </section>
   </div>
 
-  <div v-else class="page">
+  <div v-else class="missing-day">
     <TopBar title="找不到這一天" back="/map" />
-    <p>這座島上沒有 Day {{ day }}，回地圖看看吧。</p>
+    <section class="page missing-day__body">
+      <CharacterSprite id="owl" :size="120" bob />
+      <h2>這座島上沒有 Day {{ day }}</h2>
+      <p>貓頭鷹數了三遍，只找到 Day 1 到 Day {{ TOTAL_DAYS }}。</p>
+      <RouterLink to="/map" class="btn btn--primary">回雲之島地圖</RouterLink>
+    </section>
   </div>
 </template>
 
@@ -295,5 +300,19 @@ const nextDay = computed(() => (props.day < TOTAL_DAYS ? props.day + 1 : null))
 
 .clear__actions .btn {
   text-decoration: none;
+}
+
+.missing-day__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 40px;
+  text-align: center;
+}
+
+.missing-day__body p {
+  margin: 0;
+  color: var(--ink-soft);
 }
 </style>

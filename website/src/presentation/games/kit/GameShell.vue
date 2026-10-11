@@ -201,4 +201,82 @@ function press(event: 'start' | 'retry') {
 .shell__btn {
   width: 100%;
 }
+
+/* 平板以上：舞台維持 360px 設計整塊等比放大，覆蓋層不放大 */
+@media (min-width: 768px) {
+  .shell {
+    --shell-zoom: 1.15;
+    max-width: calc(360px * var(--shell-zoom));
+    gap: calc(var(--space-2) * var(--shell-zoom));
+  }
+
+  .shell__top,
+  .shell__stage,
+  .shell__controls {
+    zoom: var(--shell-zoom);
+  }
+
+  /* 舞台最小高度先除回放大倍率，避免放大後舞台過高 */
+  .shell__stage {
+    min-height: clamp(400px, calc(62dvh / var(--shell-zoom)), 520px);
+    box-shadow:
+      0 2px 0 rgba(107, 79, 58, 0.08),
+      0 18px 36px -14px rgba(107, 79, 58, 0.38);
+  }
+
+  .shell__overlay {
+    padding: var(--space-6);
+  }
+
+  .shell__card {
+    width: min(100%, 440px);
+    padding: var(--space-6) var(--space-5);
+    gap: var(--space-4);
+  }
+
+  .shell__eyebrow {
+    font-size: 1.5rem;
+  }
+
+  .shell__title {
+    font-size: 1.75rem;
+  }
+
+  .shell__text,
+  .shell__aha {
+    font-size: 1.1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    --shell-zoom: 1.3;
+  }
+}
+
+/* 依視窗高度分級，最高的關卡在一屏內也能看到舞台與控制列 */
+@media (min-width: 1024px) and (max-height: 929px) {
+  .shell {
+    --shell-zoom: 1.2;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 869px) {
+  .shell {
+    --shell-zoom: 1.1;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 799px) {
+  .shell {
+    --shell-zoom: 1;
+  }
+}
+
+/* 夠高的大螢幕才放到上限 */
+@media (min-width: 1024px) and (min-height: 1000px) {
+  .shell {
+    --shell-zoom: 1.4;
+  }
+}
 </style>

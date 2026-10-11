@@ -6,7 +6,7 @@
       {
         "id": "9f32b9570d1fd8a5",
         "type": "tabs",
-        "dimension": 82.96529968454259,
+        "dimension": 54.73186119873817,
         "children": [
           {
             "id": "0a2bdc1ac64e03cd",
@@ -14,12 +14,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "day-27.md",
+                "file": "day-30.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "day-27"
+              "title": "day-30"
             }
           },
           {
@@ -41,7 +41,7 @@
       {
         "id": "aceea52c38913ad0",
         "type": "tabs",
-        "dimension": 17.034700315457414,
+        "dimension": 45.268138801261834,
         "children": [
           {
             "id": "798b1403f84ac638",
@@ -49,12 +49,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "day-26.md",
+                "file": "day-29.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "day-26"
+              "title": "day-29"
             }
           }
         ]
@@ -209,11 +209,15 @@
   },
   "active": "0a2bdc1ac64e03cd",
   "lastOpenFiles": [
+    "illustrations/day-29-diagram.svg",
+    "day-29.md",
+    "day-30.md",
+    "day-28.md",
     "day-26.md",
+    "day-27.md",
     "day-25.md",
     "day-24.md",
     "k8s-series-tasks.md",
-    "day-29.md",
     "Pasted image 20261007014247.png",
     "k8s-series-spec.md",
     "day-22.md",
@@ -229,13 +233,9 @@
     "day-13.md",
     "day-12.md",
     "day-11.md",
-    "day-30.md",
-    "day-27.md",
     "day-10.md",
     "day-09.md",
     "day-08.md",
-    "day-05.md",
-    "day-03.md",
     "illustrations/day-30-diagram.png",
     "illustrations/day-29-diagram.png",
     "illustrations/day-28-diagram.png",

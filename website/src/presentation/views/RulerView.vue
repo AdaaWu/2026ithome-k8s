@@ -148,4 +148,75 @@ onMounted(() => {
   text-decoration: none;
   font-size: 0.85rem;
 }
+
+/* 平板以上：證書變成橫式獎狀，最寬 640px 置中 */
+@media (min-width: 768px) {
+  .ruler > .page {
+    max-width: calc(640px + 48px);
+    margin: 0 auto;
+  }
+
+  .cert {
+    padding: 40px 48px 28px;
+    border-width: 6px;
+    outline: 2px solid var(--gold);
+    outline-offset: -14px;
+    box-shadow: var(--shadow-pop);
+  }
+
+  .cert__crown {
+    font-size: 4rem;
+  }
+
+  .cert__name {
+    font-size: clamp(2.4rem, 1.6rem + 2vw, 3.2rem);
+  }
+
+  .cert__body {
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .cert__title {
+    font-size: 1.45rem;
+    padding: 10px 28px;
+  }
+
+  .cert__date {
+    margin-top: 20px;
+  }
+
+  .cert__parade {
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding-top: 10px;
+    border-top: 1.5px dashed var(--ink-soft);
+  }
+
+  .cert__parade > :deep(.sprite) {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .ruler__tip {
+    margin: 20px 0 12px;
+  }
+
+  .ruler__back {
+    display: flex;
+    width: fit-content;
+    min-width: 240px;
+    margin: 0 auto;
+  }
+
+  .cert--locked {
+    padding: 36px 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ruler > .page {
+    max-width: calc(640px + 64px);
+  }
+}
 </style>

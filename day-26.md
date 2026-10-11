@@ -1,23 +1,24 @@
-# Day 26：自動調節旋鈕（HPA），碼頭排隊了就調高期望數量
+# Day 26：自動調節旋鈕 HPA，碼頭排隊了就調高期望數量
 
 
-## 痛點
+## HPA 做什麼
 
 流量尖峰在半夜三點來，不可能守在電腦前面打 `kubectl scale`。
 而白天沒人的時候，那些閒置的泡泡（Pod）還在燒錢。
 
 ![day-26-01](illustrations/day-26-01.png)
-碼頭邊排著長長的人龍，自動調節旋鈕（HPA）把部署管家（Deployment）手上的期望副本數調高，右側的控制器再補出一顆新泡泡（Pod）。
+碼頭邊排著長長的人龍，自動調節旋鈕（HPA）把部署管家（Deployment）手上的期望副本數調高，右側的控制器再補出一顆新泡泡（Pod），旋鈕轉的正是期望副本數
 
 
 ## 旋鈕轉的是期望副本數
 
 ![day-26-diagram](illustrations/day-26-diagram.png)
 
-昨天畫的飯碗水位線，今天終於有第二個用途。
+昨天畫的 **Resource Request（資源請求水位線，代表程式跟系統保證需要的最低資源）**，也有第二個用途。
 
 **自動調節旋鈕（HPA）做的事情，是根據指標調整目標工作負載的期望副本數。**
-它盯著現有泡泡（Pod）的資源使用率，跟設定的目標值比一比，修改 Deployment 或 StatefulSet 的 `replicas`；接著由 ReplicaSet 或 StatefulSet 控制器建立、刪除 Pod。
+
+它盯著現有 **Pod** 的資源使用率，跟設定的目標值比一比，修改 **Deployment** 或 `StatefulSet` 的 `replicas`；接著由 `ReplicaSet` 或 `StatefulSet` 控制器建立、刪除 Pod。
 HPA 不直接建立 Pod。
 
 注意這個關鍵字：**使用率**。自動調節旋鈕（HPA）算的是這個：
@@ -25,7 +26,7 @@ HPA 不直接建立 Pod。
 **實際用量 ÷ Request = 使用率**
 
 看清楚分母，**是 Request；Limit 不作為這個公式的分母**。
-昨天那條下面的線，今天變成了自動調節旋鈕（HPA）的計算基準。
+下面那條 Request 線（資源請求），就是自動調節旋鈕（HPA）的計算基準；上面那條 Limit 線（資源上限）不參與計算。
 
 這也帶出一個直接的後果：**使用 CPU／記憶體 utilization 指標時，沒設 Request 的泡泡（Pod）通常無法計算使用率**，分母是零，算不出來，目標值那欄會顯示 `<unknown>`。
 
@@ -53,11 +54,10 @@ HPA 不直接建立 Pod。
 這叫穩定窗口，目的是防止流量一抖動就瘋狂擴縮，那比不擴容還糟。
 
 所以 HPA 適合處理持續一段時間的負載變化，瞬間尖峰仍要靠預留容量、佇列或其他流量控制策略。
-這類尖峰要靠事先保留容量、佇列或其他流量控制策略。
 
 ## 動手 5 分鐘
 
-昨天我們畫好了飯碗的線、也裝好了 metrics-server。今天裝自動調節旋鈕（HPA），然後灌流量給它看。
+昨天我們畫好了資源**Resource Request**、也裝好了 metrics-server。接下來會裝自動調節旋鈕（HPA），然後灌流量給它看。
 
 先確認 metrics-server 還活著：
 
@@ -90,7 +90,7 @@ spec:
           averageUtilization: 50
 ```
 
-`scaleTargetRef` 是「我要調整哪個部署管家（Deployment）」。`minReplicas` / `maxReplicas` 是上下界 ── **實務上應該設 max，避免流量異常讓副本數無限制成長並放大成本。**
+`scaleTargetRef` 是「我要調整哪個部署管家（Deployment）」。`minReplicas` / `maxReplicas` 是上下界 ，**`maxReplicas` 是必填欄位，數值要依成本上限推算，避免流量異常時副本數衝太高。**
 
 ```bash
 kubectl apply -f hello-hpa.yaml
@@ -105,7 +105,7 @@ kubectl get hpa
 
 變成 `0%/50%`、REPLICAS 是 3。沒流量，什麼都不用做。
 
-**現在灌流量。** 開一顆一直打你柱子（Service）的泡泡（Pod）：
+**現在灌流量。** 開一顆一直打 Service 的 Pod：
 
 ```bash
 kubectl run load-gen --image=busybox:1.36 -- sh -c "while true; do wget -q -O- http://hello > /dev/null; done"
@@ -160,13 +160,21 @@ TARGETS 幾乎立刻掉回 `0%/50%`，但 **REPLICAS 卡在 6 不動**。等五�
 
 最後提醒一個常被忘記的搭配問題：**HPA 和 Deployment 的 `replicas` 會打架。**
 
-你的 `hello-deployment.yaml` 裡還寫著 `replicas: 3`。現在自動調節旋鈕（HPA）把它調成 6，你如果手滑再 apply 一次那個檔案，數字會被拉回 3，然後自動調節旋鈕（HPA）又把它推上去 ── 兩邊互相覆蓋。
+你的 `hello-deployment.yaml` 裡還寫著 `replicas: 3`。現在自動調節旋鈕（HPA）把它調成 6，你如果手滑再 apply 一次那個檔案，數字會被拉回 3，然後自動調節旋鈕（HPA）又把它推上去，兩邊互相覆蓋。
 
-正確做法是：**服務交給 HPA 管之後，就把 Deployment 裡的 `replicas` 那一行刪掉。** 沒寫的話 K8s 不會去動現有的數量，自動調節旋鈕（HPA）說了算。
+正確做法是：**服務交給 HPA 管之後，就把 Deployment 裡的 `replicas` 那一行刪掉。** 之後 apply 就不會再去動數量，自動調節旋鈕（HPA）說了算。
 
-## 帶走一句話
+但刪之前要先做一步：`kubectl apply` 會記住上次 apply 的內容，檔案裡少了 `replicas`，它會當成「你要刪掉這個欄位」，數量直接退回預設的 1 顆。所以先把紀錄裡的 `replicas` 拿掉，再改檔案：
 
-**HPA 看的是用量除以 Request，調整的是期望副本數；真正增減 Pod 的是工作負載控制器。**
+```bash
+kubectl apply edit-last-applied deployment/hello
+```
+
+在跳出的編輯器裡刪掉 `replicas: 3` 那行、存檔，接著才從 `hello-deployment.yaml` 刪掉同一行。
+
+## 小結
+
+**HPA 看的是用量除以 Request （資源請求）**，調整的是期望副本數；真正增減 Pod 的是工作負載控制器。
 
 ## 參考資源
 

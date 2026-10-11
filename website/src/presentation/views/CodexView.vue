@@ -374,4 +374,153 @@ const activeUnlocked = computed(() => (active.value ? game.isUnlocked(active.val
 .sheet-leave-to .sheet {
   transform: translateY(100%);
 }
+
+/* 平板：內容 720px 置中，網格 6 欄讓 6 人分組剛好一排；影子題改成置中對話框 */
+@media (min-width: 768px) {
+  .codex > .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding-top: 24px;
+  }
+
+  .codex__head {
+    padding: 16px 24px;
+  }
+
+  .group {
+    margin-top: 28px;
+  }
+
+  .group__name {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+
+  .cell {
+    padding: 14px 6px 10px;
+  }
+
+  .cell > :deep(.sprite) {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .cell__name {
+    font-size: 0.9rem;
+  }
+
+  .overlay {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .sheet {
+    max-width: 520px;
+    max-height: 86dvh;
+    padding: 28px 32px 28px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-pop);
+  }
+
+  .sheet__portrait {
+    width: 200px;
+    height: 200px;
+  }
+
+  .sheet__portrait > :deep(.sprite) {
+    width: 160px !important;
+    height: 160px !important;
+  }
+
+  .sheet__portrait.is-reveal {
+    animation: reveal-wide 1.1s ease-out;
+  }
+
+  .options {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sheet__debut img {
+    width: 128px;
+  }
+
+  .sheet-enter-from .sheet,
+  .sheet-leave-to .sheet {
+    transform: translateY(24px) scale(0.92);
+  }
+}
+
+/* 桌機：內容 1120px 置中，網格 8 欄，最大分組剛好一排 */
+@media (min-width: 1024px) {
+  .codex > .page {
+    max-width: 1120px;
+    padding: 32px 32px 64px;
+  }
+
+  .codex__head {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .group {
+    margin-top: 36px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(8, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) and (hover: hover) {
+  .cell {
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .cell:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-pop);
+  }
+
+  .cell:active {
+    transform: scale(0.95);
+  }
+}
+
+/* 對話框比手機面板寬，揭曉光圈放大，再補一圈柔和的金色餘暉 */
+@media (min-width: 768px) {
+  @keyframes reveal-wide {
+    0% {
+      box-shadow:
+        0 0 0 0 rgb(246 201 69 / 0.9),
+        0 0 0 0 rgb(240 138 36 / 0.5);
+      transform: scale(0.85);
+    }
+    55% {
+      box-shadow:
+        0 0 0 44px rgb(246 201 69 / 0),
+        0 0 0 18px rgb(240 138 36 / 0.25);
+      transform: scale(1.1);
+    }
+    100% {
+      box-shadow:
+        0 0 0 44px rgb(246 201 69 / 0),
+        0 0 0 30px rgb(240 138 36 / 0);
+      transform: scale(1);
+    }
+  }
+}
+
+/* 桌機補足點擊目標尺寸 */
+@media (min-width: 768px) {
+  .sheet__close {
+    width: 44px;
+    height: 44px;
+  }
+}
 </style>

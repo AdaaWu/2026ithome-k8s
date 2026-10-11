@@ -28,6 +28,13 @@ body {
   position: relative;
 }
 
+/* 平板以上由各頁面自己的容器決定內容寬度，背景才能滿版 */
+@media (min-width: 768px) {
+  #app {
+    max-width: none;
+  }
+}
+
 h1,
 h2,
 h3 {
@@ -110,6 +117,30 @@ a.btn--primary {
 
 .page {
   padding: 16px 16px calc(32px + env(safe-area-inset-bottom));
+}
+
+/* 平板以上：滿版天空加淡淡雲影，所有頁面共用同一片天空 */
+@media (min-width: 768px) {
+  body {
+    background:
+      radial-gradient(ellipse 460px 120px at 8% 18%, color-mix(in srgb, var(--cloud) 90%, transparent), transparent 70%),
+      radial-gradient(ellipse 360px 100px at 92% 30%, color-mix(in srgb, var(--cloud) 85%, transparent), transparent 70%),
+      radial-gradient(ellipse 560px 150px at 88% 80%, color-mix(in srgb, var(--cloud) 80%, transparent), transparent 70%),
+      radial-gradient(ellipse 400px 110px at 5% 66%, color-mix(in srgb, var(--cloud) 75%, transparent), transparent 70%),
+      linear-gradient(180deg, var(--sky) 0%, color-mix(in srgb, var(--sky) 55%, var(--cloud)) 60%, var(--cloud) 100%);
+    background-color: var(--sky);
+    background-attachment: fixed;
+  }
+
+  .page {
+    padding: 24px 24px calc(40px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    padding: 32px 32px calc(48px + env(safe-area-inset-bottom));
+  }
 }
 
 @keyframes bob {

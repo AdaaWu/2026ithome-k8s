@@ -33,72 +33,81 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
   <div class="map">
     <TopBar title="雲之島地圖" back="/" />
 
-    <section class="hud paper">
-      <div class="hud__who">
-        <CharacterSprite id="bird" :size="52" bob />
-        <div>
-          <p class="hud__name">{{ game.progress.value.nickname }}</p>
-          <span class="chip" :class="{ 'chip--gold': game.isRuler.value }" data-test="title">{{ game.title.value }}</span>
+    <!-- 桌機左右兩欄用的容器，手機版沒有樣式 -->
+    <div class="map__body">
+      <aside class="map__side">
+        <section class="hud paper">
+          <div class="hud__who">
+            <CharacterSprite id="bird" :size="52" bob />
+            <div>
+              <p class="hud__name">{{ game.progress.value.nickname }}</p>
+              <span class="chip" :class="{ 'chip--gold': game.isRuler.value }" data-test="title">{{ game.title.value }}</span>
+            </div>
+          </div>
+          <div class="hud__bars">
+            <label>
+              關卡 {{ game.clearedCount.value }}/{{ game.totalDays }}
+              <span class="bar"><i :style="{ width: `${dayPercent}%` }" /></span>
+            </label>
+            <label>
+              圖鑑 {{ game.unlockedCount.value }}/{{ game.totalCharacters }}
+              <span class="bar bar--codex"><i :style="{ width: `${codexPercent}%` }" /></span>
+            </label>
+          </div>
+          <RouterLink v-if="game.isRuler.value" to="/ruler" class="btn btn--primary hud__ruler">👑 查看統治大王證書</RouterLink>
+          <p v-else class="hud__goal">目標：破完 30 關，並在圖鑑答對全部角色，成為「K8s 雲之島統治大王」</p>
+        </section>
+
+        <RouterLink to="/codex" class="codex-shortcut paper" data-test="codex-link">
+          <span class="codex-shortcut__icons">
+            <CharacterSprite id="owl" :size="40" silhouette />
+            <CharacterSprite id="totem" :size="40" silhouette />
+            <CharacterSprite id="squirrel" :size="40" silhouette />
+          </span>
+          <span>
+            <strong>Day {{ CODEX_DAY }}・角色圖鑑</strong>
+            <small>猜出影子是誰，讓角色恢復色彩</small>
+          </span>
+          <span class="codex-shortcut__arrow">›</span>
+        </RouterLink>
+      </aside>
+
+      <div class="map__main">
+        <div class="map__acts">
+          <section v-for="act in acts" :key="act.id" class="act">
+            <h2 class="act__name">{{ act.name }}</h2>
+            <ol class="path">
+              <li v-for="level in act.levels" :key="level.day" class="node" :style="{ '--offset': offsetOf(level.day) }">
+                <RouterLink
+                  :to="`/day/${level.day}`"
+                  class="node__link"
+                  :class="{ 'is-cleared': game.isDayCleared(level.day), 'is-next': level.day === nextDay }"
+                  :data-test="`day-${level.day}`"
+                >
+                  <span class="node__disc">
+                    <img :src="level.image" alt="" loading="lazy" />
+                    <b>{{ level.day }}</b>
+                    <span v-if="game.isDayCleared(level.day)" class="node__stamp">✓</span>
+                  </span>
+                  <span class="node__label">
+                    <small>{{ level.concept }}</small>
+                    {{ shortTitle(level.title) }}
+                  </span>
+                </RouterLink>
+              </li>
+            </ol>
+          </section>
         </div>
+
+        <RouterLink to="/codex" class="finale paper">
+          <CharacterSprite id="island" :size="72" bob />
+          <span>
+            <strong>Day {{ CODEX_DAY }}：角色圖鑑</strong>
+            <small>{{ game.unlockedCount.value }} / {{ game.totalCharacters }} 位角色已現身</small>
+          </span>
+        </RouterLink>
       </div>
-      <div class="hud__bars">
-        <label>
-          關卡 {{ game.clearedCount.value }}/{{ game.totalDays }}
-          <span class="bar"><i :style="{ width: `${dayPercent}%` }" /></span>
-        </label>
-        <label>
-          圖鑑 {{ game.unlockedCount.value }}/{{ game.totalCharacters }}
-          <span class="bar bar--codex"><i :style="{ width: `${codexPercent}%` }" /></span>
-        </label>
-      </div>
-      <RouterLink v-if="game.isRuler.value" to="/ruler" class="btn btn--primary hud__ruler">👑 查看統治大王證書</RouterLink>
-      <p v-else class="hud__goal">目標：破完 30 關，並在圖鑑答對全部角色，成為「K8s 雲之島統治大王」</p>
-    </section>
-
-    <RouterLink to="/codex" class="codex-shortcut paper" data-test="codex-link">
-      <span class="codex-shortcut__icons">
-        <CharacterSprite id="owl" :size="40" silhouette />
-        <CharacterSprite id="totem" :size="40" silhouette />
-        <CharacterSprite id="squirrel" :size="40" silhouette />
-      </span>
-      <span>
-        <strong>Day {{ CODEX_DAY }}・角色圖鑑</strong>
-        <small>猜出影子是誰，讓角色恢復色彩</small>
-      </span>
-      <span class="codex-shortcut__arrow">›</span>
-    </RouterLink>
-
-    <section v-for="act in acts" :key="act.id" class="act">
-      <h2 class="act__name">{{ act.name }}</h2>
-      <ol class="path">
-        <li v-for="level in act.levels" :key="level.day" class="node" :style="{ '--offset': offsetOf(level.day) }">
-          <RouterLink
-            :to="`/day/${level.day}`"
-            class="node__link"
-            :class="{ 'is-cleared': game.isDayCleared(level.day), 'is-next': level.day === nextDay }"
-            :data-test="`day-${level.day}`"
-          >
-            <span class="node__disc">
-              <img :src="level.image" alt="" loading="lazy" />
-              <b>{{ level.day }}</b>
-              <span v-if="game.isDayCleared(level.day)" class="node__stamp">✓</span>
-            </span>
-            <span class="node__label">
-              <small>{{ level.concept }}</small>
-              {{ shortTitle(level.title) }}
-            </span>
-          </RouterLink>
-        </li>
-      </ol>
-    </section>
-
-    <RouterLink to="/codex" class="finale paper">
-      <CharacterSprite id="island" :size="72" bob />
-      <span>
-        <strong>Day {{ CODEX_DAY }}：角色圖鑑</strong>
-        <small>{{ game.unlockedCount.value }} / {{ game.totalCharacters }} 位角色已現身</small>
-      </span>
-    </RouterLink>
+    </div>
   </div>
 </template>
 
@@ -357,5 +366,178 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
 .finale {
   margin-top: 28px;
   background: linear-gradient(135deg, var(--paper), var(--accent-soft));
+}
+
+/* 平板：單欄置中，最寬 720px */
+@media (min-width: 768px) {
+  .map__body {
+    max-width: calc(720px + 48px);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .hud {
+    margin: 24px 0 12px;
+  }
+
+  .codex-shortcut {
+    margin: 0;
+  }
+
+  .act__name {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .path {
+    padding: 0;
+  }
+
+  .finale {
+    margin: 28px 0 0;
+  }
+}
+
+/* 桌機：左側固定玩家資訊欄，右側幕卡片兩兩一列（Z 字順序），同列等高 */
+@media (min-width: 1024px) {
+  .map__body {
+    max-width: calc(1120px + 64px);
+    padding: 32px 32px 0;
+    display: grid;
+    grid-template-columns: 288px minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+
+  .map__side {
+    position: sticky;
+    top: 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .hud,
+  .codex-shortcut {
+    margin: 0;
+  }
+
+  .hud {
+    padding: 20px;
+    gap: 14px;
+  }
+
+  .hud__name {
+    font-size: 1.35rem;
+  }
+
+  .hud__bars {
+    gap: 10px;
+    font-size: 0.95rem;
+  }
+
+  .bar {
+    height: 12px;
+  }
+
+  .hud__goal {
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+
+  .codex-shortcut {
+    padding: 14px 16px;
+  }
+
+  /* 第五幕跨兩列，第六幕與終點卡疊在它右邊，三列高度一致 */
+  .map__main {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .map__acts {
+    display: contents;
+  }
+
+  .act {
+    margin: 0;
+    padding: 18px 16px 14px;
+    background: color-mix(in srgb, var(--paper) 55%, transparent);
+    border: 2px dashed color-mix(in srgb, var(--ink-soft) 45%, transparent);
+    border-radius: var(--radius-lg);
+  }
+
+  .act:nth-child(5) {
+    grid-row: 3 / span 2;
+  }
+
+  .act__name {
+    margin: 0 0 10px;
+    font-size: 1.1rem;
+  }
+
+  .path {
+    padding: 0;
+  }
+
+  /* 卡片較窄，蛇行幅度收小，長標題才不會折太多行 */
+  .node {
+    padding-left: calc(var(--offset) * 0.35);
+    margin: 6px 0;
+  }
+
+  .node + .node::before {
+    top: -16px;
+    left: calc(var(--offset) * 0.35 + 44px);
+    height: 26px;
+  }
+
+  .node__disc {
+    width: 80px;
+    height: 80px;
+  }
+
+  .node__label {
+    font-size: 1.02rem;
+    text-wrap: pretty;
+  }
+
+  .node__label small {
+    font-size: 0.78rem;
+  }
+
+  .finale {
+    grid-column: 2;
+    grid-row: 4;
+    align-self: end;
+    margin: 0;
+    padding: 16px 20px;
+  }
+}
+
+@media (min-width: 1024px) and (hover: hover) {
+  .node__link {
+    transition: background-color 0.15s;
+  }
+
+  .node__link:hover {
+    background: color-mix(in srgb, var(--cloud) 70%, transparent);
+  }
+
+  .node__link:hover .node__disc {
+    transform: translateY(-2px);
+  }
+
+  .codex-shortcut,
+  .finale {
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .codex-shortcut:hover,
+  .finale:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-pop);
+  }
 }
 </style>

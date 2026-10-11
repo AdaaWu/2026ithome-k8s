@@ -318,4 +318,200 @@ const nextDay = computed(() => (props.day < TOTAL_DAYS ? props.day + 1 : null))
   margin: 0;
   color: var(--ink-soft);
 }
+
+/* 平板：內容 720px 置中；過關與找不到頁收成最寬 640px 的置中卡片 */
+@media (min-width: 768px) {
+  .intro,
+  .play {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .intro {
+    gap: 18px;
+  }
+
+  .intro__title {
+    font-size: clamp(1.5rem, 1rem + 1.2vw, 2.1rem);
+  }
+
+  .intro__story {
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .intro__cast {
+    gap: 16px;
+  }
+
+  .intro__actor > :deep(.sprite) {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .intro__actor {
+    font-size: 0.82rem;
+  }
+
+  .mission {
+    padding: 20px 24px;
+  }
+
+  .mission__go {
+    width: auto;
+    min-width: 240px;
+  }
+
+  .play__head h2 {
+    font-size: 1.5rem;
+  }
+
+  .play__head p {
+    font-size: 1rem;
+  }
+
+  .clear {
+    max-width: calc(640px + 48px);
+    margin: 0 auto;
+  }
+
+  .missing-day__body {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .clear {
+    padding-top: 48px;
+    gap: 20px;
+  }
+
+  .clear__card {
+    padding: 24px 32px;
+  }
+
+  .clear__takeaway {
+    font-size: 1.5rem;
+  }
+
+  .clear__actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .clear__actions > .btn--primary {
+    grid-column: 1 / -1;
+  }
+
+  .missing-day__body {
+    margin-top: 48px;
+    padding: 40px 32px;
+    gap: 16px;
+    background: var(--paper) var(--paper-texture);
+    border: 2px solid var(--ink-soft);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+  }
+}
+
+/* 桌機：開場改成左圖右文，遊戲中外框放寬到 1120px 讓舞台自己決定寬度 */
+@media (min-width: 1024px) {
+  .intro,
+  .play {
+    max-width: calc(1120px + 64px);
+    padding: 32px 32px 64px;
+  }
+
+  .clear {
+    max-width: calc(640px + 64px);
+  }
+
+  /* 開場整塊在第一屏垂直置中，右欄文字對齊插圖中線，大螢幕下方才不會空一大片 */
+  .intro {
+    min-height: calc(100dvh - 70px);
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-rows: 1fr auto auto auto auto auto 1fr;
+    grid-template-areas:
+      'art .'
+      'art act'
+      'art title'
+      'art story'
+      'art cast'
+      'art mission'
+      'art .';
+    align-content: center;
+    column-gap: 40px;
+    row-gap: 14px;
+    align-items: start;
+  }
+
+  .intro__act {
+    grid-area: act;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+  }
+
+  .intro__title {
+    grid-area: title;
+  }
+
+  .intro__art {
+    grid-area: art;
+    align-self: center;
+    position: sticky;
+    top: 88px;
+    padding: 8px;
+    box-shadow: var(--shadow-pop);
+  }
+
+  .intro__art img {
+    aspect-ratio: 4 / 3;
+  }
+
+  .intro__story {
+    grid-area: story;
+  }
+
+  .intro__cast {
+    grid-area: cast;
+    justify-content: flex-start;
+    gap: 8px 10px;
+  }
+
+  .intro__actor > :deep(.sprite) {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  .mission {
+    grid-area: mission;
+    margin-top: 6px;
+  }
+
+  .mission__go {
+    width: 100%;
+  }
+
+  /* 遊戲中：標題與玩法說明移到舞台左側，省下垂直空間給舞台與控制列 */
+  .play {
+    padding-bottom: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 504px) minmax(0, 1fr);
+    column-gap: 32px;
+    align-items: start;
+  }
+
+  .play__head {
+    grid-column: 1;
+    justify-self: end;
+    max-width: 260px;
+    padding-top: 40px;
+    text-align: right;
+    text-wrap: pretty;
+  }
+
+  .play__stage {
+    grid-column: 2;
+    min-height: 0;
+  }
+}
 </style>

@@ -56,4 +56,30 @@ defineProps<{ title?: string; back?: string }>()
   text-decoration: none;
   color: var(--ink);
 }
+
+/* 平板以上：列本身滿版，內容對齊頁面內容容器的左右邊 */
+@media (min-width: 768px) {
+  .topbar {
+    padding: calc(12px + env(safe-area-inset-top)) max(24px, calc((100% - 720px) / 2)) 12px;
+    background: color-mix(in srgb, var(--sky) 70%, transparent);
+    border-bottom: 1.5px solid color-mix(in srgb, var(--ink-soft) 25%, transparent);
+  }
+
+  .topbar__title {
+    font-size: clamp(1.15rem, 0.8rem + 0.7vw, 1.45rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .topbar {
+    padding-left: max(32px, calc((100% - 1120px) / 2));
+    padding-right: max(32px, calc((100% - 1120px) / 2));
+  }
+}
+
+@media (min-width: 1024px) and (hover: hover) {
+  .topbar__btn:hover {
+    border-color: var(--ink);
+  }
+}
 </style>

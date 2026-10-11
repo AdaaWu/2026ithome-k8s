@@ -26,3 +26,6 @@ dist-ssr
 # playwright
 /test-results/
 /playwright-report/
+/.pw-dist-*/
+/tests/visual/.font-cache/
+/.pw-results-*/

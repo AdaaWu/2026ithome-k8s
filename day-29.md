@@ -47,17 +47,20 @@
 
 ## 五條線：從宣告到執行
 
-![Kubernetes 控制面、網路流量與儲存關係圖](illustrations/day-29-diagram.svg)
+## ① **狀態調和圖（控制面與執行面）**
 
-這張圖把關係分成四種：藍線表示控制面與狀態更新、橘線表示網路流量、灰色虛線表示 API 物件引用或關聯、綠線表示持久化資料讀寫。它是教學示意圖，各元件的具體部署和資料路徑仍會依叢集設定而不同。
+![控制面調和、排程與 Node 執行](illustrations/day-29-control.png)
+藍色箭頭表示元件透過 API Server 協作；kubelet 依已排程的 Pod 規格呼叫 Runtime，建立容器。
 
-## 1. 提交期望狀態
+### 1. 提交期望狀態
+
+期望狀態如何經控制面調和並在 Node 執行？
 
 吹哨子（kubectl）向燈塔櫃台（API Server）送出請求。
 API Server 驗證並接受請求後，會將物件資料保存到記憶樹（etcd），再回覆請求結果。
 
 看到 `created` 或 `configured`，代表 API 請求已成功，不代表 Pod 已經建立或應用程式已可服務。
-這就是宣告式管理`：使用者描述期望狀態，之後由控制器持續嘗試讓目前狀態接近期望狀態。
+這就是宣告式管理：使用者描述期望狀態，之後由控制器持續嘗試讓目前狀態接近期望狀態。
 
 ## 2. 控制器調和並安排 Pod
 
@@ -74,15 +77,30 @@ kubelet 依 Pod 規格呼叫容器執行階段（Runtime），完成映像檔拉
 一般情況下，Pod 是否 Ready 不只看一個容器：其中的容器都必須就緒，且其他就緒條件（若有設定）也要符合，才會被 Service 視為可接收流量。
 `publishNotReadyAddresses` 等設定可改變端點就緒狀態的處理方式。控制面暫時故障時，Node 上已執行的容器通常不會立刻停止；但控制平面無法正常工作期間，Cluster 可能無法排程新 Pod、調和工作負載或更新狀態。
 
-## 4. Service 與 Ingress 導入流量
+## ② **網路流量圖（Ingress 與 Service）**
+
+![Ingress 與 Service 的網路流量](illustrations/day-29-network.png)
+
+分開呈現 Ingress 與 Service 的流量關係。橘色箭頭表示封包流量；灰色虛線表示 API 資源關係。Service 對應的 EndpointSlice 提供後端端點資訊，資料平面依此轉送；Ingress Controller 的後端連線方式依實作而異。
+
+### 4. Service 與 Ingress 導入流量
+
 
 Service controller 依 Service selector 找出符合條件的 Pod，並更新 EndpointSlice。Service 資料平面依 Service 與 EndpointSlice 設定，把送往 Service 的流量轉到後端 Pod。常見實作是 kube-proxy；有些叢集使用其他資料平面。
 
 Ingress 是 HTTP/HTTPS 路由規則，Ingress Controller 才負責接收並處理流量。Controller 會依規則將請求導向指定後端；它連到後端的實際路徑取決於實作，不一定經過 Service 的 ClusterIP。Day 18 的圖示呈現的是一種簡化路徑。
 
-## 5. Pod 使用持久儲存
 
-容器可寫入自己的可寫入層，也可使用 Pod volume。容器重啟時，其可寫入層的資料不應視為可靠的持久資料；`emptyDir` 可在同一 Pod 中供容器共享，並在容器重啟期間保留，但 Pod 被移除後，`emptyDir` 也會隨之刪除。
+## ③ **儲存架構圖（PVC/PV 與資料讀寫）**
+
+![Pod、PVC、PV 與儲存後端](illustrations/day-29-storage.png)
+
+ PVC/PV 的資源關係和實際資料讀寫：灰色虛線表示 Pod 引用 PVC、PVC 綁定 PV，以及 PV 對應底層儲存；綠色雙向箭頭表示 Pod 對掛載 volume 的資料讀寫。
+
+### 5. Pod 使用持久儲存
+
+容器可寫入自己的可寫入層，也可使用 Pod volume。
+容器重啟時，其可寫入層的資料不應視為可靠的持久資料；`emptyDir` 可在同一 Pod 中供容器共享，並在容器重啟期間保留，但 Pod 被移除後，`emptyDir` 也會隨之刪除。
 
 需要跨 Pod 保留的資料時，工作負載可透過 PVC 使用 PV。PV 的生命週期獨立於單一 Pod，因此刪除 Pod 不會自動刪除 PV；資料是否仍保留，還取決於實際儲存後端及 PV 的回收策略。
 

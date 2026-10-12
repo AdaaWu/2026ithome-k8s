@@ -27,16 +27,28 @@
 
 **我們用 Kind 建立了一座本機叢集，並在上面部署雙層架構的服務。**
 
-Web 層是三副本的 Nginx，由 Deployment 管理期望副本數與版本；Service 提供穩定的服務入口，Ingress 定義網域與路徑路由，並由 Ingress Controller 實際處理流量。一般設定放進 ConfigMap，敏感設定放進 Secret；Secret 本身不等於加密或完整的密鑰管理，仍須搭配適當的存取控制與叢集設定。
+① **Web 層：Nginx，同時跑 3 個 Pod**
+- Deployment 維持 `replicas: 3` 並管理版本
+- Service 提供穩定的服務入口
+- Ingress 定義網域與路徑路由，由 Ingress Controller 實際處理流量
+- 一般設定放進 ConfigMap，敏感設定放進 Secret
+  - Secret 本身不等於加密或完整的密鑰管理，仍須搭配存取控制與叢集設定
 
-資料庫層使用 Postgres，資料目錄透過 PVC 使用 PV。
-只要 Pod 重建時仍使用同一份 claim，且底層儲存與回收設定保留資料，資料就能在 Pod 重建後繼續使用；PV 這個 API 物件本身不保證底層資料一定不會遺失。
+② **資料庫層：Postgres**
+- 資料目錄透過 PVC 使用 PV
+- Pod 重建後仍使用同一份 claim，且底層儲存與回收設定保留資料，資料就能繼續使用
+  - PV 這個 API 物件本身不保證底層資料一定不會遺失
 
-Web 層加入 Liveness 與 Readiness 探針（Probe）、設定 CPU/記憶體 Requests 與 Limits，再用 HPA 依 CPU 使用率調整 Deployment 的期望副本數。以 CPU 使用率作為指標時，相關容器必須設定 CPU Request，且叢集需要提供可用的資源指標 API；HPA controller 提出副本數調整，Deployment/ReplicaSet controllers 再建立或刪除 Pod。
+③ **穩定性與擴縮：讓 Web 層自己顧好自己**
+- Liveness 與 Readiness 探針（Probe）負責健康檢查
+- CPU／記憶體 Requests 與 Limits 負責資源邊界
+- HPA 依 CPU 使用率調整 Deployment 的期望副本數
+  - 前提：容器要設定 CPU Request，叢集要提供資源指標 API
+  - 分工：HPA controller 提出副本數，Deployment／ReplicaSet controllers 建立或刪除 Pod
 
-整套系統以十個 YAML 檔描述，可以用相同指令重建。
+**成果：整套系統以十個 YAML 檔描述，可以用相同指令重建。**
 
-這套環境仍是教學環境，還缺少跨機器高可用、正式儲存、RBAC、監控、告警與備份。
+**限制：這仍是教學環境。** 還缺少跨機器高可用、正式儲存、RBAC、監控、告警與備份。
 
 不過它已經把 Kubernetes 最重要的控制迴圈串了起來：提交期望狀態、由控制器持續調和，再透過觀測結果修正設定。
 

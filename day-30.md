@@ -7,24 +7,32 @@
 最後一天把既有零件串起來：工作負載如何被宣告、排程、連線、更新、擴縮，以及如何查問題。
 
 ![day-30-01](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/illustrations/day-30-01.png)
-這張合照象徵三十天課程裡，我們一起認識的 Kubernetes 世界。島上的角色代表不同工作：有人提交設定、有人安排工作、有人維持服務運作，也有人觀察狀態與處理問題。
+這張合照象徵三十天課程裡，我們一起認識的 Kubernetes 世界。
+島上的角色代表不同工作：有人提交設定、有人安排工作、有人維持服務運作，也有人觀察狀態與處理問題。
 
 ## K8s 控制迴圈
 
 ![day-30-diagram](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/illustrations/day-30-diagram.png)
 
-使用者透過 kubectl 將 YAML 提交至 API Server。控制器經由 API Server 觀察物件並建立或更新資源；Scheduler 讀取尚未排程的 Pod，選定 Node 後透過 API Server 寫入 binding。Node 上的 kubelet 讀取指派給該 Node 的 Pod 規格，呼叫容器執行階段並回報狀態。使用者可透過 kubectl 查詢狀態，必要時修改 YAML 再提交。
+### Kubernetes 工作流程：
+
+① **提交需求**：使用者透過 `kubectl` 將 YAML 提交至 API Server。 
+② **狀態調節**：控制器透過 API Server 觀察物件狀態並建立或更新資源。 
+③ **節點調度**：Scheduler 讀取未排程的 Pod，選定合適 Node 並透過 API Server 寫入 binding。 
+④ **容器執行**：Node 上的 `kubelet` 讀取 Pod 規格，呼叫容器執行階段並回報狀態。
+⑤ **回饋迴圈**：使用者透過 `kubectl` 查詢狀態，必要時修改 YAML 再次提交。
 
 
 ## 第一件：這三十天完成了什麼
 
 **我們用 Kind 建立了一座本機叢集，並在上面部署雙層架構的服務。**
 
-前端是三副本的 Nginx，由 Deployment 管理期望副本數與版本；Service 提供穩定的服務入口，Ingress 定義網域與路徑路由，並由 Ingress Controller 實際處理流量。一般設定放進 ConfigMap，敏感設定放進 Secret；Secret 本身不等於加密或完整的密鑰管理，仍須搭配適當的存取控制與叢集設定。
+Web 層是三副本的 Nginx，由 Deployment 管理期望副本數與版本；Service 提供穩定的服務入口，Ingress 定義網域與路徑路由，並由 Ingress Controller 實際處理流量。一般設定放進 ConfigMap，敏感設定放進 Secret；Secret 本身不等於加密或完整的密鑰管理，仍須搭配適當的存取控制與叢集設定。
 
-後端使用 Postgres，資料目錄透過 PVC 使用 PV。只要 Pod 重建時仍使用同一份 claim，且底層儲存與回收設定保留資料，資料就能在 Pod 重建後繼續使用；PV 這個 API 物件本身不保證底層資料一定不會遺失。
+資料庫層使用 Postgres，資料目錄透過 PVC 使用 PV。
+只要 Pod 重建時仍使用同一份 claim，且底層儲存與回收設定保留資料，資料就能在 Pod 重建後繼續使用；PV 這個 API 物件本身不保證底層資料一定不會遺失。
 
-前端加入 Liveness 與 Readiness 探針（Probe）、設定 CPU/記憶體 Requests 與 Limits，再用 HPA 依 CPU 使用率調整 Deployment 的期望副本數。以 CPU 使用率作為指標時，相關容器必須設定 CPU Request，且叢集需要提供可用的資源指標 API；HPA controller 提出副本數調整，Deployment/ReplicaSet controllers 再建立或刪除 Pod。
+Web 層加入 Liveness 與 Readiness 探針（Probe）、設定 CPU/記憶體 Requests 與 Limits，再用 HPA 依 CPU 使用率調整 Deployment 的期望副本數。以 CPU 使用率作為指標時，相關容器必須設定 CPU Request，且叢集需要提供可用的資源指標 API；HPA controller 提出副本數調整，Deployment/ReplicaSet controllers 再建立或刪除 Pod。
 
 整套系統以十個 YAML 檔描述，可以用相同指令重建。
 
@@ -63,7 +71,7 @@ StorageClass 描述儲存類別及其供應方式；動態供應時由對應 pro
 **Q5：三種探針（Probe）差在哪？**
 
 **Liveness 探針失敗達門檻時，kubelet 會終止該容器，後續是否重啟依 Pod 的 `restartPolicy`；Readiness 決定 Pod 是否可接收 Service 流量；Startup 成功前，kubelet 暫緩執行該容器的 Liveness 與 Readiness 探針。**
-Liveness 過於敏感會造成反覆重啟；外部資料庫健康狀態應交給 Readiness，避免前端跟著重啟。
+Liveness 過於敏感會造成反覆重啟；依賴的外部服務（例如資料庫）出問題時，應交給 Readiness 處理，不要放進 Liveness，避免容器因外部故障被反覆重啟。
 若服務暫時無法處理請求，可透過 Readiness 先停止導入流量。（Day 24）
 
 這五個問題都指向同一件事：不要只記物件定義，要理解控制器在什麼條件下採取什麼動作，以及該從哪一層觀察結果。

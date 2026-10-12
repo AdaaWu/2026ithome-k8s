@@ -49,12 +49,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "day-29.md",
+                "file": "day-30.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "day-29"
+              "title": "day-30"
             }
           }
         ]
@@ -209,8 +209,9 @@
   },
   "active": "798b1403f84ac638",
   "lastOpenFiles": [
-    "day-30.md",
     "day-29.md",
+    "day-30.md",
+    "day-28.md",
     "illustrations/day-30-diagram-overlay.svg",
     "website/dist/assets/kit-Cj9wdimv.css",
     "website/dist/assets/index-X_SOHS72.css",
@@ -227,7 +228,6 @@
     "illustrations/day-29-network.png",
     "illustrations/day-29-control.png",
     "illustrations/day-29-diagram.svg",
-    "day-28.md",
     "day-26.md",
     "day-27.md",
     "day-25.md",

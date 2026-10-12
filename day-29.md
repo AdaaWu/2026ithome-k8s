@@ -4,7 +4,7 @@
 
 今天把雲之島夥伴們放進同一座島，先看 Kubernetes 叢集由哪些部分組成，再沿著五條常見流程走一遍。
 
-![day-29-01](illustrations/day-29-01.png)
+![day-29-01](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/illustrations/day-29-01.png)
 
 ### 全島架構按空間與系統職責分為四大區域：
 
@@ -49,7 +49,7 @@
 
 ## ① **狀態調和圖（控制面與執行面）**
 
-![控制面調和、排程與 Node 執行](illustrations/day-29-control.png)
+![控制面調和、排程與 Node 執行](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/illustrations/day-29-control.png)
 藍色箭頭表示元件透過 API Server 協作；kubelet 依已排程的 Pod 規格呼叫 Runtime，建立容器。
 
 ### 1. 提交期望狀態
@@ -79,7 +79,7 @@ kubelet 依 Pod 規格呼叫容器執行階段（Runtime），完成映像檔拉
 
 ## ② **網路流量圖（Ingress 與 Service）**
 
-![Ingress 與 Service 的網路流量](illustrations/day-29-network.png)
+![Ingress 與 Service 的網路流量](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/illustrations/day-29-network.png)
 
 分開呈現 Ingress 與 Service 的流量關係。橘色箭頭表示封包流量；灰色虛線表示 API 資源關係。Service 對應的 EndpointSlice 提供後端端點資訊，資料平面依此轉送；Ingress Controller 的後端連線方式依實作而異。
 
@@ -93,7 +93,7 @@ Ingress 是 HTTP/HTTPS 路由規則，Ingress Controller 才負責接收並處�
 
 ## ③ **儲存架構圖（PVC/PV 與資料讀寫）**
 
-![Pod、PVC、PV 與儲存後端](illustrations/day-29-storage.png)
+![Pod、PVC、PV 與儲存後端](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/illustrations/day-29-storage.png)
 
  PVC/PV 的資源關係和實際資料讀寫：灰色虛線表示 Pod 引用 PVC、PVC 綁定 PV，以及 PV 對應底層儲存；綠色雙向箭頭表示 Pod 對掛載 volume 的資料讀寫。
 
@@ -134,7 +134,7 @@ kubectl get pv
 
 第一行查看各 namespace 的工作負載和服務資源；第二、三行查看叢集層級的 Node 與 PV。資源清單會隨 namespace 和實際操作而不同。
 
-![day-29-shot-02](screenshots/day-29-shot-02.png)
+![day-29-shot-02](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/screenshots/day-29-shot-02.png)
 
 截圖當時，這個教學叢集有兩個 Deployment、三個 Service、一個 Ingress、兩個 PV 和一個 HPA。這是當時環境的數量，不是 Kubernetes 的固定配置。
 
@@ -152,7 +152,7 @@ kubectl get pv
 預期可看到 API Server readiness 檢查成功、Node 為 `Ready`、入口回應 `200`、`hello` 的 EndpointSlice 有後端，以及 PVC/PV 配對狀態符合預期。
 `Bound` 只表示 PVC 與 PV 已配對；如果要確認資料能在 Pod 重建後讀回，還要實際寫入並讀取測試資料。（是快速抽查，不涵蓋所有故障情境）。
 
-![day-29-shot-01](screenshots/day-29-shot-01.png)
+![day-29-shot-01](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/screenshots/day-29-shot-01.png)
 
 ## 小結
 

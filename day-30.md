@@ -6,17 +6,14 @@
 我們已經碰過不少 Kubernetes 物件與指令。
 最後一天把既有零件串起來：工作負載如何被宣告、排程、連線、更新、擴縮，以及如何查問題。
 
-![day-30-01](illustrations/day-30-01.png)
+![day-30-01](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/illustrations/day-30-01.png)
 這張合照象徵三十天課程裡，我們一起認識的 Kubernetes 世界。島上的角色代表不同工作：有人提交設定、有人安排工作、有人維持服務運作，也有人觀察狀態與處理問題。
 
 ## K8s 控制迴圈
 
-![day-30-diagram](illustrations/day-30-diagram.png)
+![day-30-diagram](https://raw.githubusercontent.com/AdaaWu/2026ithome-k8s/main/illustrations/day-30-diagram.png)
 
-說明期望狀態如何經過 API Server、控制器與工作負載，形成持續運作的控制迴圈。
-這張圖用一個簡化循環整理操作方式：先用 YAML 向 API Server 提交期望狀態；API Server 驗證並保存物件後，各控制器透過 API 觀察狀態並建立或調整相關物件，Node 上的 kubelet 再依已排程的 Pod 規格呼叫容器執行階段。接著觀察叢集回報的狀態，若結果不符合預期，就檢查原因並調整設定。圖中的箭頭表示概念流程，不代表單一控制器直接啟動容器；叢集也不一定會完全達到期望狀態。
-
-今天整理三件事：這三十天完成的系統、五個核心技術問題，以及接下來的學習方向。
+使用者透過 kubectl 將 YAML 提交至 API Server。控制器經由 API Server 觀察物件並建立或更新資源；Scheduler 讀取尚未排程的 Pod，選定 Node 後透過 API Server 寫入 binding。Node 上的 kubelet 讀取指派給該 Node 的 Pod 規格，呼叫容器執行階段並回報狀態。使用者可透過 kubectl 查詢狀態，必要時修改 YAML 再提交。
 
 
 ## 第一件：這三十天完成了什麼

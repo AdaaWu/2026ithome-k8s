@@ -6,7 +6,7 @@
       {
         "id": "9f32b9570d1fd8a5",
         "type": "tabs",
-        "dimension": 54.73186119873817,
+        "dimension": 20.110410094637224,
         "children": [
           {
             "id": "0a2bdc1ac64e03cd",
@@ -41,7 +41,7 @@
       {
         "id": "aceea52c38913ad0",
         "type": "tabs",
-        "dimension": 45.268138801261834,
+        "dimension": 79.88958990536278,
         "children": [
           {
             "id": "798b1403f84ac638",
@@ -207,10 +207,22 @@
       "bases:建立新的 base": false
     }
   },
-  "active": "0a2bdc1ac64e03cd",
+  "active": "798b1403f84ac638",
   "lastOpenFiles": [
-    "day-29.md",
     "day-30.md",
+    "day-29.md",
+    "illustrations/day-30-diagram-overlay.svg",
+    "website/dist/assets/kit-Cj9wdimv.css",
+    "website/dist/assets/index-X_SOHS72.css",
+    "website/dist/assets/TopBar-C9IWeAcH.css",
+    "website/dist/assets/RulerView-C_81LFQ0.css",
+    "website/dist/assets/MapView-iLO-ezEL.css",
+    "website/dist/assets/DayView-CAHBwO-j.css",
+    "website/dist/assets/CodexView-DY1Y1aA6.css",
+    "website/dist/assets/useTicker-CAX-SKOC.js",
+    "website/dist/assets/useSequence-CaIyNYEn.js",
+    "website/dist/assets/useRounds-D0jDc-DT.js",
+    "illustrations/day-30-diagram.svg",
     "illustrations/day-29-storage.png",
     "illustrations/day-29-network.png",
     "illustrations/day-29-control.png",
@@ -241,11 +253,6 @@
     "day-08.md",
     "illustrations/day-30-diagram.png",
     "illustrations/day-29-diagram.png",
-    "illustrations/day-28-diagram.png",
-    "illustrations/day-27-diagram.png",
-    "illustrations/day-26-diagram.png",
-    "nvim.log",
-    "screenshots",
-    "illustrations"
+    "illustrations/day-28-diagram.png"
   ]
 }

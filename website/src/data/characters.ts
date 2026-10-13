@@ -342,7 +342,7 @@ export const CHARACTERS: Character[] = [
     options: ['ConfigMap', 'ServiceAccount（服務帳戶）', 'Volume（磁碟區）', 'Secret'],
     answer: 'Secret',
     description:
-      'Secret 存放密碼、Token 等敏感資料，預設只做 Base64 編碼而非加密。要搭配 RBAC 權限控管與 etcd 加密才算真正安全。',
+      'Secret 存放密碼、Token 等敏感資料，預設只做 Base64 編碼而非加密。要搭配存取權限控管與 etcd 加密才算真正安全。',
     debutDay: 20,
   },
   {
@@ -351,11 +351,11 @@ export const CHARACTERS: Character[] = [
     k8sName: 'Volume',
     zhTerm: '磁碟區',
     category: 'config-storage',
-    riddle: '擺在泡泡正中央，裡面的小鳥都從這裡取用；小鳥重開它還在，泡泡一破它就跟著消失。這是什麼？',
+    riddle: '擺在泡泡正中央、屬於整顆泡泡，裡面的小鳥都從這裡取用；最簡單的那款，泡泡一破就跟著消失。這是什麼？',
     options: ['Volume（磁碟區）', 'PV（持久磁碟區）', 'ConfigMap', 'Volume Mount（掛載點）'],
     answer: 'Volume（磁碟區）',
     description:
-      'Volume 定義在 Pod 層級，讓同一個 Pod 的容器共用資料。emptyDir 這類 Volume 跟著 Pod 生滅，容器重啟時資料仍在。',
+      'Volume 定義在 Pod 層級，讓同一個 Pod 的容器共用資料。島上的食物桶是最簡單的 emptyDir，容器重啟資料仍在，Pod 被換掉就消失。',
     debutDay: 6,
   },
   {

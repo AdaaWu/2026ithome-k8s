@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useGame } from '@/application/useGame'
 import { CHARACTERS } from '@/data/characters'
 import type { Character, CharacterCategory } from '@/domain/character'
@@ -41,6 +41,13 @@ function open(c: Character) {
 function close() {
   active.value = null
 }
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && active.value) close()
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 function pick(option: string) {
   if (!active.value || wrongPicks.value.includes(option)) return

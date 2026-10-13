@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('玩家旅程', () => {
-  test('輸入暱稱後進入地圖，重新整理後存檔還在', async ({ page }) => {
+  test('輸入暱稱後先看序章再進入地圖，重新整理後存檔還在', async ({ page }) => {
     await page.goto('/')
     await page.getByPlaceholder('輸入暱稱').fill('小桑')
     await page.getByTestId('start').click()
+    await expect(page).toHaveURL(/#\/prologue/)
+    await page.getByTestId('prologue-go').click()
     await expect(page).toHaveURL(/#\/map/)
     await expect(page.getByText('小桑')).toBeVisible()
 
@@ -21,6 +23,7 @@ test.describe('玩家旅程', () => {
     await page.goto('/')
     await page.getByPlaceholder('輸入暱稱').fill('小桑')
     await page.getByTestId('start').click()
+    await page.getByTestId('prologue-go').click()
     await page.getByTestId('codex-link').click()
 
     await page.getByTestId('codex-bird').click()

@@ -67,7 +67,7 @@ function start() {
   if (!canStart.value) return
   game.setNickname(draft.value)
   playSfx('correct')
-  void router.push({ name: 'map' })
+  void router.push({ name: 'prologue' })
 }
 
 function continueGame() {

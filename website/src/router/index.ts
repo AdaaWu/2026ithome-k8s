@@ -8,6 +8,7 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
   routes: [
     { path: '/', name: 'title', component: TitleView },
+    { path: '/prologue', name: 'prologue', component: () => import('@/presentation/views/PrologueView.vue') },
     { path: '/map', name: 'map', component: () => import('@/presentation/views/MapView.vue') },
     { path: '/day/:n(\\d+)', name: 'day', component: () => import('@/presentation/views/DayView.vue'), props: (r) => ({ day: Number(r.params.n) }) },
     { path: '/codex', name: 'codex', component: () => import('@/presentation/views/CodexView.vue') },

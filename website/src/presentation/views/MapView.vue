@@ -58,6 +58,17 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
           <p v-else class="hud__goal">目標：破完 30 關，並在圖鑑答對全部角色，成為「K8s 雲之島統治大王」</p>
         </section>
 
+        <RouterLink to="/prologue" class="codex-shortcut prologue-shortcut paper" data-test="prologue-link">
+          <span class="codex-shortcut__icons">
+            <CharacterSprite id="island" :size="40" />
+          </span>
+          <span>
+            <strong>序章：雲之島是什麼？</strong>
+            <small>世界規則與核心角色，忘了隨時回來看</small>
+          </span>
+          <span class="codex-shortcut__arrow">›</span>
+        </RouterLink>
+
         <RouterLink to="/codex" class="codex-shortcut paper" data-test="codex-link">
           <span class="codex-shortcut__icons">
             <CharacterSprite id="owl" :size="40" silhouette />
@@ -76,6 +87,7 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
         <div class="map__acts">
           <section v-for="act in acts" :key="act.id" class="act">
             <h2 class="act__name">{{ act.name }}</h2>
+            <p class="act__goal">本章目標：{{ act.goal }}</p>
             <ol class="path">
               <li v-for="level in act.levels" :key="level.day" class="node" :style="{ '--offset': offsetOf(level.day) }">
                 <RouterLink
@@ -215,6 +227,11 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
   font-size: 1.6rem;
 }
 
+/* 序章入口沿用圖鑑入口卡樣式，與下方圖鑑卡留間距 */
+.codex-shortcut.prologue-shortcut {
+  margin-bottom: 12px;
+}
+
 .act {
   margin-top: 26px;
 }
@@ -227,6 +244,12 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
   background: var(--paper);
   border: 2px solid var(--ink-soft);
   border-radius: 999px;
+}
+
+.act__goal {
+  margin: 0 16px 6px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
 }
 
 .path {
@@ -384,7 +407,8 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
     margin: 0;
   }
 
-  .act__name {
+  .act__name,
+  .act__goal {
     margin-left: 0;
     margin-right: 0;
   }
@@ -449,6 +473,10 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
     padding: 14px 16px;
   }
 
+  .codex-shortcut.prologue-shortcut {
+    margin-bottom: 0;
+  }
+
   /* 第五幕跨兩列，第六幕與終點卡疊在它右邊，三列高度一致 */
   .map__main {
     display: grid;
@@ -475,6 +503,12 @@ const shortTitle = (title: string) => title.split(/[，？?,]/)[0].trim()
   .act__name {
     margin: 0 0 10px;
     font-size: 1.1rem;
+  }
+
+  .act__goal {
+    margin: -4px 0 10px;
+    font-size: 0.9rem;
+    text-wrap: pretty;
   }
 
   .path {

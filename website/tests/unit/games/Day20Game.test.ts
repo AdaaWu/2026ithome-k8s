@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import Day20Game from '@/presentation/games/days/Day20Game.vue'
 
-const SAFE = ['rbac', 'etcd', 'kms']
+const SAFE = ['access', 'etcd', 'exec']
 const UNSAFE = ['base64', 'describe', 'git']
 
 async function sort(wrapper: VueWrapper, card: string, bin: 'safe' | 'unsafe') {
@@ -63,8 +63,16 @@ describe('Day20Game', () => {
     expect(wrapper.find('.cards .shake').exists()).toBe(false)
     await vi.advanceTimersByTimeAsync(2000)
     expect(wrapper.find('[data-test=shell-retry]').exists()).toBe(false)
-    expect(wrapper.get('.sort__tip').text()).toContain('錯 0 / 2')
-    await sort(wrapper, 'rbac', 'safe')
+    expect(wrapper.get('.sort__tip').text()).toContain('還能錯 2 次')
+    await sort(wrapper, 'access', 'safe')
     expect(wrapper.findAll('[data-card]')).toHaveLength(5)
+  })
+
+  it('分類卡只用 Day 20 文章講到的做法', async () => {
+    const wrapper = mount(Day20Game)
+    await decode(wrapper)
+    const cards = wrapper.get('.cards').text()
+    expect(cards).not.toMatch(/RBAC|KMS/)
+    expect(wrapper.findAll('[data-card]')).toHaveLength(6)
   })
 })

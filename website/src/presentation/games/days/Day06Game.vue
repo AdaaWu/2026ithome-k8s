@@ -15,10 +15,17 @@ interface Round {
   // 放錯時的原因；兩個 :80 擠同一顆另外處理
   why: string
   clash?: boolean
+  // 過關說明；沒寫就用門牌的通用說法
+  ok?: string
 }
 
 const ROUNDS: Round[] = [
-  { birds: ['Nginx :80', '日誌收集器（讀日誌檔）'], together: true, why: '拆開就讀不到 Nginx 寫在本機的日誌檔' },
+  {
+    birds: ['Nginx :80', '日誌收集器（讀日誌檔）'],
+    together: true,
+    why: '小鳥預設不共用檔案，要同顆泡泡共掛共享食物桶（Volume）才讀得到日誌檔',
+    ok: '掛同一個共享食物桶（Volume），收集器才讀得到 Nginx 的日誌檔',
+  },
   { birds: ['網站 :80', 'Postgres :5432'], together: false, why: '網站更新時，資料庫不該一起死' },
   { birds: ['Nginx :80', 'Nginx :80'], together: false, why: '共用網路，80 埠撞號，第二隻綁不到', clash: true },
   { birds: ['App :8080', '本機代理 :15001'], together: true, why: '拆開後代理打 localhost 找不到 App' },
@@ -99,7 +106,7 @@ function blow() {
     result.value = 'ok'
     rounds.record(missCount.value === 0)
     playSfx('correct')
-    hint.show(together.value ? '一塊門牌，打 localhost 就到' : '各自一塊門牌，各自生死', 'good')
+    hint.show(round.value.ok ?? (together.value ? '一塊門牌，打 localhost 就到' : '各自一塊門牌，各自生死'), 'good')
     later(nextRound, 1800)
     return
   }

@@ -49,4 +49,21 @@ describe('Day28Game', () => {
     expect(wrapper.find('[data-test=new-tree]').exists()).toBe(false)
     expect(wrapper.get('[data-manager=job-ticket]').text()).not.toContain('備份')
   })
+
+  it('前端交給守樹隊長、收日誌交給部署管家，結果說明對應的問題', async () => {
+    const wrapper = mount(Day28Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+
+    await assign(wrapper, 'web', 'tree-guard-captain')
+    await assign(wrapper, 'migrate', 'job-ticket')
+    await assign(wrapper, 'backup', 'cron-clock')
+    await assign(wrapper, 'logs', 'steward')
+    await wrapper.get('[data-test=work]').trigger('click')
+    await vi.advanceTimersByTimeAsync(8000)
+
+    const log = wrapper.get('[data-test=worklog]').text()
+    expect(log).toContain('副本數不歸你管')
+    expect(log).toContain('樹變多也不會跟上')
+    expect(wrapper.get('[data-manager=tree-guard-captain]').text()).toContain('DaemonSet')
+  })
 })

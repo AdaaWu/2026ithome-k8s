@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { playSfx } from '@/infrastructure/sfx'
 import { ChoiceCards, GameShell, HintBubble, KChar, useHint, useRounds, useTimeouts, type CharFx, type GameStatus } from '../kit'
 
@@ -13,7 +13,7 @@ const SEGMENTS: Segment[] = ['create', 'recreate', 'dns', 'scale']
 const TASK: Record<Segment, string> = {
   create: '依序建立 hello-db-0、1、2',
   recreate: 'hello-db-1 被刪了，把它找回來',
-  dns: '要連主節點 0 號，填哪個地址？',
+  dns: 'hello-db 是 Headless Service，要連主庫（primary）0 號，填哪個？',
   scale: '縮成 2 顆，誰先走？',
 }
 const ADDRESS = [
@@ -47,6 +47,14 @@ const later = (fn: () => void, ms: number) =>
 let completed = false
 
 const segment = computed(() => rounds.current.value)
+const addressEl = ref<InstanceType<typeof ChoiceCards> | null>(null)
+
+// 窄螢幕地址選項可能在第一屏外，出現時捲進畫面
+watch(segment, async (now) => {
+  if (now !== 'dns') return
+  await nextTick()
+  ;(addressEl.value?.$el as HTMLElement | undefined)?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
+})
 // 卡關保護：同一步連錯 2 次，閃這一步的正確目標
 const flashKey = computed(() => {
   if (stepMisses.value < 2) return null
@@ -138,10 +146,10 @@ function tapPod(i: number) {
 
 function tapWarehouse(i: number) {
   if (status.value !== 'playing' || !waitingWarehouse.value) return
-  if (i !== 1) return wrong(`wh-${i}`, '每個編號只接自己那座')
+  if (i !== 1) return wrong(`wh-${i}`, 'volumeClaimTemplates 依名稱配對，每個編號只接自己那座')
   waitingWarehouse.value = false
   create(1, () => {
-    hint.show('接回原本的倉庫，資料原封不動', 'good')
+    hint.show('volumeClaimTemplates 依名稱自動配回原倉庫，資料原封不動', 'good')
     nextSegment(1000)
   })
 }
@@ -188,7 +196,7 @@ function finish() {
             :fx="podFx(i)"
             :label="`hello-db-${i}`"
             :data-slot="i"
-            :class="{ 'is-flash': flashKey === `pod-${i}` }"
+            :class="{ 'is-flash': flashKey === `pod-${i}`, 'is-ghost': pods[i] === 'ghost' }"
             @tap="tapPod(i)"
           />
           <KChar
@@ -214,7 +222,7 @@ function finish() {
     </div>
 
     <template #controls>
-      <ChoiceCards v-if="segment === 'dns'" :options="ADDRESS" answer="pod-dns" class="address" :class="{ 'is-stuck': flashKey === 'pod-dns' }" @choose="chooseAddress" />
+      <ChoiceCards v-if="segment === 'dns'" ref="addressEl" :options="ADDRESS" answer="pod-dns" class="address" :class="{ 'is-stuck': flashKey === 'pod-dns' }" @choose="chooseAddress" />
       <p v-else class="note">{{ waitingWarehouse ? '點它專屬的那座倉庫' : '點上面的泡泡位置' }}</p>
     </template>
   </GameShell>
@@ -268,6 +276,13 @@ function finish() {
   opacity: 1;
   border-left-style: solid;
   border-color: var(--leaf-deep);
+}
+
+/* 抖動時保留空位的半透明虛線 */
+.is-ghost :deep(.kchar__body) {
+  opacity: 0.35;
+  outline: 2px dashed var(--ink-soft);
+  outline-offset: 2px;
 }
 
 .is-pick :deep(.kchar__body) {

@@ -23,7 +23,7 @@ const COMMANDS: Command[] = [
   { id: 'run', text: 'kubectl run hello\n--image=nginx:alpine' },
   { id: 'get-pods', text: 'kubectl get pods' },
   { id: 'port-forward', text: 'kubectl port-forward\npod/hello 8080:80' },
-  { id: 'kubectl-create-cluster', text: 'kubectl create cluster' },
+  { id: 'kubectl-create-cluster', text: 'kubectl create\ncluster' },
   { id: 'docker-run', text: 'docker run nginx' },
 ]
 
@@ -262,6 +262,7 @@ function finish() {
   color: #c9f2b5;
   font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
   font-size: 0.8rem;
+  font-variant-ligatures: none;
   white-space: pre;
   overflow: hidden;
 }
@@ -276,9 +277,13 @@ function finish() {
 .cards .cards__chip {
   min-height: 46px;
   width: 100%;
-  padding: 4px 6px;
-  font-size: 0.72rem;
-  white-space: pre-line;
+  padding: 4px 2px;
+  font-size: 0.64rem;
+  font-variant-ligatures: none;
+  /* 拉開字距，連續的 -- 才不會黏成一條長線 */
+  letter-spacing: 0.4px;
+  /* 只在指令內的換行處斷行 */
+  white-space: pre;
   overflow-wrap: normal;
 }
 

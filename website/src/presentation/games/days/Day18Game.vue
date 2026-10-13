@@ -8,7 +8,7 @@ const emit = defineEmits<{ complete: [] }>()
 
 type PodId = 'p1' | 'p2' | 'p3'
 type NodeId = 'gate-map' | 'gatekeeper' | 'totem' | 'road-a' | 'road-b' | 'tree-a' | 'tree-b' | PodId | 'lighthouse' | 'bird'
-type Step = 'gate-map' | 'gatekeeper' | 'p1' | 'totem' | 'road-a' | 'pick' | 'tree' | 'pod' | 'bird'
+type Step = 'gatekeeper' | 'gate-map' | 'p1' | 'totem' | 'road-a' | 'pick' | 'tree' | 'pod' | 'bird'
 
 interface SceneItem {
   node: NodeId | 'deco1' | 'deco2'
@@ -24,7 +24,7 @@ const PODS: Record<PodId, { ip: string; tree: 'tree-a' | 'tree-b' }> = {
   p2: { ip: '10.244.2.7', tree: 'tree-b' },
   p3: { ip: '10.244.2.8', tree: 'tree-b' },
 }
-const SERVICE_IP = '10.96.0.10'
+const SERVICE_IP = '10.96.123.45'
 
 // 同畫面可點目標 12 個以內：每回合只開放路線上的角色加上道路管理員 B 當干擾
 const ROUND_NODES: NodeId[][] = [
@@ -33,7 +33,7 @@ const ROUND_NODES: NodeId[][] = [
 ]
 
 const ROUNDS: Array<{ title: string; steps: Step[]; start: string }> = [
-  { title: '訪客打 http://你的網域/hello', steps: ['gate-map', 'gatekeeper', 'totem', 'road-a', 'pick', 'tree', 'pod', 'bird'], start: '你的網域/hello' },
+  { title: '訪客打 http://你的網域/hello', steps: ['gatekeeper', 'gate-map', 'totem', 'road-a', 'pick', 'tree', 'pod', 'bird'], start: '你的網域/hello' },
   { title: 'P1 用名字呼叫 http://hello', steps: ['p1', 'totem', 'road-a', 'pick', 'tree', 'pod', 'bird'], start: 'hello' },
 ]
 
@@ -46,7 +46,7 @@ const SCENE: SceneItem[] = [
   { node: 'totem', id: 'totem', cx: 186, cy: 140, size: 58, label: `hello ${SERVICE_IP}` },
   { node: 'tree-a', id: 'tree', cx: 88, cy: 300, size: 120, label: '樹 A' },
   { node: 'tree-b', id: 'tree', cx: 252, cy: 300, size: 120, label: '樹 B' },
-  { node: 'gatekeeper', id: 'gatekeeper', cx: 52, cy: 264, size: 44 },
+  { node: 'gatekeeper', id: 'gatekeeper', cx: 52, cy: 264, size: 44, label: '守門員' },
   { node: 'p1', id: 'bubble', cx: 118, cy: 264, size: 48, label: 'P1' },
   { node: 'p2', id: 'bubble', cx: 222, cy: 264, size: 48, label: 'P2' },
   { node: 'p3', id: 'bubble', cx: 288, cy: 264, size: 48, label: 'P3' },
@@ -137,17 +137,18 @@ function tap(node: SceneItem['node']) {
   if (node !== expected.value) {
     if (node === 'road-b' && step.value === 'road-a') return wrong(node, '封包在出發那棵樹就被改寫')
     if (step.value === 'tree' && picked.value) return wrong(node, `${picked.value.toUpperCase()} 住在${PODS[picked.value].tree === 'tree-a' ? '樹 A' : '樹 B'}`)
+    if (node === 'gate-map' && step.value === 'gatekeeper') return wrong(node, '看板只是規則表，要先有守門員讀它')
     if (node === 'totem') return wrong(node, '還沒輪到柱子，先走前一站')
     return wrong(node, '下一站不是這裡，想想順序')
   }
 
   play(node, 'glow')
-  if (node === 'gate-map') return advance('看板：/hello 交給 hello 柱子')
-  if (node === 'gatekeeper') {
+  if (node === 'gatekeeper') return advance('守門員收下請求，去查看板規則')
+  if (node === 'gate-map') {
     packet.value = `${SERVICE_IP}:80`
-    return advance('守門員照表，送往柱子 IP')
+    return advance('看板規則：送往 hello 柱子')
   }
-  if (node === 'p1') {
+  if (step.value === 'p1') {
     packet.value = `${SERVICE_IP}:80`
     return advance('DNS 把 hello 換成柱子 IP')
   }

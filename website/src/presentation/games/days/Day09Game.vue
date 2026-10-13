@@ -141,7 +141,7 @@ function finish() {
 
 <template>
   <GameShell
-    hint="讓 app:hello 泡泡歸零"
+    hint="讓 app: hello 泡泡歸零"
     :status="status"
     :aha="AHA"
     @start="begin"

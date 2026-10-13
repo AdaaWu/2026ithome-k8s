@@ -11,7 +11,7 @@ const ANSWER: Record<string, string> = {
   'K8s 排程的最小單位': 'bubble',
   '可以是實體機，也可以是虛擬機': 'tree',
   '副本數在數的是誰': 'bubble',
-  '壽命最長的一層': 'island',
+  '刪掉它，樹、泡泡、小鳥全部跟著消失': 'island',
 }
 
 describe('Day03Game', () => {

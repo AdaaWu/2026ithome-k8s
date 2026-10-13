@@ -28,6 +28,7 @@ describe('Day04Game', () => {
     await wrapper.get('[data-test=shell-start]').trigger('click')
 
     for (const id of ROUND1) await tap(wrapper, id)
+    expect(wrapper.text()).toContain('櫃台已登記：要 3 顆泡泡')
     await vi.advanceTimersByTimeAsync(1500)
     expect(wrapper.findAll('[data-test=pod]')).toHaveLength(3)
 

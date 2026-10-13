@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { playSfx } from '@/infrastructure/sfx'
 import { ChoiceCards, GameShell, HintBubble, KChar, TagChip, useHint, useTicker, useTimeouts, type CharFx, type GameStatus } from '../kit'
 
@@ -70,6 +70,15 @@ const quiz = computed(() =>
       ? { q: '整顆泡泡要被換掉，桶裡的檔案？', options: REPLACE_OPTIONS, answer: 'gone' }
       : null,
 )
+
+const quizEl = ref<HTMLElement | null>(null)
+
+// 窄螢幕題目可能在第一屏外，出現時捲進畫面
+watch(quiz, async (now) => {
+  if (!now) return
+  await nextTick()
+  quizEl.value?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
+})
 
 function spawn() {
   if (status.value !== 'playing' || belly.value.length >= BELLY_MAX) return
@@ -275,7 +284,7 @@ function finish() {
     </div>
 
     <!-- 題目放在舞台內，390x844 第一屏看得到全部選項 -->
-    <div v-if="quiz" class="quiz" :class="{ 'is-stuck': misses >= 2 }" :data-answer="quiz.answer">
+    <div v-if="quiz" ref="quizEl" class="quiz" :class="{ 'is-stuck': misses >= 2 }" :data-answer="quiz.answer">
       <p class="quiz__q">{{ quiz.q }}</p>
       <ChoiceCards :options="quiz.options" :answer="quiz.answer" @choose="choose" />
     </div>

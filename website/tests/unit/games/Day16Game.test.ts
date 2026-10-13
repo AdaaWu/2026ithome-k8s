@@ -30,6 +30,11 @@ describe('Day16Game', () => {
     await vi.advanceTimersByTimeAsync(10000)
     expect(wrapper.find('[data-test=shell-finish]').exists()).toBe(false)
     expect(wrapper.find('[data-test=run]').exists()).toBe(true)
+    // 紀錄保留，走錯的那列標出來，提示寫出走錯的路徑
+    const wrong = wrapper.findAll('.log__row.is-wrong')
+    expect(wrong).toHaveLength(1)
+    expect(wrong[0]!.text()).toContain('shop.example.com/api')
+    expect(wrapper.get('[role=status]').text()).toContain('shop.example.com/api')
   })
 
   it('裝守門員、選對 2 張規則，6 位訪客都正確就過關，complete 只發一次', async () => {

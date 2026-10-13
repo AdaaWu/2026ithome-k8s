@@ -4,7 +4,7 @@ import { playSfx } from '@/infrastructure/sfx'
 import CharacterSprite from '@/presentation/components/characters/CharacterSprite.vue'
 import { GameShell, HintBubble, KChar, TagChip, useHint, useRounds, useTimeouts, type CharFx, type GameStatus } from '../kit'
 
-// Day 3 島嶼點點名：看指令選出它查的那一層，最後戳破一顆泡泡看它重生
+// Day 3 島嶼點點名：讀題目選出它說的那一層，最後戳破一顆泡泡看它重生
 const emit = defineEmits<{ complete: [] }>()
 
 type Layer = 'island' | 'tree' | 'bubble' | 'bird'
@@ -32,7 +32,7 @@ const QUESTIONS: Question[] = [
   { prompt: 'K8s 排程的最小單位', answer: 'bubble', why: '排程的是整顆 Pod' },
   { prompt: '可以是實體機，也可以是虛擬機', answer: 'tree', why: 'Node 可實體可虛擬' },
   { prompt: '副本數在數的是誰', answer: 'bubble', why: 'replicas 數的是 Pod' },
-  { prompt: '壽命最長的一層', answer: 'island', why: '叢集比裡面的都長命' },
+  { prompt: '刪掉它，樹、泡泡、小鳥全部跟著消失', answer: 'island', why: '刪掉叢集，裡面全部一起消失' },
 ]
 
 interface SceneItem {
@@ -146,7 +146,7 @@ function popPod(pod: string) {
     podNames[pod] = `web-${Math.random().toString(36).slice(2, 6)}`
     poppedPod.value = null
     rebornPod.value = pod
-    hint.show('新泡泡長回來，島和樹沒動', 'good')
+    hint.show('新泡泡長回來，島和樹沒動。有人管著它，Day 9 揭曉', 'good')
     later(() => {
       if (status.value === 'playing') status.value = 'won'
     }, 1400)
@@ -162,7 +162,7 @@ function finish() {
 
 <template>
   <GameShell
-    hint="看指令，點出它查的那一層"
+    hint="讀題目，點出它說的是哪一層"
     :status="status"
     :aha="AHA"
     :progress="progress"
@@ -190,7 +190,7 @@ function finish() {
 
     <div class="question paper">
       <template v-if="step === 'quiz'">
-        <small class="question__label">第 {{ rounds.index.value + 1 }} 題：這查的是哪一層？</small>
+        <small class="question__label">第 {{ rounds.index.value + 1 }} 題：{{ rounds.current.value.command ? '這查的是哪一層？' : '這說的是哪一層？' }}</small>
         <TagChip v-if="rounds.current.value.command" :text="rounds.current.value.prompt" mono color="blue" data-test="question" />
         <p v-else class="question__text" data-test="question">{{ rounds.current.value.prompt }}</p>
       </template>

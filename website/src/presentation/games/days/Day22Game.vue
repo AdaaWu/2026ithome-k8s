@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { playSfx } from '@/infrastructure/sfx'
 import { ChoiceCards, GameShell, HintBubble, KChar, TagChip, useHint, usePickPlace, useTimeouts, type CharFx, type GameStatus } from '../kit'
 
@@ -55,6 +55,14 @@ const pp = usePickPlace<SlipId, PvId>({
 
 const { later } = useTimeouts()
 let completed = false
+const quizEl = ref<HTMLElement | null>(null)
+
+// 窄螢幕結尾題可能在第一屏外，出現時捲進畫面
+watch(step, async (now) => {
+  if (now !== 'reclaim') return
+  await nextTick()
+  quizEl.value?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
+})
 
 const flashPv = computed(() => (streak.value >= 2 && pp.picked.value ? bestFor(pp.picked.value) : null))
 const statusOf = (pv: PvId) => (step.value === 'done' && pv === 'd' ? 'Released' : boundTo(pv) ? 'Bound' : 'Available')
@@ -160,7 +168,7 @@ function finish() {
           :disabled="step === 'reclaim' || step === 'done' || (step === 'bind' && !!bindings[s.id])"
           @tap="tapSlip(s.id)"
         />
-        <TagChip class="static" :text="`${s.id} 要 ${s.need}Gi`" color="blue" />
+        <TagChip :text="`${s.id} 要 ${s.need}Gi`" color="blue" :selected="pp.picked.value === s.id" :data-slip-tag="s.id" @tap="tapSlip(s.id)" />
         <small v-if="bindings[s.id] && !(step === 'done' && s.id === 'db')" class="slip__bound" :data-test="`bound-${s.id}`">綁定 PV-{{ bindings[s.id] }}</small>
       </div>
     </div>
@@ -189,7 +197,7 @@ function finish() {
     </div>
 
     <!-- 結尾題放在舞台內，390x844 第一屏看得到全部選項 -->
-    <div v-if="step === 'reclaim' || step === 'done'" class="quiz">
+    <div v-if="step === 'reclaim' || step === 'done'" ref="quizEl" class="quiz">
       <p class="quiz__q">刪掉 db 的借用單後，PV-d（Retain）會？</p>
       <ChoiceCards :options="OPTIONS" answer="released" @choose="choose" />
     </div>

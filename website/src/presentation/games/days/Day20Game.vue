@@ -7,7 +7,7 @@ import { GameShell, HintBubble, KChar, TagChip, useHint, usePickPlace, useTimeou
 const emit = defineEmits<{ complete: [] }>()
 
 type Bin = 'safe' | 'unsafe'
-type CardId = 'rbac' | 'etcd' | 'kms' | 'base64' | 'describe' | 'git'
+type CardId = 'access' | 'etcd' | 'exec' | 'base64' | 'describe' | 'git'
 
 interface Card {
   id: CardId
@@ -18,11 +18,11 @@ interface Card {
 
 const CARDS: Card[] = [
   { id: 'base64', text: 'base64 編碼', bin: 'unsafe', why: '一行 base64 -d 就解開了' },
-  { id: 'rbac', text: 'RBAC：前端讀不到 Secret', bin: 'safe', why: 'RBAC 擋住沒權限的人' },
+  { id: 'access', text: '設定誰讀得到 Secret', bin: 'safe', why: '讀不到的人拿不到內容' },
   { id: 'describe', text: 'describe 只顯示 8 bytes', bin: 'unsafe', why: '只是防手滑投影到螢幕，資料沒變' },
   { id: 'etcd', text: '開啟 etcd 靜態加密', bin: 'safe', why: '開了之後 etcd 存的是密文' },
   { id: 'git', text: 'Secret YAML 推上公開 git', bin: 'unsafe', why: '等於把密碼明文公開' },
-  { id: 'kms', text: '外部金鑰管理（KMS）', bin: 'safe', why: '金鑰在外面，拿到資料也解不開' },
+  { id: 'exec', text: '管好誰能 exec 進泡泡', bin: 'safe', why: '限制 exec，就少一條看到明文的路' },
 ]
 const BINS: Array<{ id: Bin; name: string }> = [
   { id: 'safe', name: '真的有保護' },
@@ -154,7 +154,7 @@ function finish() {
           <span v-for="c in inBin(bin.id)" :key="c.id" class="bin__card pop-in">{{ c.text }}</span>
         </button>
       </div>
-      <p class="sort__tip">點卡片，再點收納區（錯 {{ misses }} / {{ MAX_MISS }}）</p>
+      <p class="sort__tip">點卡片，再點收納區（還能錯 {{ Math.max(0, MAX_MISS - misses) }} 次）</p>
       <div class="cards">
         <TagChip
           v-for="c in waiting"

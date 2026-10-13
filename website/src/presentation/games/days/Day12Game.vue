@@ -103,7 +103,7 @@ const checks = ref(0)
 const lastTool = ref<Tool | null>(null)
 const cured = ref(false)
 const shakingTool = ref<Tool | null>(null)
-// 卡關保護：同一位病患的同一步錯 2 次就閃正解
+// 卡關保護：同一位病患的同一步錯 2 次就閃正解；檢查次數用完就不閃工具
 const toolMisses = ref(0)
 const diagnoseMisses = ref(0)
 const { later, clearAll } = useTimeouts()
@@ -115,7 +115,11 @@ const progress = computed(() => ({
   current: rounds.results.value.filter((r) => r !== null).length,
   total: PATIENTS.length,
 }))
-const reportSource = computed(() => (lastTool.value === 'describe' ? 'Events（K8s 說的）' : 'logs（程式說的）'))
+const reportSource = computed(() => {
+  if (lastTool.value === 'describe') return 'Events（K8s 說的）'
+  // 容器沒起來，回話的是 kubectl 不是程式
+  return patient.value.id === 'crash' ? 'logs（程式說的）' : 'kubectl 回應（容器沒起來）'
+})
 
 function inspect(tool: Tool) {
   if (status.value !== 'playing' || cured.value) return
@@ -196,7 +200,7 @@ function finish() {
     <HintBubble :text="hint.text.value" :tone="hint.tone.value" @close="hint.clear" />
 
     <div class="ward">
-      <KChar id="bubble" :size="72" :fx="cured ? 'bounce' : patient.fx" :badge="patient.restarts || undefined" disabled />
+      <KChar id="bubble" :size="60" :fx="cured ? 'bounce' : patient.fx" :badge="patient.restarts || undefined" disabled />
       <div class="ward__side">
         <small class="ward__cmd">$ kubectl get pods</small>
         <div class="getline" :data-patient="patient.id">
@@ -230,7 +234,7 @@ function finish() {
           mono
           color="blue"
           class="tools__btn"
-          :class="{ shake: shakingTool === tool.id, 'is-flash': toolMisses >= 2 && tool.id === patient.tool }"
+          :class="{ shake: shakingTool === tool.id, 'is-flash': toolMisses >= 2 && checks < MAX_CHECKS && tool.id === patient.tool }"
           :data-tool="tool.id"
           :disabled="cured"
           @tap="inspect(tool.id)"
@@ -277,7 +281,7 @@ function finish() {
   grid-template-columns: auto auto 1fr auto;
   gap: 0 4px;
   font-family: ui-monospace, Menlo, monospace;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
 }
 
 .getline > * {

@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { playSfx } from '@/infrastructure/sfx'
 import { ChoiceCards, GameShell, HintBubble, KChar, TagChip, useHint, useRounds, useTimeouts, type GameStatus } from '../kit'
 
-// Day 11 後悔捲軸：預測哪些變更會在卷軸（Revision）多一行，壞版本卡住後捲回上一版
+// Day 11 後悔卷軸：預測哪些變更會在卷軸（Revision）多一行，壞版本卡住後捲回上一版
 const emit = defineEmits<{ complete: [] }>()
 
 interface Change {
@@ -201,6 +201,7 @@ function finish() {
         <ChoiceCards :options="options" :answer="answerId" :columns="2" @choose="predict" />
       </div>
       <p v-else-if="phase === 'rollback'" class="card__note">rollout undo：點卷軸上要回去的那一行</p>
+      <p v-else-if="phase === 'done'" class="card__note" data-test="rolled-back">已回到 rev{{ scroll[0]!.rev }} · {{ scroll[0]!.image }}</p>
       <p v-else class="card__note">部署管家執行中…</p>
     </template>
   </GameShell>

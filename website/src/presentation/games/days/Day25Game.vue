@@ -184,7 +184,7 @@ function finish() {
       <div v-if="phase === 'schedule'" class="queue paper">
         <KChar id="tree-picker" :size="52" disabled label="選樹官" />
         <div class="queue__pod">
-          <small class="queue__label">待排程 {{ Math.min(queueIndex + 1, QUEUE.length) }} / {{ QUEUE.length }}　錯 {{ misses }} / {{ MAX_MISSES }}</small>
+          <small class="queue__label">待排程 {{ Math.min(queueIndex + 1, QUEUE.length) }} / {{ QUEUE.length }}　還能錯 {{ Math.max(0, MAX_MISSES - misses) }} 次</small>
           <div v-if="current" class="queue__row">
             <KChar id="bubble" :size="40" fx="bounce" :key="queueIndex" disabled />
             <TagChip :text="fmtReq(current)" color="yellow" mono disabled class="queue__req" />
@@ -240,7 +240,7 @@ function finish() {
           />
         </div>
       </div>
-      <small v-if="phase === 'schedule'" class="legend">上條 CPU、下條記憶體｜粗條 Request、細線實際用量</small>
+      <small v-if="phase === 'schedule'" class="legend">上條 CPU、下條記憶體｜橘條 Request、深色短條實際用量</small>
 
       <div v-if="phase === 'limits' && question < QUESTIONS.length" class="quiz">
         <p class="quiz__ask">{{ QUESTIONS[question]!.ask }}</p>
@@ -367,6 +367,18 @@ function finish() {
 .grove .grove__meter {
   font-size: 0.72rem;
   margin-top: 2px;
+}
+
+/* 實際用量條加粗加框，疊在橘色 Request 上也看得到 */
+.grove__meter :deep(.meter__overlay) {
+  height: 8px;
+  margin-top: -4px;
+  min-width: 6px;
+  outline: 2px solid var(--cloud);
+}
+
+.grove__meter :deep(.meter__overlay[style*='width: 0%']) {
+  display: none;
 }
 
 .legend {

@@ -4,7 +4,7 @@ import Day24Game from '@/presentation/games/days/Day24Game.vue'
 
 const RIGHT: Record<string, string> = {
   回應變慢: 'flag',
-  資料庫連不上: 'flag',
+  連線池滿了: 'flag',
   死結: 'bell',
   開機中: 'wait',
 }
@@ -29,7 +29,7 @@ describe('Day24Game', () => {
 
   it('一直搞反鈴與旗，失誤 3 次就失敗', async () => {
     const wrapper = await start()
-    const WRONG = { 回應變慢: 'bell', 資料庫連不上: 'bell', 死結: 'flag', 開機中: 'bell' }
+    const WRONG = { 回應變慢: 'bell', 連線池滿了: 'bell', 死結: 'flag', 開機中: 'bell' }
     for (let i = 0; i < 6 && !wrapper.find('[data-test=shell-retry]').exists(); i++) {
       const symptom = wrapper.find('[data-test=symptom]')
       if (symptom.exists()) await wrapper.get(`[data-action=${actionFor(symptom.text(), WRONG)}]`).trigger('click')
@@ -52,7 +52,7 @@ describe('Day24Game', () => {
 
   it('連錯 2 次閃正解；失敗後重來，舊局的延遲回呼不影響新局', async () => {
     const wrapper = await start()
-    const WRONG = { 回應變慢: 'bell', 資料庫連不上: 'bell', 死結: 'flag', 開機中: 'bell' }
+    const WRONG = { 回應變慢: 'bell', 連線池滿了: 'bell', 死結: 'flag', 開機中: 'bell' }
     for (let i = 0; i < 2; i++) {
       await wrapper.get(`[data-action=${actionFor(wrapper.get('[data-test=symptom]').text(), WRONG)}]`).trigger('click')
       await vi.advanceTimersByTimeAsync(1600)
@@ -70,5 +70,17 @@ describe('Day24Game', () => {
     expect(wrapper.text()).toContain('0 / 3')
     await vi.advanceTimersByTimeAsync(300)
     expect(wrapper.findAll('[data-test=symptom]')).toHaveLength(1)
+  })
+  it('連線池滿了按搖鈴，提示重啟也沒用要降旗', async () => {
+    const wrapper = await start()
+    for (let i = 0; i < 8; i++) {
+      const symptom = wrapper.find('[data-test=symptom]')
+      if (symptom.exists() && symptom.text().includes('連線池滿了')) break
+      if (symptom.exists()) await wrapper.get(`[data-action=${actionFor(symptom.text(), RIGHT)}]`).trigger('click')
+      await vi.advanceTimersByTimeAsync(4000)
+    }
+    expect(wrapper.get('[data-test=symptom]').text()).toContain('連線池滿了')
+    await wrapper.get('[data-action=bell]').trigger('click')
+    expect(wrapper.get('[role=status]').text()).toBe('連線池滿重啟也沒用，降旗讓它喘口氣')
   })
 })

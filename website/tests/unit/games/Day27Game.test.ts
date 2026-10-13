@@ -12,6 +12,8 @@ describe('Day27Game', () => {
 
     await wrapper.get('[data-slot="1"]').trigger('click')
     expect(wrapper.get('[role=status]').text()).toContain('OrderedReady')
+    // 抖動時仍保留空位樣式
+    expect(wrapper.get('[data-slot="1"]').classes()).toEqual(expect.arrayContaining(['kchar--shake', 'is-ghost']))
     await wrapper.get('[data-slot="0"]').trigger('click')
     await wrapper.get('[data-slot="1"]').trigger('click')
     expect(wrapper.get('[role=status]').text()).toContain('Ready 才建')

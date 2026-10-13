@@ -130,6 +130,7 @@ function run() {
     return
   }
   phase.value = 'flow'
+  active.value = 1
   results.value = results.value.map((r, i) => (i === 0 ? r : null))
   ticker.start()
 }
@@ -167,10 +168,11 @@ function endFlow() {
     status.value = 'won'
     return
   }
+  // 保留這輪紀錄，走錯的那列標 ✗
   phase.value = 'rules'
-  active.value = 1
   ruleMisses.value++
-  hint.show('有訪客走錯路，換一張規則卡', 'bad')
+  const wrong = VISITORS.findIndex((v, i) => results.value[i] !== v.expect)
+  hint.show(`${VISITORS[wrong]!.text} 被送去 ${results.value[wrong]}，換一張規則卡`, 'bad', 4000)
 }
 
 function resultText(i: number): string {
@@ -181,6 +183,8 @@ function resultText(i: number): string {
   if (r === '404') return r === VISITORS[i]?.expect ? '404 ✓' : '404 ✗'
   return r === VISITORS[i]?.expect ? `→ ${r} ✓` : `→ ${r} ✗`
 }
+
+const isWrong = (i: number) => resultText(i).includes('✗') || resultText(i) === 'timeout'
 
 function finish() {
   if (completed) return
@@ -223,11 +227,11 @@ function finish() {
         <li
           v-if="i <= active"
           class="log__row"
-          :class="{ 'is-active': i === active }"
+          :class="{ 'is-active': i === active, 'is-wrong': isWrong(i) }"
           :data-test="i === active ? 'visitor' : undefined"
         >
           <span class="mono">{{ v.text }}</span>
-          <b :class="{ 'is-bad': resultText(i).includes('✗') || resultText(i) === 'timeout' }">{{ resultText(i) }}</b>
+          <b :class="{ 'is-bad': isWrong(i) }">{{ resultText(i) }}</b>
         </li>
       </template>
       <li v-if="active < VISITORS.length - 1" class="log__more">門外還有 {{ VISITORS.length - 1 - active }} 位</li>
@@ -238,7 +242,7 @@ function finish() {
       <TagChip
         v-for="c in CARDS"
         :key="c.id"
-        :text="ruleText(c.rule)"
+        :text="`${picked.includes(c.id) ? '✓ ' : ''}${ruleText(c.rule)}`"
         mono
         color="blue"
         :selected="picked.includes(c.id)"
@@ -315,9 +319,7 @@ function finish() {
   border-radius: var(--radius-sm);
   background: var(--paper);
   border: 1.5px solid var(--sky-deep);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .log {
@@ -353,6 +355,10 @@ function finish() {
   color: var(--danger);
 }
 
+.log__row.is-wrong {
+  background: color-mix(in srgb, var(--danger) 14%, var(--cloud));
+}
+
 .log__more {
   text-align: center;
   color: var(--ink-soft);
@@ -377,6 +383,11 @@ function finish() {
 .cards__card {
   width: 100%;
   min-height: 44px;
+}
+
+.cards__card.is-selected {
+  background: color-mix(in srgb, var(--sky-deep) 40%, var(--cloud));
+  font-weight: 700;
 }
 
 .cards__run {

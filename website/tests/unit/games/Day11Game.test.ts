@@ -40,7 +40,9 @@ describe('Day11Game', () => {
   it('捲回 rev2 會變成 rev4，按收下這一課會 emit complete 一次', async () => {
     const wrapper = await playToRollback()
     await wrapper.get('[data-rev="2"]').trigger('click')
-    await vi.advanceTimersByTimeAsync(3000)
+    await vi.advanceTimersByTimeAsync(500)
+    expect(wrapper.get('[data-test=rolled-back]').text()).toBe('已回到 rev4 · nginx:1.27')
+    await vi.advanceTimersByTimeAsync(2500)
     expect(wrapper.find('[data-rev="2"]').exists()).toBe(false)
     expect(wrapper.find('[data-rev="4"]').exists()).toBe(true)
 

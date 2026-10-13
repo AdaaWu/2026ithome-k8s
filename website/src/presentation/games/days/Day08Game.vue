@@ -55,6 +55,7 @@ const { later, clearAll } = useTimeouts()
 const selector = computed(() => rounds.current.value)
 const selectorText = computed(() => formatLabels(selector.value).join(','))
 const answer = computed(() => PODS.filter((p) => !firstMismatch(p.labels, selector.value)).map((p) => p.name))
+const triesLeft = computed(() => MAX_TRIES - tries.value)
 const progress = computed(() => ({
   current: rounds.results.value.filter((r) => r !== null).length,
   total: SELECTORS.length,
@@ -100,9 +101,9 @@ function shine() {
   shaking.value = extras
   later(() => (shaking.value = []), 450)
   selected.value = selected.value.filter((n) => !extras.includes(n))
-  const trap = extras.find((n) => TRAP_HINT[n])
+  const traps = extras.filter((n) => TRAP_HINT[n]).map((n) => TRAP_HINT[n]!)
   const first = extras[0]
-  if (trap) hint.show(TRAP_HINT[trap]!, 'bad')
+  if (traps.length) hint.show(traps.join('；'), 'bad')
   else if (first) hint.show(`${first} 不符合 ${firstMismatch(PODS.find((p) => p.name === first)!.labels, selector.value)}`, 'bad')
   else hint.show(`還漏了 ${missed.length} 顆，看貼紙不看名字`, 'bad')
 }
@@ -148,8 +149,9 @@ function finish() {
     <div class="lens paper">
       <CharacterSprite id="magnifier" :size="44" />
       <div class="lens__body">
-        <small>第 {{ rounds.index.value + 1 }} 回合 Selector</small>
+        <small>第 {{ rounds.index.value + 1 }} 回合 Selector・剩 <b data-test="tries-left">{{ triesLeft }}</b> 次機會</small>
         <TagChip :text="selectorText" mono color="purple" data-test="selector" />
+        <small class="lens__note">指令寫 =，YAML 寫 :</small>
       </div>
     </div>
 
@@ -194,6 +196,10 @@ function finish() {
   align-items: flex-start;
   gap: 4px;
   color: var(--ink-soft);
+}
+
+.lens__note {
+  font-size: 0.7rem;
 }
 
 .pods {

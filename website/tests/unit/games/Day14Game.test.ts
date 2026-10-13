@@ -32,7 +32,7 @@ describe('Day14Game', () => {
     const wrapper = await start()
     await wrapper.get('[data-test=selector]').trigger('click')
     await wrapper.get('[data-choice=hello]').trigger('click')
-    // 旗子降著的那顆不進名單
+    // 啟動中的那顆不進名單
     expect(wrapper.findAll('[data-test=endpoint]')).toHaveLength(2)
     await vi.advanceTimersByTimeAsync(4000)
     expect(wrapper.findAll('[data-test=endpoint]')).toHaveLength(3)
@@ -55,5 +55,13 @@ describe('Day14Game', () => {
     expect(wrapper.get('.picker').attributes('data-flash')).toBeUndefined()
     await wrapper.get('[data-choice=name]').trigger('click')
     expect(wrapper.get('.picker').attributes('data-flash')).toBe('hello')
+  })
+
+  it('破掉的舊泡泡標示終止中', async () => {
+    const wrapper = await start()
+    await wrapper.get('[data-test=selector]').trigger('click')
+    await wrapper.get('[data-choice=hello]').trigger('click')
+    await vi.advanceTimersByTimeAsync(5100)
+    expect(wrapper.findAll('.pod__state')[0]!.text()).toBe('終止中')
   })
 })

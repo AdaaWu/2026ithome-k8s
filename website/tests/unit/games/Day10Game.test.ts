@@ -27,6 +27,20 @@ describe('Day10Game', () => {
     expect(wrapper.get('[role=status]').text()).toContain('maxSurge')
   })
 
+  it('新泡泡還沒 Ready 時連錯不閃收舊，Ready 後才閃', async () => {
+    const wrapper = mount(Day10Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+
+    await wrapper.get('[data-test=add-new]').trigger('click')
+    await wrapper.get('[data-test=add-new]').trigger('click')
+    await wrapper.get('[data-test=add-new]').trigger('click')
+    expect(wrapper.get('[data-test=remove-old]').classes()).not.toContain('is-flash')
+    expect(wrapper.get('[data-test=add-new]').classes()).not.toContain('is-flash')
+
+    await vi.advanceTimersByTimeAsync(1600)
+    expect(wrapper.get('[data-test=remove-old]').classes()).toContain('is-flash')
+  })
+
   it('加新、等就緒、收舊三輪後過關，按收下這一課會 emit complete 一次', async () => {
     const wrapper = mount(Day10Game)
     await wrapper.get('[data-test=shell-start]').trigger('click')
@@ -59,11 +73,11 @@ describe('Day10Game', () => {
 
     await vi.advanceTimersByTimeAsync(1000)
     await wrapper.get('[data-test=add-new]').trigger('click')
-    // 上一局的回呼在第 1.5 秒觸發，新局的泡泡要再等 1.5 秒才升旗
+    // 上一局的回呼在第 1.5 秒觸發，新局的泡泡要再等 1.5 秒才 Ready
     await vi.advanceTimersByTimeAsync(1000)
-    expect(wrapper.text()).not.toContain('升旗')
+    expect(wrapper.find('[role=status]').exists()).toBe(false)
     await vi.advanceTimersByTimeAsync(600)
-    expect(wrapper.get('[role=status]').text()).toContain('升旗')
+    expect(wrapper.get('[role=status]').text()).toContain('Ready')
   })
 
   it('換裝完成到過關之間，按鈕不會跳錯誤提示', async () => {

@@ -19,11 +19,11 @@ const CARDS: Array<{ id: Card; text: string; short: string; right: Manager }> = 
 ]
 const CARD = Object.fromEntries(CARDS.map((c) => [c.id, c])) as Record<Card, (typeof CARDS)[number]>
 
-const MANAGERS: Array<{ id: Manager; name: string }> = [
-  { id: 'tree-guard-captain', name: '守樹隊長' },
-  { id: 'job-ticket', name: '委託單' },
-  { id: 'cron-clock', name: '定時任務鐘' },
-  { id: 'steward', name: '部署管家' },
+const MANAGERS: Array<{ id: Manager; name: string; kind: string }> = [
+  { id: 'tree-guard-captain', name: '守樹隊長', kind: 'DaemonSet' },
+  { id: 'job-ticket', name: '一次性任務委託單', kind: 'Job' },
+  { id: 'cron-clock', name: '定時任務鐘', kind: 'CronJob' },
+  { id: 'steward', name: '部署管家', kind: 'Deployment' },
 ]
 const MANAGER_NAME = Object.fromEntries(MANAGERS.map((m) => [m.id, m.name])) as Record<Manager, string>
 
@@ -36,11 +36,12 @@ interface Outcome {
 // 規格列出的組合；其餘一律視為「不負責」
 const OUTCOMES: Partial<Record<`${Card}>${Manager}`, Outcome>> = {
   'logs>tree-guard-captain': { ok: true, text: '每棵樹各一顆，日誌全收到', trees: [['run'], ['run'], ['run']] },
-  'logs>steward': { ok: false, text: '兩顆擠同一棵樹，一棵沒人收', trees: [['run', 'run'], ['run'], []] },
+  'logs>steward': { ok: false, text: '只管顆數，不保證每棵都有；樹變多也不會跟上', trees: [['run', 'run'], ['run'], []] },
   'migrate>job-ticket': { ok: true, text: '跑完變 Completed，沒人重啟', trees: [['done'], [], []] },
   'migrate>steward': { ok: false, text: '跑完被重啟，最後 CrashLoopBackOff', trees: [['crash'], [], []] },
   'backup>cron-clock': { ok: true, text: '03:00 建委託單，跑完 Completed', trees: [[], ['done'], []] },
   'backup>job-ticket': { ok: false, text: '現在就跑一次，凌晨 3 點不會再跑', trees: [['done'], [], []] },
+  'web>tree-guard-captain': { ok: false, text: '樹變多前端就跟著變多，副本數不歸你管', trees: [['run'], ['run'], ['run']] },
   'web>steward': { ok: true, text: '3 顆常駐，網站一直開著', trees: [['run'], ['run'], ['run']] },
   'web>job-ticket': { ok: false, text: '跑完就 Completed，網站關門了', trees: [['done'], [], []] },
 }
@@ -196,6 +197,7 @@ function finish() {
       >
         <CharacterSprite :id="m.id" :size="46" />
         <small class="manager__name">{{ m.name }}</small>
+        <small class="manager__kind">{{ m.kind }}</small>
         <span class="manager__slot" :class="{ 'is-passed': assigned[m.id] && passed.includes(assigned[m.id]!) }">
           {{ assigned[m.id] ? CARD[assigned[m.id]!].short : '空' }}
         </span>
@@ -279,6 +281,13 @@ function finish() {
 
 .manager__name {
   font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.manager__kind {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.62rem;
+  color: var(--ink-soft);
 }
 
 .manager__slot {

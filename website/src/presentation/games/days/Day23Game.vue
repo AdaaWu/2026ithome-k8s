@@ -167,8 +167,8 @@ function finish() {
         <KChar id="totem" :size="44" label="hello-db" disabled />
         <KChar id="lockbox" :size="32" label="db-secret" :fx="lockboxLit ? 'glow' : 'none'" disabled />
         <KChar id="bubble" :size="44" :label="dbIp" :fx="dbFx" disabled />
-        <KChar id="borrow-slip" :size="30" :fx="storageLit ? 'glow' : 'dim'" disabled />
-        <KChar id="warehouse" :size="40" :fx="storageLit ? 'glow' : 'dim'" disabled />
+        <KChar id="borrow-slip" :size="30" label="db-data" :fx="storageLit ? 'glow' : 'dim'" disabled />
+        <KChar id="warehouse" :size="40" label="PV" :fx="storageLit ? 'glow' : 'dim'" disabled />
       </div>
     </div>
 
@@ -215,8 +215,9 @@ function finish() {
 </template>
 
 <style scoped>
+/* 上方留給提示泡泡，不蓋住 web 那排 */
 .scene {
-  margin: 8px 6px 4px;
+  margin: 56px 6px 4px;
   display: flex;
   flex-direction: column;
   gap: 2px;

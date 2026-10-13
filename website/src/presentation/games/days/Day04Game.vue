@@ -27,7 +27,7 @@ const TO_PICKER: Step[] = [
   { id: 'lighthouse', ask: '隊長把補件登記到哪？', why: '隊長也只跟櫃台說話' },
   { id: 'tree-picker', ask: '誰決定泡泡掛哪棵樹？', why: '選樹官負責挑樹' },
   { id: 'lighthouse', ask: '選好的樹寫回哪？', why: '選樹結果寫回櫃台' },
-  { id: 'squirrel', ask: '誰真的把泡泡吹出來？', why: '樹上的松鼠才動手' },
+  { id: 'squirrel', ask: '誰真的把泡泡吹出來？', why: '樹上的管家松鼠才動手' },
 ]
 
 const ROUNDS: Array<{ task: string; steps: Step[] }> = [
@@ -62,7 +62,7 @@ const POD_SPOTS = [
   { cx: 306, cy: 205 },
 ]
 
-const AHA = '巡邏隊長（Controller Manager）負責補齊，大家都透過燈塔櫃台（API Server）交談，吹泡泡的是松鼠（kubelet）。'
+const AHA = '巡邏隊長（Controller Manager）負責補齊，大家都透過燈塔櫃台（API Server）交談，吹泡泡的是管家松鼠（kubelet）。'
 
 const placeOf = (cx: number, cy: number, size: number) => {
   const box = Math.max(size, 44)
@@ -137,12 +137,12 @@ function finishRound() {
   busy.value = true
   if (round.value === 0) {
     ;[0, 300, 600].forEach(blowPod)
-    hint.show('松鼠吹出 3 顆泡泡！', 'good')
+    hint.show('管家松鼠吹出 3 顆泡泡！', 'good')
     later(breakOnePod, 2000)
     return
   }
   blowPod(0)
-  hint.show('松鼠補回第 3 顆了！', 'good')
+  hint.show('管家松鼠補回第 3 顆了！', 'good')
   later(() => {
     if (status.value === 'playing') status.value = 'won'
   }, 1500)
@@ -207,7 +207,7 @@ function finish() {
         class="village__item village__pod"
         :style="placeOf(POD_SPOTS[i]!.cx, POD_SPOTS[i]!.cy, 40)"
       />
-      <TagChip v-if="created" text="deployment created" color="green" mono disabled class="village__created pop-in" />
+      <TagChip v-if="created" text="櫃台已登記：要 3 顆泡泡" color="green" disabled class="village__created pop-in" />
     </div>
 
     <div class="task paper">

@@ -165,8 +165,11 @@ function blow() {
     terminal.value = clip(getOutput(want.target, flag.value))
     hint.show(want.flag ? FLAG_HINT[want.flag] : '這題不用加旗標', 'bad')
   } else {
-    terminal.value = clip(`$ ${command.value}`)
+    terminal.value = '$ _'
     hint.show(`${verb.value}：${MEANING[verb.value]}，不是這題`, 'bad')
+    // 動詞錯就清掉，預覽不拼出這題不存在的指令
+    verb.value = null
+    flag.value = null
   }
 }
 
@@ -179,6 +182,7 @@ function nextTask() {
   stamped.value = false
   verb.value = null
   flag.value = null
+  terminal.value = '$ _'
   index.value++
   countdown.start()
 }
@@ -246,6 +250,7 @@ function finish() {
           @click="pickVerb(v.id)"
         >
           {{ v.id }}
+          <small class="pad__meaning">{{ v.meaning }}</small>
         </button>
       </div>
       <div v-if="verb === 'get'" class="pad__flags">
@@ -376,6 +381,18 @@ function finish() {
   padding: 4px 2px;
   font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
   font-size: 0.78rem;
+}
+
+.pad__verbs .pad__btn {
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.2;
+}
+
+.pad__meaning {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  color: var(--ink-soft);
 }
 
 .pad__btn.is-on {

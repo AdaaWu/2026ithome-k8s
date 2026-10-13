@@ -56,6 +56,7 @@ describe('Day05Game', () => {
     await wrapper.get(`[data-verb="${wrong}"]`).trigger('click')
     await wrapper.get('[data-test=blow]').trigger('click')
     expect(wrapper.get(`[data-verb="${verb}"]`).classes()).not.toContain('is-flash')
+    await wrapper.get(`[data-verb="${wrong}"]`).trigger('click')
     await wrapper.get('[data-test=blow]').trigger('click')
     expect(wrapper.get(`[data-verb="${verb}"]`).classes()).toContain('is-flash')
   })
@@ -74,7 +75,7 @@ describe('Day05Game', () => {
     expect(wrapper.get('[data-test=shell-timer]').attributes('style')).toBe(before)
   })
 
-  it('動詞選錯不會蓋章', async () => {
+  it('動詞選錯不會蓋章，指令預覽也不留下錯的動詞', async () => {
     const wrapper = mount(Day05Game)
     await wrapper.get('[data-test=shell-start]').trigger('click')
     const { verb } = ANSWER[wrapper.get('[data-task]').attributes('data-task')!]!
@@ -84,6 +85,8 @@ describe('Day05Game', () => {
     await wrapper.get('[data-test=blow]').trigger('click')
     await vi.advanceTimersByTimeAsync(900)
     expect(wrapper.findAll('[data-test=shell-dot].is-done')).toHaveLength(0)
+    expect(wrapper.get('.cmd').text()).toContain('kubectl ___')
+    expect(wrapper.get('.cmd').text()).not.toContain(wrong)
   })
 
   it('時間到先延長一次，第二次才失敗', async () => {

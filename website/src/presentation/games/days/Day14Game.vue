@@ -13,7 +13,7 @@ interface Pod {
   fx: CharFx
 }
 
-const CLUSTER_IP = '10.96.0.10'
+const CLUSTER_IP = '10.96.123.45'
 const GOAL = 15
 const SELECTOR_OPTIONS = [
   { id: 'Hello', label: 'app: Hello' },
@@ -51,6 +51,9 @@ let completed = false
 let robin = 0
 const { later, clearAll } = useTimeouts()
 
+// 正在破掉的泡泡是終止中，不是啟動中
+const stateOf = (pod: Pod) => (pod.ready ? 'Ready' : pod.fx === 'pop' ? '終止中' : '啟動中')
+
 const endpoints = computed(() => (fixed.value ? pods.filter((p) => p.ready) : []))
 
 function setFx(pod: Pod, fx: CharFx, resetMs?: number) {
@@ -67,7 +70,7 @@ const ticker = useTicker(1000, (tick) => {
     failCount.value++
     totemFx.value = 'none'
     later(() => (totemFx.value = 'shake'), 20)
-    if (tick === 3 && !fixed.value) hint.show('請求全失敗，點放大鏡查名單', 'bad')
+    if (tick === 3 && !fixed.value) hint.show('請求全失敗，點黃色的 app: helo 修名單', 'bad')
     return
   }
   okCount.value++
@@ -101,14 +104,14 @@ function chooseSelector(id: string, correct: boolean) {
     return
   }
   fixed.value = true
-  hint.show('名單出現了！降旗那顆先不收', 'good')
+  hint.show('名單出現了！啟動中那顆先不收', 'good')
   later(() => (picking.value = false), 700)
-  // 啟動中的泡泡升旗後自動進名單，接著一顆泡泡破掉換人
+  // 啟動中的泡泡 Ready 後自動進名單，接著一顆泡泡破掉換人
   later(() => {
     if (status.value !== 'playing') return
     const starting = pods.find((p) => !p.ready)
     if (starting) starting.ready = true
-    hint.show('旗子升起，自動進名單', 'good')
+    hint.show('它 Ready 了，自動進名單', 'good')
   }, 3000)
   later(() => {
     if (status.value !== 'playing') return
@@ -175,8 +178,8 @@ function rollout() {
 
 function inspect(pod?: Pod) {
   playSfx('tap')
-  if (!fixed.value) hint.show('柱子找 helo，泡泡貼的是 hello', 'bad')
-  else if (pod && !pod.ready) hint.show('旗子降著，還不收進名單', 'info')
+  if (!fixed.value) hint.show('柱子找 helo，泡泡貼的是 hello，點黃色那張改', 'bad')
+  else if (pod && !pod.ready) hint.show('還在啟動，不收進名單', 'info')
   else hint.show('貼紙對上又 Ready，在名單上', 'good')
 }
 
@@ -239,7 +242,7 @@ function finish() {
 
     <div class="pods">
       <div v-for="(p, i) in pods" :key="p.key" class="pod">
-        <KChar id="ready-flag" :size="26" :fx="p.ready ? 'none' : 'dim'" disabled />
+        <small class="pod__state" :class="{ 'is-off': !p.ready }">{{ stateOf(p) }}</small>
         <KChar id="bubble" :size="58" :fx="p.fx" :data-pod="i" @tap="inspect(p)" />
         <span class="pod__ip mono">{{ p.ip }}</span>
         <small class="pod__label">app: hello</small>
@@ -401,6 +404,16 @@ function finish() {
 
 .pod__label {
   font-size: 0.68rem;
+  color: var(--ink-soft);
+}
+
+.pod__state {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.pod__state.is-off {
   color: var(--ink-soft);
 }
 

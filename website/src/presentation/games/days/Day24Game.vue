@@ -19,7 +19,7 @@ interface Pod {
 
 const SYMPTOMS: Record<Kind, { text: string; right: Action }> = {
   slow: { text: '回應變慢（GC 中）', right: 'flag' },
-  db: { text: '資料庫連不上', right: 'flag' },
+  db: { text: '這顆連線池滿了', right: 'flag' },
   deadlock: { text: '死結：程序在，但不回應', right: 'bell' },
   boot: { text: '開機中：載入模型', right: 'wait' },
 }
@@ -34,7 +34,7 @@ const GOAL = 8
 const MAX_MISS = 3
 const PATIENCE_SEC = 5
 const RECOVER_MS = 3000
-const AHA = '管家松鼠（kubelet）用 Readiness 管流量、Liveness 管重啟。只是慢就降旗別搖鈴，資料庫檢查放 Readiness。'
+const AHA = '管家松鼠（kubelet）用 Readiness 管流量、Liveness 管重啟、Startup 給慢開機緩衝。只是慢就降旗別搖鈴，資料庫檢查別放 Liveness。'
 
 const status = ref<GameStatus>('intro')
 const hint = useHint(2600)
@@ -160,7 +160,7 @@ function act(action: Action) {
     misses.value++
     restart(c.pod)
     settle(c.pod, RECOVER_MS)
-    hint.show('只是慢就重啟，流量壓垮別顆', 'bad')
+    hint.show(c.kind === 'db' ? '連線池滿重啟也沒用，降旗讓它喘口氣' : '只是慢就重啟，流量壓垮別顆', 'bad')
     return closeSymptom(1200, 'slow', c.pod)
   }
   if (c.kind === 'deadlock' && action === 'flag') {
@@ -209,12 +209,12 @@ function finish() {
 
 <template>
   <GameShell
-    hint="判斷該降旗還是搖鈴"
+    hint="判斷該降旗、搖鈴，還是等它開機"
     :status="status"
     :aha="AHA"
     :timer="timer"
     :progress="{ current: solved, total: GOAL }"
-    lose-text="失誤 3 次。記住：Liveness 決定生死，Readiness 決定流量"
+    lose-text="失誤 3 次。記住：Liveness 決定生死，Readiness 決定流量，Startup 決定何時開始問"
     @start="reset"
     @retry="reset"
     @finish="finish"
@@ -223,7 +223,10 @@ function finish() {
 
     <div class="top">
       <KChar id="totem" :size="56" label="柱子" disabled />
-      <p class="top__text">流量只送給<b>升旗</b>的泡泡</p>
+      <p class="top__text">
+        流量只送給<b>升旗</b>的泡泡
+        <small class="top__timer" data-test="timer-note">上方細條：{{ PATIENCE_SEC }} 秒內要處置</small>
+      </p>
       <KChar id="squirrel" :size="52" label="你" disabled />
     </div>
 
@@ -284,6 +287,12 @@ function finish() {
   margin: 0;
   font-size: 0.85rem;
   text-align: center;
+}
+
+.top__timer {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
 }
 
 .pods {

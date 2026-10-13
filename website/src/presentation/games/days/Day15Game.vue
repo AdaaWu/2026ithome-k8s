@@ -19,7 +19,7 @@ const ROUNDS: Round[] = [
   { need: '資料庫只給島內前端用', who: ['inside'], answer: 'cluster' },
   { need: '同事要從筆電連測試服務，他連得到節點 IP', who: ['colleague'], answer: 'node' },
   { need: '正式網站要給全世界用，跑在雲端', who: ['world'], answer: 'lb' },
-  { need: '在 Kind 筆電上，想用瀏覽器打開', who: ['laptop'], answer: 'pf', kind: true },
+  { need: '在 Kind 筆電上（macOS／Windows 預設），想用瀏覽器打開', who: ['laptop'], answer: 'pf', kind: true },
 ]
 
 const OPTIONS = [
@@ -91,7 +91,7 @@ function whyWrong(pick: Pick): string {
   const r = round.value
   if (r.kind) {
     if (pick === 'lb') return '筆電上沒有雲端負載平衡器接單'
-    if (pick === 'node') return 'Kind 的樹沒把埠接到筆電上'
+    if (pick === 'node') return 'macOS／Windows 上 Kind 預設沒把樹的埠接到筆電'
     return 'ClusterIP 在島外打不通'
   }
   return RANK[pick] > RANK[r.answer] ? '每多開一層，就多一個對外的攻擊面' : '需要的人連不進來'
@@ -191,11 +191,10 @@ function finish() {
       <p class="need__text">{{ round.need }}</p>
     </div>
 
-    <template #controls>
-      <fieldset class="choices-wrap" :disabled="locked" :data-flash="flashId">
-        <ChoiceCards :key="rounds.index.value + status" :options="options" :answer="round.answer" :columns="2" @choose="choose" />
-      </fieldset>
-    </template>
+    <!-- 選項放進舞台，手機第一屏就看得到 -->
+    <fieldset class="choices-wrap" :disabled="locked" :data-flash="flashId">
+      <ChoiceCards :key="rounds.index.value + status" :options="options" :answer="round.answer" :columns="2" @choose="choose" />
+    </fieldset>
   </GameShell>
 </template>
 
@@ -250,7 +249,7 @@ function finish() {
   flex-wrap: wrap;
   justify-content: center;
   gap: 6px;
-  padding: 12px 10px;
+  padding: 8px 10px;
 }
 
 .visitor {
@@ -272,8 +271,8 @@ function finish() {
 }
 
 .need {
-  margin: auto 12px 12px;
-  padding: 10px 12px;
+  margin: auto 12px 8px;
+  padding: 8px 12px;
   text-align: center;
 }
 
@@ -288,9 +287,8 @@ function finish() {
 }
 
 .choices-wrap {
-  width: 100%;
   min-width: 0;
-  margin: 0;
+  margin: 0 12px 12px;
   padding: 0;
   border: 0;
 }

@@ -69,6 +69,18 @@ describe('Day12Game', () => {
     expect(wrapper.get(`[data-tool=${cure.tool}]`).classes()).toContain('is-flash')
   })
 
+  it('檢查次數用完時不閃正確工具，避免按下就失敗', async () => {
+    const wrapper = mount(Day12Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    const cure = CURE[patientOf(wrapper)]!
+    const wrong = cure.tool === 'describe' ? 'logs' : 'describe'
+    for (let i = 0; i < 6; i++) await wrapper.get(`[data-tool=${wrong}]`).trigger('click')
+    expect(wrapper.get(`[data-tool=${cure.tool}]`).classes()).toContain('is-flash')
+    await wrapper.get(`[data-tool=${wrong}]`).trigger('click')
+    expect(wrapper.get('[data-test=checks]').text()).toBe('檢查 7/7')
+    expect(wrapper.get(`[data-tool=${cure.tool}]`).classes()).not.toContain('is-flash')
+  })
+
   it('同一位病患診斷錯 2 次就閃正確診斷', async () => {
     const wrapper = mount(Day12Game)
     await wrapper.get('[data-test=shell-start]').trigger('click')
@@ -79,5 +91,18 @@ describe('Day12Game', () => {
     expect(wrapper.get('.diagnose').attributes('data-flash')).toBeUndefined()
     await wrapper.get(`[data-choice=${wrongs[1]}]`).trigger('click')
     expect(wrapper.get('.diagnose').attributes('data-flash')).toBe(cure.diagnosis)
+  })
+
+  it('容器沒起來時看 logs，報告標成 kubectl 回應', async () => {
+    const wrapper = mount(Day12Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    // 跳到第一位沒起來的病患
+    while (patientOf(wrapper) === 'crash') {
+      await wrapper.get('[data-tool=previous]').trigger('click')
+      await wrapper.get('[data-choice=config]').trigger('click')
+      await vi.advanceTimersByTimeAsync(1500)
+    }
+    await wrapper.get('[data-tool=logs]').trigger('click')
+    expect(wrapper.get('.report__head').text()).toContain('kubectl 回應（容器沒起來）')
   })
 })

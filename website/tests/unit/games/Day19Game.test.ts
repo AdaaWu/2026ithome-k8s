@@ -10,7 +10,7 @@ describe('Day19Game', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
-  it('環境變數只等同步不會更新；亂重啟超過 3 次會失敗，再玩一次可重來', async () => {
+  it('環境變數只等同步不會更新；答錯的重啟也計入次數', async () => {
     const wrapper = mount(Day19Game)
     await wrapper.get('[data-test=shell-start]').trigger('click')
     await act(wrapper, 'sync')
@@ -22,10 +22,9 @@ describe('Day19Game', () => {
     expect(wrapper.findAll('[data-test=shell-dot].is-done')).toHaveLength(1)
 
     for (let i = 0; i < 4; i++) await act(wrapper, 'restartB')
-    expect(wrapper.find('[data-test=shell-retry]').exists()).toBe(true)
-    await wrapper.get('[data-test=shell-retry]').trigger('click')
-    expect(wrapper.findAll('[data-test=shell-dot].is-done')).toHaveLength(0)
-    expect(wrapper.get('[data-action=sync]').attributes('disabled')).toBeUndefined()
+    expect(wrapper.get('.count').text()).toBe('重啟 4 次')
+    expect(wrapper.find('[data-test=shell-retry]').exists()).toBe(false)
+    expect(wrapper.get('[data-action=restartA]').classes()).toContain('is-flash')
   })
 
   it('用最少重啟完成三回合，按收下這一課會 emit complete 一次', async () => {
@@ -44,17 +43,23 @@ describe('Day19Game', () => {
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
-  it('失敗後 retry，舊的延遲回呼不會改到新局', async () => {
+  it('連錯多次後按閃爍的正解仍能過關，不會因重啟次數失敗', async () => {
     const wrapper = mount(Day19Game)
     await wrapper.get('[data-test=shell-start]').trigger('click')
-    // 回合 1 改 index.html：連按 4 次重啟 A 都沒用，第 4 次超過上限
-    for (let i = 0; i < 4; i++) await act(wrapper, 'restartA')
-    await wrapper.get('[data-test=shell-retry]').trigger('click')
-    expect(wrapper.find('.kchar--shake').exists()).toBe(false)
-    expect(wrapper.find('.is-flash').exists()).toBe(false)
+    // 回合 1 改 index.html：多花一次重啟 B 也算過
+    await act(wrapper, 'restartB')
     await vi.advanceTimersByTimeAsync(2000)
-    expect(wrapper.find('.kchar--shake').exists()).toBe(false)
+    // 回合 2 改 LOG_LEVEL：先亂重啟 B 三次，再按閃爍的重啟 A
+    for (let i = 0; i < 3; i++) await act(wrapper, 'restartB')
+    await act(wrapper, 'restartA')
+    await vi.advanceTimersByTimeAsync(2000)
+    // 回合 3 改 nginx.conf：亂重啟 A 三次後，閃爍的重啟 B 仍可按
+    for (let i = 0; i < 3; i++) await act(wrapper, 'restartA')
+    expect(wrapper.get('[data-action=restartB]').classes()).toContain('is-flash')
+    await act(wrapper, 'restartB')
     expect(wrapper.find('[data-test=shell-retry]').exists()).toBe(false)
-    expect(wrapper.get('.count').text()).toBe('重啟 0 / 3 次')
+    expect(wrapper.get('.count').text()).toBe('重啟 9 次')
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(wrapper.find('[data-test=shell-finish]').exists()).toBe(true)
   })
 })

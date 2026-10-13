@@ -23,12 +23,11 @@ const SLOTS = 3
 const DESIRED = 6
 const MANUAL_SEC = 15
 const PUSHES_TO_WIN = 2
-// 第一階段固定的倒樹時間（秒），倒下 6 秒後換新機器長回來
+// 第一階段固定的倒樹時間（秒），手動階段倒下的樹不會長回來
 const KNOCKS: Array<{ at: number; tree: TreeId }> = [
   { at: 1, tree: 'A' },
   { at: 8, tree: 'B' },
 ]
-const MANUAL_REGROW_MS = 6000
 const RESCHEDULE_MS = 2000
 const DECLARE_REGROW_MS = 5000
 
@@ -65,7 +64,7 @@ const flashBird = computed(() => missCount.value >= 2 && phase.value === 'manual
 const timer = computed(() => (phase.value === 'manual' ? { remaining: countdown.remaining.value, total: MANUAL_SEC } : undefined))
 
 function placeVerdict(tree: TreeId): true | string {
-  if (down.value[tree]) return '這台倒了，換一棵'
+  if (down.value[tree]) return '這棵倒了，換一棵'
   if (onTree(tree).length >= SLOTS) return '這棵滿了，換一棵'
   return true
 }
@@ -84,9 +83,6 @@ function knockManual(tree: TreeId) {
   onTree(tree).forEach((u) => (u.tree = null))
   playSfx('wrong')
   hint.show(`樹 ${tree} 倒了！快把小鳥搬走`, 'bad')
-  later(() => {
-    if (status.value === 'playing') down.value[tree] = false
-  }, MANUAL_REGROW_MS)
 }
 
 function endManual() {
@@ -133,6 +129,8 @@ function shake(tree: TreeId) {
 // 第二階段：每隻小鳥包進泡泡，交給島照期望數量維持
 function declare() {
   if (phase.value !== 'switch') return
+  // 交給島之前倒下的樹都換上新機器
+  down.value = { A: false, B: false, C: false }
   units.value = []
   for (let i = 0; i < DESIRED; i++) units.value.push({ key: ++nextKey, name: podName(), tree: null, fx: 'bounce' })
   schedule()
@@ -372,7 +370,7 @@ function finish() {
 }
 
 .declare {
-  width: 100%;
+  width: calc(100% - 24px);
   min-height: 52px;
   display: inline-flex;
   align-items: center;

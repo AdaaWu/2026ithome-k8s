@@ -66,4 +66,16 @@ describe('Day08Game', () => {
     await vi.advanceTimersByTimeAsync(1500)
     expect(wrapper.findAll('[data-test=shell-dot].is-done')).toHaveLength(1)
   })
+
+  it('同時選錯兩個陷阱會兩個都解釋，剩餘機會跟著減少', async () => {
+    const wrapper = mount(Day08Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    expect(wrapper.get('[data-test=tries-left]').text()).toBe('3')
+
+    await pickAndShine(wrapper, [...ROUNDS[0]!, 'hello-e5', 'hello-f6'])
+    const text = wrapper.get('[role=status]').text()
+    expect(text).toContain('Hello')
+    expect(text).toContain('api')
+    expect(wrapper.get('[data-test=tries-left]').text()).toBe('2')
+  })
 })

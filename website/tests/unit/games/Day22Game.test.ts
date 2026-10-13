@@ -66,4 +66,12 @@ describe('Day22Game', () => {
     await wrapper.get('[data-pv=c]').trigger('click')
     expect(wrapper.get('[role=status]').text()).toContain('借用單的名字')
   })
+
+  it('點借用單下方的需求標籤，等同點借用單', async () => {
+    const wrapper = mount(Day22Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    await wrapper.get('[data-slip-tag=db]').trigger('click')
+    await wrapper.get('[data-pv=d]').trigger('click')
+    expect(wrapper.get('[data-test=bound-db]').text()).toContain('PV-d')
+  })
 })

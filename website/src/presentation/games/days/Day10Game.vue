@@ -16,7 +16,7 @@ const MAX_TOTAL = REPLICAS + 1 // maxSurge: 1
 const MIN_READY = REPLICAS // maxUnavailable: 0
 const READY_MS = 1500
 const AHA = '一個版本一隻貓頭鷹（ReplicaSet）。部署管家（Deployment）先加新、等就緒、再收舊；舊貓頭鷹停在 0 不刪，後悔時就靠它。'
-const LOSE_TEXT = '新的還沒升旗，就先收舊的了。先加新、等升旗，再收舊。'
+const LOSE_TEXT = '新的還沒 Ready，就先收舊的了。先加新、等 Ready，再收舊。'
 
 const status = ref<GameStatus>('intro')
 const oldCount = ref(REPLICAS)
@@ -34,10 +34,11 @@ const { later, clearAll } = useTimeouts()
 
 const readyCount = computed(() => oldCount.value + newPods.value.filter((p) => p.ready).length)
 const total = computed(() => oldCount.value + newPods.value.length)
-// 卡關保護：連錯 2 次就讓下一步該按的鈕閃
+// 卡關保護：連錯 2 次就讓下一步該按的鈕閃；新泡泡還沒 Ready 時不閃，等它就緒
 const suggest = computed<'add' | 'remove' | null>(() => {
   if (misses.value < 2) return null
-  return total.value < MAX_TOTAL ? 'add' : 'remove'
+  if (total.value < MAX_TOTAL) return 'add'
+  return readyCount.value - 1 >= MIN_READY ? 'remove' : null
 })
 
 function begin() {
@@ -62,7 +63,7 @@ function reject(button: 'add' | 'remove', text: string) {
 
 function addNew() {
   if (status.value !== 'playing' || locked.value) return
-  if (newPods.value.length >= REPLICAS) return reject('add', '新貓頭鷹已經滿 3 顆了')
+  if (newPods.value.length >= REPLICAS) return reject('add', 'v2 泡泡已經滿 3 顆了')
   if (total.value >= MAX_TOTAL) return reject('add', 'maxSurge 1：最多只能多一顆')
   const pod: NewPod = { key: ++seq, ready: false }
   newPods.value.push(pod)
@@ -73,7 +74,7 @@ function addNew() {
     if (!target) return
     target.ready = true
     playSfx('correct')
-    hint.show('新泡泡升旗，可以接客了', 'good')
+    hint.show('新泡泡 Ready，可以接客了', 'good')
   }, READY_MS)
 }
 
@@ -139,21 +140,21 @@ function finish() {
         <KChar id="owl" :size="52" :badge="oldCount" :fx="oldCount === 0 ? 'dim' : 'none'" label="v1 貓頭鷹" disabled data-test="old-owl" />
         <div v-for="i in REPLICAS" :key="i" class="pod" :class="{ 'is-gone': i - 1 >= oldCount && !isPopping(i - 1) }">
           <KChar id="bubble" :size="44" :fx="oldFx(i - 1)" label="v1" disabled data-pod="v1" />
-          <KChar v-if="i - 1 < oldCount" id="ready-flag" :size="26" disabled />
+          <span v-if="i - 1 < oldCount" class="pod__state is-ready">Ready</span>
         </div>
       </section>
       <section class="side">
         <KChar id="owl" :size="52" :badge="newPods.length" label="v2 貓頭鷹" disabled />
         <div v-for="p in newPods" :key="p.key" class="pod">
           <KChar id="bubble" :size="44" :fx="p.ready ? 'bounce' : 'dim'" label="v2" disabled data-pod="v2" />
-          <KChar id="ready-flag" :size="26" :fx="p.ready ? 'bounce' : 'dim'" disabled />
+          <span class="pod__state" :class="{ 'is-ready': p.ready }">{{ p.ready ? 'Ready' : '啟動中' }}</span>
         </div>
       </section>
     </div>
 
     <div class="meters">
-      <Meter label="可接客（Ready）" :value="readyCount" :max="4" :marks="[{ at: MIN_READY, label: '至少 3', color: 'red' }]" />
-      <Meter label="泡泡總數" :value="total" :max="5" :marks="[{ at: MAX_TOTAL, label: '上限 4', color: 'yellow' }]" />
+      <Meter label="可接客（Ready）" :value="readyCount" :max="MAX_TOTAL" :marks="[{ at: MIN_READY, label: `至少 ${MIN_READY}`, color: 'red' }]" />
+      <Meter :label="`泡泡總數（上限 ${MAX_TOTAL}）`" :value="total" :max="MAX_TOTAL" />
     </div>
 
     <template #controls>
@@ -163,13 +164,13 @@ function finish() {
           :class="{ shake: shaking === 'add', 'is-flash': suggest === 'add' }"
           data-test="add-new"
           @click="addNew"
-        >新貓頭鷹 +1</button>
+        >加一顆 v2</button>
         <button
           class="btn actions__btn"
           :class="{ shake: shaking === 'remove', 'is-flash': suggest === 'remove' }"
           data-test="remove-old"
           @click="removeOld"
-        >舊貓頭鷹 −1</button>
+        >收一顆 v1</button>
       </div>
     </template>
   </GameShell>
@@ -216,6 +217,17 @@ function finish() {
 
 .pod.is-gone {
   visibility: hidden;
+}
+
+.pod__state {
+  width: 42px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.pod__state.is-ready {
+  color: var(--leaf-deep);
 }
 
 .meters {

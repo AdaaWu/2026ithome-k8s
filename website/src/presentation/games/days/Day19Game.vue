@@ -16,7 +16,6 @@ const ROUNDS: Key[] = ['index.html', 'LOG_LEVEL', 'nginx.conf']
 const OLD: Record<Key, string> = { LOG_LEVEL: 'info', 'index.html': '舊首頁', 'nginx.conf': '舊設定' }
 const NEW: Record<Key, string> = { LOG_LEVEL: 'debug', 'index.html': '新首頁', 'nginx.conf': '新設定' }
 const BEST: Record<Key, Action> = { 'index.html': 'sync', LOG_LEVEL: 'restartA', 'nginx.conf': 'restartB' }
-const MAX_RESTARTS = 3
 const AHA = '改 ConfigMap 後，依注入方式決定是否重啟 Pod。環境變數一定要重啟；掛成檔案會同步，但程式有沒有重讀是另一回事。'
 
 const status = ref<GameStatus>('intro')
@@ -31,7 +30,7 @@ const podA = reactive({ name: 'hello-a-7d2k', env: OLD.LOG_LEVEL })
 const podB = reactive({ name: 'hello-b-4x9p', disk: { ...OLD }, conf: OLD['nginx.conf'] })
 const fx = reactive<Record<PodKey, CharFx>>({ A: 'none', B: 'none' })
 
-const { later, clearAll } = useTimeouts()
+const { later } = useTimeouts()
 
 let completed = false
 
@@ -71,7 +70,6 @@ function setFx(pod: PodKey, value: CharFx) {
 
 // 重啟其實是換一顆新泡泡：新名字、重新讀環境變數與掛載
 function restart(pod: PodKey) {
-  restarts.value++
   const suffix = Math.random().toString(36).slice(2, 6)
   if (pod === 'A') Object.assign(podA, { name: `hello-a-${suffix}`, env: cm.LOG_LEVEL })
   else Object.assign(podB, { name: `hello-b-${suffix}`, disk: { ...cm }, conf: cm['nginx.conf'] })
@@ -86,13 +84,12 @@ function act(action: Action) {
     playSfx('tap')
   } else {
     restart(action === 'restartA' ? 'A' : 'B')
+    restarts.value++
     playSfx('pop')
   }
-  if (restarts.value > MAX_RESTARTS) {
-    status.value = 'lost'
-    return
+  if (live(k) === NEW[k]) {
+    return pass(action)
   }
-  if (live(k) === NEW[k]) return pass(action)
   missCount.value++
   playSfx('wrong')
   if (action === 'sync') hint.show(k === 'LOG_LEVEL' ? '環境變數在容器啟動那一刻就決定了' : 'Nginx 只在啟動時讀一次設定', 'bad')
@@ -121,19 +118,6 @@ function begin() {
   startRound()
 }
 
-function retry() {
-  clearAll()
-  rounds.reset()
-  restarts.value = 0
-  missCount.value = 0
-  locked.value = false
-  Object.assign(fx, { A: 'none', B: 'none' })
-  Object.assign(cm, OLD)
-  Object.assign(podA, { name: 'hello-a-7d2k', env: OLD.LOG_LEVEL })
-  Object.assign(podB, { name: 'hello-b-4x9p', disk: { ...OLD }, conf: OLD['nginx.conf'] })
-  begin()
-}
-
 function finish() {
   if (completed) return
   completed = true
@@ -147,9 +131,7 @@ function finish() {
     :status="status"
     :aha="AHA"
     :progress="progress"
-    lose-text="先想清楚：環境變數還是掛檔？程式會不會重讀？"
     @start="begin"
-    @retry="retry"
     @finish="finish"
   >
     <HintBubble :text="hint.text.value" :tone="hint.tone.value" @close="hint.clear" />
@@ -181,7 +163,7 @@ function finish() {
       </div>
     </div>
 
-    <p class="count">重啟 {{ restarts }} / {{ MAX_RESTARTS }} 次</p>
+    <p class="count">重啟 {{ restarts }} 次</p>
 
     <template #controls>
       <div class="actions">

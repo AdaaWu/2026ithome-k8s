@@ -52,7 +52,7 @@ describe('Day25Game', () => {
 
     await wrapper.get('[data-test=shell-retry]').trigger('click')
     expect(wrapper.get('[data-test=pending-btn]').classes()).not.toContain('shake')
-    expect(wrapper.text()).toContain('錯 0 / 2')
+    expect(wrapper.text()).toContain('還能錯 2 次')
     await vi.advanceTimersByTimeAsync(3000)
     expect(wrapper.find('[data-test=shell-retry]').exists()).toBe(false)
     expect(wrapper.text()).toContain('待排程 1 / 6')

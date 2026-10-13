@@ -165,7 +165,12 @@ function finish() {
       <KChar id="lighthouse" :size="64" label="櫃台" disabled />
       <div v-if="step === 'edit'" class="desk__out paper" data-test="error">
         <code v-for="(text, n) in error" :key="n">{{ text }}</code>
-        <small v-if="!error.length">改好後送去櫃台</small>
+        <ul v-if="!error.length" class="desk__tips">
+          <li>一層縮 2 格，縮進去就屬於上一層</li>
+          <li>例：name 屬於 metadata，縮 2 格</li>
+          <li>藍字點一下可切換，改好送去櫃台</li>
+        </ul>
+        <small v-else class="desk__tip">一層縮 2 格，縮進去就屬於上一層</small>
       </div>
       <div v-else class="desk__pod">
         <KChar id="bubble" :size="96" :fx="podFx" :label="step === 'created' ? 'hello' : undefined" data-test="pod" :disabled="step !== 'created'" @tap="deletePod" />
@@ -257,9 +262,18 @@ function finish() {
   color: var(--danger);
 }
 
-.desk__out small {
+.desk__tips {
+  margin: 0;
+  padding-left: 1.1em;
   color: var(--ink-soft);
-  font-size: 0.85rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.desk__tip {
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
 }
 
 .desk__pod {

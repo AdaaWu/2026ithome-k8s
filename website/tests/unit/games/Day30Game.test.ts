@@ -75,4 +75,12 @@ describe('Day30Game', () => {
     expect(wrapper.get('[data-test=lives]').text()).toContain('3')
     expect(wrapper.find('[data-choice=previous]').exists()).toBe(true)
   })
+
+  it('答錯時說明所選選項為何不對', async () => {
+    const wrapper = mount(Day30Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    await wrapper.get('[data-choice=delete]').trigger('click')
+    expect(wrapper.get('[data-test=picked-why]').text()).toContain('kubectl delete pod')
+    expect(wrapper.get('[data-test=reveal]').text()).toContain('kubelet')
+  })
 })

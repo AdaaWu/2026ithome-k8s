@@ -14,6 +14,7 @@ interface Incident {
   options: Array<{ id: string; label: string; sub?: string }>
   answer: string
   reason: string
+  wrong: Record<string, string>
   cast: CharacterId[]
 }
 
@@ -27,7 +28,8 @@ const INCIDENTS: Incident[] = [
       { id: 'rebuild', label: '重建整座島' },
     ],
     answer: 'previous',
-    reason: '加 --previous 才看得到上一輪怎麼死的',
+    reason: '加 --previous 才看得到上一輪怎麼死的。一直把它重啟的是管家松鼠（kubelet）',
+    wrong: { delete: '刪掉只會換一顆新的，死因還是沒查到', rebuild: '問題在程式或設定，重建整座島也一樣' },
     cast: ['bubble', 'magnifier'],
   },
   {
@@ -39,7 +41,8 @@ const INCIDENTS: Incident[] = [
       { id: 'keep', label: '維持現狀' },
     ],
     answer: 'clusterip',
-    reason: '只給島內用，ClusterIP 就夠，暴露越少越好',
+    reason: '只給島內用，ClusterIP 就夠，暴露越少越好。改完由雲端的 Service 控制器收回對外 LB',
+    wrong: { nodeport: 'NodePort 一樣從島外連得進來', keep: 'LoadBalancer 讓資料庫直接曝露在島外' },
     cast: ['totem-inner', 'totem-dock'],
   },
   {
@@ -51,7 +54,8 @@ const INCIDENTS: Incident[] = [
       { id: 'undo', label: 'kubectl rollout undo' },
     ],
     answer: 'undo',
-    reason: '舊 ReplicaSet 還留著，undo 就切回去',
+    reason: '舊 ReplicaSet 還留著，undo 後部署管家（Deployment 控制器）把副本調回舊版',
+    wrong: { 'delete-rs': '刪掉舊 ReplicaSet 就沒得退版', wait: '紅泡泡起不來，rollout 會一直卡著' },
     cast: ['steward', 'owl'],
   },
   {
@@ -63,19 +67,21 @@ const INCIDENTS: Incident[] = [
       { id: 'container', label: '寫在容器裡' },
     ],
     answer: 'pvc',
-    reason: 'PVC 借倉庫，泡泡重建資料還在',
+    reason: 'PVC 借倉庫，泡泡重建資料還在。借用單和倉庫的綁定由 PV 控制器調和',
+    wrong: { emptydir: 'emptyDir 跟著泡泡一起消失', container: '寫在容器裡，重啟就清空' },
     cast: ['borrow-slip', 'warehouse'],
   },
   {
-    prompt: '尖峰時服務變慢，前端一直被重啟',
+    prompt: '尖峰時資料庫變慢，前端的 Liveness 有查資料庫，一直被重啟',
     scene: [{ id: 'bubble', fx: 'slow', label: 'web' }, { id: 'alive-bell', fx: 'shake' }, { id: 'ready-flag' }],
     options: [
       { id: 'stricter', label: 'Liveness 再調嚴格' },
-      { id: 'readiness', label: '資料庫檢查移到 Readiness', sub: 'Liveness 放寬，只看程式本身' },
+      { id: 'readiness', label: '把資料庫檢查移出 Liveness', sub: 'Liveness 只看程式本身' },
       { id: 'off', label: '關掉所有探針' },
     ],
     answer: 'readiness',
-    reason: '外部依賴交給 Readiness，Liveness 只看自己',
+    reason: 'Liveness 只檢查自己活著沒，外部依賴掛了重啟也沒用。探針由管家松鼠（kubelet）執行',
+    wrong: { stricter: '調更嚴只會重啟得更兇', off: '關掉探針，壞了也沒人發現' },
     cast: ['alive-bell', 'ready-flag'],
   },
 ]
@@ -101,7 +107,7 @@ const countdown = useCountdown(QUESTION_SEC, { onExpire: expire })
 const lives = ref(LIVES)
 const timerTotal = ref(QUESTION_SEC)
 const extended = ref(false)
-const reveal = ref<{ ok: boolean; title: string } | null>(null)
+const reveal = ref<{ ok: boolean; title: string; picked?: string } | null>(null)
 const onStage = ref<CharacterId[]>([])
 const finale = ref(false)
 
@@ -151,11 +157,18 @@ function expire() {
   fail('時間到')
 }
 
-function choose(_id: string, correct: boolean) {
+const pickedWhy = computed(() => {
+  const id = reveal.value?.picked
+  if (!id) return null
+  const label = incident.value.options.find((o) => o.id === id)?.label
+  return `你選的「${label}」：${incident.value.wrong[id]}`
+})
+
+function choose(id: string, correct: boolean) {
   if (reveal.value || status.value !== 'playing') return
   countdown.pause()
   if (!correct) {
-    fail('答錯了')
+    fail('答錯了', id)
     return
   }
   rounds.record(true)
@@ -163,7 +176,7 @@ function choose(_id: string, correct: boolean) {
   incident.value.cast.forEach((id, i) => later(() => addToPhoto(id), i * 250))
 }
 
-function fail(title: string) {
+function fail(title: string, picked?: string) {
   countdown.pause()
   rounds.record(false)
   playSfx('wrong')
@@ -172,7 +185,7 @@ function fail(title: string) {
     status.value = 'lost'
     return
   }
-  reveal.value = { ok: false, title }
+  reveal.value = { ok: false, title, picked }
 }
 
 function next() {
@@ -184,7 +197,7 @@ function next() {
   }
   // 全員合照：沒上台的角色也一起跳上來
   finale.value = true
-  hint.show('全員到齊，結業合照！', 'good', 3000)
+  hint.show('值班結束，大家來合照！', 'good', 3000)
   playSfx('win')
   const rest = ALL_CAST.filter((id) => !onStage.value.includes(id))
   rest.forEach((id, i) => later(() => addToPhoto(id), i * 120))
@@ -250,6 +263,7 @@ function finish() {
       <!-- 選項放在舞台內，390x844 第一屏就看得到全部選項 -->
       <div v-if="reveal" class="reveal paper" :class="reveal.ok ? 'is-ok' : 'is-bad'" data-test="reveal">
         <strong>{{ reveal.title }}</strong>
+        <p v-if="pickedWhy" class="reveal__why" data-test="picked-why">{{ pickedWhy }}</p>
         <p>正解：{{ correctLabel }}<br />{{ incident.reason }}</p>
         <button class="btn btn--primary" data-test="next" @click="next">
           {{ rounds.isLast.value ? '收工，合照去 ▶' : '下一題 ▶' }}
@@ -259,7 +273,7 @@ function finish() {
     </template>
 
     <div class="photo" :class="{ 'is-finale': finale }">
-      <small class="photo__title">{{ finale ? '雲之島全員合照' : '合照台' }}</small>
+      <small class="photo__title">{{ finale ? '雲之島結業合照' : '合照台' }}</small>
       <div class="photo__crowd" data-test="photo">
         <span v-for="id in onStage" :key="id" class="photo__member pop-in">
           <CharacterSprite :id="id" :size="finale ? 38 : 30" />
@@ -278,8 +292,9 @@ function finish() {
 </template>
 
 <style scoped>
+/* 上方留給提示泡泡，不蓋住命與事故數 */
 .top {
-  margin: 8px 12px 0;
+  margin: 56px 12px 0;
   display: flex;
   justify-content: space-between;
   font-size: 0.85rem;
@@ -395,6 +410,10 @@ function finish() {
 }
 
 .reveal.is-bad strong {
+  color: var(--danger);
+}
+
+.reveal .reveal__why {
   color: var(--danger);
 }
 </style>

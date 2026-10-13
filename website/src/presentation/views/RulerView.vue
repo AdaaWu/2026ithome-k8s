@@ -35,7 +35,7 @@ onMounted(() => {
         <h2 class="cert__name">{{ game.progress.value.nickname }}</h2>
         <p class="cert__body">
           走遍雲之島 30 天、喚醒全部 {{ game.totalCharacters }} 位居民，<br />
-          從此島上的泡泡、圖騰柱與貓頭鷹都聽你的哨子
+          從此島上的泡泡、柱子與貓頭鷹都聽你的哨子
         </p>
         <p class="cert__title">{{ RULER_TITLE }}</p>
         <p class="cert__date">{{ today }}・燈塔櫃台 核發</p>

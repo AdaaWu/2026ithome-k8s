@@ -36,6 +36,21 @@ describe('Day17Game', () => {
     expect(wrapper.get('[data-test=checks]').text()).toBe('檢查 0 / 10')
   })
 
+  it('檢查次數用完時不閃斷點，避免按下就失敗', async () => {
+    const wrapper = await start()
+    for (const id of OK_STATIONS) await wrapper.get(`[data-station=${id}]`).trigger('click')
+    await wrapper.get('[data-station=endpoints]').trigger('click')
+    await vi.advanceTimersByTimeAsync(1500)
+    await wrapper.get('[data-station=ingress]').trigger('click')
+    await vi.advanceTimersByTimeAsync(1500)
+    // 第 3 回合 404 斷在看板：先問 3 站正常，閃出看板
+    for (const id of ['controller', 'service', 'endpoints']) await wrapper.get(`[data-station=${id}]`).trigger('click')
+    expect(wrapper.get('[data-station=ingress]').classes()).toContain('is-flash')
+    await wrapper.get('[data-station=pod]').trigger('click')
+    expect(wrapper.get('[data-test=checks]').text()).toBe('檢查 10 / 10')
+    expect(wrapper.find('.is-flash').exists()).toBe(false)
+  })
+
   it('retry 會重新洗牌回合順序，舊的延遲回呼不會改到新局', async () => {
     const wrapper = await start()
     for (let round = 0; round < 2; round++) {
@@ -65,5 +80,11 @@ describe('Day17Game', () => {
     await wrapper.get('[data-test=shell-finish]').trigger('click')
     await wrapper.get('[data-test=shell-finish]').trigger('click')
     expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('名單斷掉的回合，泡泡站顯示 Readiness 未過', async () => {
+    const wrapper = await start()
+    await wrapper.get('[data-station=pod]').trigger('click')
+    expect(wrapper.get('.terminal').text()).toContain('0/1 Running（Readiness 未過）')
   })
 })

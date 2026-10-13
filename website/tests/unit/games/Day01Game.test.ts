@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import Day01Game from '@/presentation/games/days/Day01Game.vue'
+import { GAME_PAUSED } from '@/presentation/games/kit'
 
 describe('Day01Game', () => {
   beforeEach(() => vi.useFakeTimers())
@@ -60,5 +62,36 @@ describe('Day01Game', () => {
 
     await wrapper.get('[data-tree=B]').trigger('click')
     expect(wrapper.find('.is-flash').exists()).toBe(false)
+  })
+
+  it('手動階段倒下的樹不會長回來，宣告後全部換上新機器', async () => {
+    const wrapper = mount(Day01Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    await vi.advanceTimersByTimeAsync(14_000)
+    expect(wrapper.get('[data-tree=A]').classes()).toContain('is-down')
+    expect(wrapper.get('[data-tree=B]').classes()).toContain('is-down')
+
+    await vi.advanceTimersByTimeAsync(1500)
+    await wrapper.get('[data-test=declare]').trigger('click')
+    expect(wrapper.find('.is-down').exists()).toBe(false)
+    expect(wrapper.findAll('[data-test=pod]')).toHaveLength(6)
+  })
+
+  it('看簡報暫停期間倒數不前進，也不會倒下一棵樹', async () => {
+    const paused = ref(false)
+    const wrapper = mount(Day01Game, { global: { provide: { [GAME_PAUSED as symbol]: paused } } })
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    await vi.advanceTimersByTimeAsync(7000)
+    const width = wrapper.get('[data-test=shell-timer]').attributes('style')
+
+    paused.value = true
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(wrapper.get('[data-test=shell-timer]').attributes('style')).toBe(width)
+    expect(wrapper.get('[data-tree=B]').classes()).not.toContain('is-down')
+    expect(wrapper.find('[data-test=declare]').exists()).toBe(false)
+
+    paused.value = false
+    await vi.advanceTimersByTimeAsync(1100)
+    expect(wrapper.get('[data-tree=B]').classes()).toContain('is-down')
   })
 })

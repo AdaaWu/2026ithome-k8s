@@ -20,13 +20,13 @@ const ROUNDS: Round[] = [
   { pods: 3, usage: 90, target: 50, max: 10, answer: '6', formula: '3×90÷50=5.4，無條件進位 6' },
   { pods: 2, usage: 100, target: 50, max: 3, answer: '3', formula: '算出 4，但被上限 3 擋住' },
   { pods: 4, usage: 52, target: 50, max: 10, answer: 'keep', formula: '52÷50=1.04，在 10% 容忍內' },
-  { pods: 3, usage: null, target: 50, max: 10, note: '沒設 CPU Request', answer: 'unknown', formula: '沒設 Request，分母是 0' },
+  { pods: 3, usage: null, target: 50, max: 10, note: '沒設 CPU Request', answer: 'unknown', formula: '沒設 Request，算不出使用率，HPA 不動作' },
   { pods: 6, usage: 20, target: 50, max: 10, note: '1 分鐘前才降下來', answer: 'keep', formula: '縮容要等 5 分鐘穩定窗口' },
 ]
 const NUMBERS = ['2', '3', '4', '5', '6', '7', '8', '9', '10']
 const MAX_MISSES = 2
 const AHA = 'HPA 看的是用量除以 Request，調的是期望副本數；真正增減 Pod 的是工作負載控制器。擴容要時間，縮容刻意更慢。'
-const LOSE_TEXT = '期望副本 = ceil(現有 × 目前使用率 ÷ 目標)，再套上下限、10% 容忍度與縮容穩定窗口。'
+const LOSE_TEXT = '期望顆數 = 現有 × 使用率 ÷ 目標，無條件進位、不超過上限；再看預設 10% 容忍與 5 分鐘縮容穩定窗口。'
 
 const status = ref<GameStatus>('intro')
 const rounds = useRounds(ROUNDS)
@@ -129,7 +129,7 @@ function finish() {
     <HintBubble :text="hint.text.value" :tone="hint.tone.value" @close="hint.clear" />
 
     <div class="board">
-      <KChar id="hpa-knob" :size="72" disabled class="board__knob" :class="{ 'is-turning': turning }" />
+      <KChar id="hpa-knob" :size="56" disabled class="board__knob" :class="{ 'is-turning': turning }" />
       <div class="board__data">
         <small data-test="round">第 {{ rounds.index.value + 1 }} 回合</small>
         <div class="board__chips">
@@ -144,7 +144,8 @@ function finish() {
     <div class="usage">
       <Meter
         v-if="round.usage !== null"
-        label="平均 CPU 使用率（用量 ÷ Request）"
+        :label="`平均 CPU 使用率（用量 ÷ Request）：${round.usage}%`"
+        class="usage__meter"
         :value="round.usage"
         :max="120"
         unit="%"
@@ -153,42 +154,48 @@ function finish() {
       <p v-else class="usage__unknown">平均使用率：<code>&lt;unknown&gt; / 50%</code></p>
     </div>
 
+    <ul class="rules paper" data-test="rules">
+      <li>期望顆數 = 現有 × 使用率 ÷ 目標，無條件進位，不超過上限</li>
+      <li>比值在 0.9～1.1（預設容忍 10%）：維持不變</li>
+      <li>縮容未滿 5 分鐘（預設穩定窗口）：維持不變</li>
+      <li>&lt;unknown&gt;：算不出使用率，HPA 不動作</li>
+    </ul>
+
     <div class="work">
       <div class="work__chain">
-        <KChar id="steward" :size="52" disabled />
+        <KChar id="steward" :size="40" disabled />
         <TagChip :text="`replicas: ${replicas}`" mono color="yellow" class="work__sign" :class="{ 'is-turning': turning }" />
         <span class="work__arrow">→</span>
-        <KChar id="owl" :size="48" disabled />
+        <KChar id="owl" :size="40" disabled />
       </div>
       <div class="work__pods">
-        <KChar v-for="n in bubbles" :key="n" id="bubble" :size="36" :fx="n > round.pods ? 'bounce' : 'none'" disabled />
+        <KChar v-for="n in bubbles" :key="n" id="bubble" :size="30" :fx="n > round.pods ? 'bounce' : 'none'" disabled />
       </div>
     </div>
 
-    <template #controls>
-      <div class="keys">
-        <button
-          v-for="n in NUMBERS"
-          :key="n"
-          class="btn keys__num"
-          :class="{ shake: shaking === n, 'is-flash': roundMisses >= 2 && round.answer === n }"
-          :data-answer="n"
-          @click="choose(n)"
-        >{{ n }}</button>
-        <button
-          class="btn keys__wide"
-          :class="{ shake: shaking === 'keep', 'is-flash': roundMisses >= 2 && round.answer === 'keep' }"
-          data-answer="keep"
-          @click="choose('keep')"
-        >維持不變</button>
-        <button
-          class="btn keys__wide keys__wide--full"
-          :class="{ shake: shaking === 'unknown', 'is-flash': roundMisses >= 2 && round.answer === 'unknown' }"
-          data-answer="unknown"
-          @click="choose('unknown')"
-        >算不出來（&lt;unknown&gt;）</button>
-      </div>
-    </template>
+    <!-- 答案鍵放在舞台內，360x740 第一屏看得到全部按鍵 -->
+    <div class="keys">
+      <button
+        v-for="n in NUMBERS"
+        :key="n"
+        class="btn keys__num"
+        :class="{ shake: shaking === n, 'is-flash': roundMisses >= 2 && round.answer === n }"
+        :data-answer="n"
+        @click="choose(n)"
+      >{{ n }}</button>
+      <button
+        class="btn keys__wide"
+        :class="{ shake: shaking === 'keep', 'is-flash': roundMisses >= 2 && round.answer === 'keep' }"
+        data-answer="keep"
+        @click="choose('keep')"
+      >維持不變</button>
+      <button
+        class="btn keys__wide keys__wide--full"
+        :class="{ shake: shaking === 'unknown', 'is-flash': roundMisses >= 2 && round.answer === 'unknown' }"
+        data-answer="unknown"
+        @click="choose('unknown')"
+      >算不出使用率（&lt;unknown&gt;）</button>
+    </div>
   </GameShell>
 </template>
 
@@ -221,8 +228,19 @@ function finish() {
   gap: 4px;
 }
 
+/* 360 寬也排成一行，答案鍵留在第一屏 */
+.board__data :deep(.tag) {
+  min-height: 30px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
+
 .usage {
   margin: 10px 12px 0;
+}
+
+.usage__meter :deep(.meter__head b) {
+  display: none;
 }
 
 .usage__unknown {
@@ -230,8 +248,16 @@ function finish() {
   font-size: 0.9rem;
 }
 
+.rules {
+  margin: 8px 12px 0;
+  padding: 4px 8px 4px 20px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
 .work {
-  margin: 16px 12px 12px;
+  margin: 6px 12px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -265,7 +291,7 @@ function finish() {
 }
 
 .keys {
-  width: 100%;
+  margin: auto 10px 10px;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 6px;

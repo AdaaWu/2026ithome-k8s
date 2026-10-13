@@ -46,4 +46,15 @@ describe('Day26Game', () => {
     expect(wrapper.get('[data-answer="6"]').classes()).toContain('is-flash')
     expect(wrapper.find('[data-test=shell-retry]').exists()).toBe(false)
   })
+
+  it('作答前就看得到容忍度、縮容等待與 <unknown> 三條規則', async () => {
+    const wrapper = mount(Day26Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    const rules = wrapper.get('[data-test=rules]').text()
+    expect(rules).toContain('0.9～1.1')
+    expect(rules).toContain('5 分鐘')
+    expect(rules).toContain('<unknown>')
+    expect(rules).toContain('預設容忍 10%')
+    expect(rules).toContain('HPA 不動作')
+  })
 })

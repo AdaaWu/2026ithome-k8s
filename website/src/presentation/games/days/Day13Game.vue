@@ -13,7 +13,7 @@ type Round = { kind: 'call'; target: Zone; prompt: string } | { kind: 'build'; p
 const ROUNDS: Round[] = [
   { kind: 'call', target: 'prod', prompt: '呼叫 prod 的 hello' },
   { kind: 'call', target: 'dev', prompt: '呼叫 dev 的 hello' },
-  { kind: 'build', prompt: '再建一個叫 hello 的 Deployment' },
+  { kind: 'build', prompt: '再建一個叫 hello 的 Service' },
   { kind: 'packet', prompt: 'dev 泡泡直接打 prod 泡泡的 IP，會被圍籬擋下嗎？' },
 ]
 
@@ -27,9 +27,10 @@ const WORD_TEXT = Object.fromEntries(WORDS.map((w) => [w.id, w.text])) as Record
 
 // 舞台座標（中心點），基準 340×240；橫向依舞台寬度等比換算，窄螢幕不用縮放
 const POS = { dev: { x: 70, y: 70 }, prod: { x: 270, y: 70 }, devPod: { x: 45, y: 190 }, me: { x: 295, y: 190 } }
+// 樹壓在圍籬線上，不偏向任何一區
 const TREES = [
-  { key: 'tree-a', x: 132, y: 180 },
-  { key: 'tree-b', x: 208, y: 180 },
+  { key: 'tree-a', x: 170, y: 118 },
+  { key: 'tree-b', x: 170, y: 192 },
 ]
 const pctX = (x: number) => `${((x / 340) * 100).toFixed(2)}%`
 const place = (p: { x: number; y: number }, size: number) => ({ left: `calc(${pctX(p.x)} - ${size / 2}px)`, top: `${p.y - size / 2}px` })
@@ -92,7 +93,12 @@ const flightStyle = computed(() => {
 const fxOf = (key: string): CharFx => (shaking.value === key ? 'shake' : lit.value === key ? 'glow' : 'none')
 
 function fly(from: { x: number; y: number }, to: { x: number; y: number }) {
-  flight.value = { key: ++flightKey, from, to }
+  const key = ++flightKey
+  flight.value = { key, from, to }
+  // 飛到後收起聲波
+  later(() => {
+    if (flight.value?.key === key) flight.value = null
+  }, 800)
 }
 
 function addWord(word: Word) {
@@ -139,7 +145,7 @@ function build(zone: 'dev' | 'prod' | 'staging') {
   if (locked.value) return
   if (zone !== 'staging') {
     // create 遇到同名才會回 AlreadyExists；apply 只會更新既有的
-    terminal.value = ['$ kubectl create deploy hello \\', `  --image=nginx -n ${zone}`, 'Error (AlreadyExists):', 'deployments.apps "hello"', 'already exists']
+    terminal.value = ['$ kubectl create svc clusterip \\', `  hello --tcp=80:80 -n ${zone}`, 'Error from server (AlreadyExists):', 'services "hello" already exists']
     shaking.value = zone
     later(() => (shaking.value = null), 450)
     misses.value++
@@ -150,9 +156,9 @@ function build(zone: 'dev' | 'prod' | 'staging') {
   terminal.value = [
     '$ kubectl create ns staging',
     'namespace/staging created',
-    '$ kubectl create deploy hello \\',
-    '  --image=nginx -n staging',
-    'deployment.apps/hello created',
+    '$ kubectl create svc clusterip \\',
+    '  hello --tcp=80:80 -n staging',
+    'service/hello created',
   ]
   stagingBuilt.value = true
   playSfx('correct')
@@ -211,7 +217,7 @@ function finish() {
 
 <template>
   <GameShell
-    hint="拼出地址，喊到對的柱子"
+    hint="拼出地址，喊到對區的 hello"
     :status="status"
     :aha="AHA"
     :progress="progress"
@@ -225,8 +231,18 @@ function finish() {
       <span class="zone zone--prod">prod</span>
       <i class="scene__line" />
       <KChar id="fence" :size="56" class="scene__item" :style="place({ x: 170, y: 36 }, 56)" disabled />
-      <KChar id="totem" :size="64" label="hello v2" class="scene__item" :fx="fxOf('dev')" :style="place(POS.dev, 64)" disabled />
-      <KChar id="totem" :size="64" label="hello v1" class="scene__item" :fx="fxOf('prod')" :style="place(POS.prod, 64)" disabled />
+      <!-- 喊話對象只用名稱牌，hello 是明天登場的 Service 名稱 -->
+      <span
+        v-for="zone in (['dev', 'prod'] as const)"
+        :key="zone"
+        class="scene__item nameplate paper"
+        :class="`nameplate--${fxOf(zone)}`"
+        :style="place(POS[zone], 64)"
+        :data-target="zone"
+      >
+        <b>hello</b>
+        <small>{{ zone === 'dev' ? 'v2' : 'v1' }}</small>
+      </span>
       <KChar
         v-for="tree in TREES"
         :key="tree.key"
@@ -247,7 +263,7 @@ function finish() {
 
     <div v-if="stagingBuilt" class="staging pop-in">
       <span class="zone">staging</span>
-      <KChar id="bubble" :size="36" fx="bounce" label="hello" disabled />
+      <b class="staging__plate paper">hello</b>
     </div>
 
     <div class="panel">
@@ -333,6 +349,35 @@ function finish() {
   right: 10px;
 }
 
+.nameplate {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: filter 0.25s;
+}
+
+.nameplate b {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.9rem;
+}
+
+.nameplate small {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.nameplate--glow {
+  filter: drop-shadow(0 0 4px var(--gold)) drop-shadow(0 0 10px var(--accent));
+}
+
+.nameplate--shake {
+  animation: shake 0.4s;
+}
+
 /* 聲波／封包從起點飛到終點 */
 .scene__wave {
   position: absolute;
@@ -364,6 +409,12 @@ function finish() {
   gap: 8px;
   border: 2px dashed var(--bark);
   border-radius: var(--radius-md);
+}
+
+.staging__plate {
+  padding: 4px 10px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.85rem;
 }
 
 .staging .zone {
@@ -413,9 +464,13 @@ function finish() {
 }
 
 .builds {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.builds [data-build='staging'] {
+  grid-column: span 2;
 }
 
 .terminal {
@@ -425,6 +480,7 @@ function finish() {
   background: #3d2f25;
   color: #f6efe2;
   font-size: 0.72rem;
+  font-variant-ligatures: none;
   line-height: 1.4;
   white-space: pre-wrap;
 }

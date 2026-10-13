@@ -34,7 +34,7 @@ describe('Day13Game', () => {
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
-  it('跨區只喊 hello 會被同區的柱子接走，亂拼地址回 NXDOMAIN，都不會前進', async () => {
+  it('跨區只喊 hello 會被同區的 hello 接走，亂拼地址回 NXDOMAIN，都不會前進', async () => {
     const wrapper = mount(Day13Game)
     await wrapper.get('[data-test=shell-start]').trigger('click')
     await shout(wrapper, ['hello'])
@@ -59,8 +59,8 @@ describe('Day13Game', () => {
 
     await wrapper.get('[data-build=prod]').trigger('click')
     const out = wrapper.get('[data-test=terminal]').text()
-    expect(out).toContain('$ kubectl create deploy hello')
-    expect(out).toContain('already exists')
+    expect(out).toContain('$ kubectl create svc clusterip')
+    expect(out).toContain('services "hello" already exists')
     await vi.advanceTimersByTimeAsync(1800)
     expect(wrapper.find('[data-build=staging]').exists()).toBe(true)
   })

@@ -59,32 +59,32 @@
 
 先用 `get` 看狀態，再用 `describe` 看物件細節與 Events，最後視容器狀態用 `logs` 檢查程式輸出。
 關鍵區分是：**Events 是叢集元件針對物件所發出的事件，logs 是容器標準輸出與錯誤輸出；容器尚未啟動時，通常還沒有該容器的應用程式 logs。**
-ImagePullBackOff 先看 Events；CrashLoopBackOff 可用 `logs --previous` 查看前一個已終止容器的日誌；Pending 則檢查排程條件與 FailedScheduling Events。（Day 12）
+ImagePullBackOff 先看 Events；CrashLoopBackOff 可用 `logs --previous` 查看前一個已終止容器的日誌；Pending 則檢查排程條件與 FailedScheduling Events。（[Day 12](https://ithelp.ithome.com.tw/articles/10416689)）
 
 **Q2：Service 三種型態差在哪？**
 
 它們是 Service 的不同 `type`。NodePort 會在 ClusterIP Service 的基礎上配置節點連接埠；LoadBalancer 通常也會配置 ClusterIP，並通常配置 NodePort，但可透過 `allocateLoadBalancerNodePorts: false` 關閉 NodePort，前提是負載平衡器實作不依賴 NodePort。
 原則是只暴露實際需要的範圍。
-LoadBalancer Service 需要叢集中有對應的負載平衡器實作；在沒有該實作的本機環境中，`EXTERNAL-IP` 可能一直顯示 `<pending>`。（Day 15）
+LoadBalancer Service 需要叢集中有對應的負載平衡器實作；在沒有該實作的本機環境中，`EXTERNAL-IP` 可能一直顯示 `<pending>`。（[Day 15](https://ithelp.ithome.com.tw/articles/10418236)）
 
 **Q3：Deployment 怎麼做到零停機？**
 
 Deployment 會為不同版本建立 ReplicaSet。
 滾動更新時，新版本逐步增加、舊版本逐步減少；新的 Pod 未 Ready 時，可用副本數可能不足，更新會無法繼續前進。控制器會依 `progressDeadlineSeconds` 判定更新是否停滯並回報 `ProgressDeadlineExceeded`，但不會因此自動回滾。
 `maxUnavailable` 控制更新期間最多可少多少可用副本，`maxSurge` 控制最多可額外建立多少副本。
-舊 ReplicaSet 通常會在保留的修訂範圍內留下紀錄，`rollout undo` 可將 Deployment 回復到先前修訂；若舊映像不在 Node 快取中，仍須重新拉取。滾動更新設定提供更新策略，但不保證所有應用在任何故障情況下都零停機。（Day 10、11）
+舊 ReplicaSet 通常會在保留的修訂範圍內留下紀錄，`rollout undo` 可將 Deployment 回復到先前修訂；若舊映像不在 Node 快取中，仍須重新拉取。滾動更新設定提供更新策略，但不保證所有應用在任何故障情況下都零停機。（[Day 10](https://ithelp.ithome.com.tw/articles/10415722)、[11](https://ithelp.ithome.com.tw/articles/10416467)）
 
 **Q4：PV 跟 PVC 是什麼關係？**
 
 **PV 代表叢集中的儲存資源，PVC 是使用者提出的儲存需求，Pod 透過 PVC 使用儲存。**
 這層抽象讓工作負載不必綁死 EBS、NFS 等底層實作。
-StorageClass 描述儲存類別及其供應方式；動態供應時由對應 provisioner 建立底層 volume。PVC 釋放後，PV 的回收策略（例如 `Delete` 或 `Retain`）會影響 PV 和底層儲存的後續處理，應依資料保留需求設定。（Day 22）
+StorageClass 描述儲存類別及其供應方式；動態供應時由對應 provisioner 建立底層 volume。PVC 釋放後，PV 的回收策略（例如 `Delete` 或 `Retain`）會影響 PV 和底層儲存的後續處理，應依資料保留需求設定。（[Day 22](https://ithelp.ithome.com.tw/articles/10421346)）
 
 **Q5：三種探針（Probe）差在哪？**
 
 **Liveness 探針失敗達門檻時，kubelet 會終止該容器，後續是否重啟依 Pod 的 `restartPolicy`；Readiness 決定 Pod 是否可接收 Service 流量；Startup 成功前，kubelet 暫緩執行該容器的 Liveness 與 Readiness 探針。**
 Liveness 過於敏感會造成反覆重啟；依賴的外部服務（例如資料庫）出問題時，應交給 Readiness 處理，不要放進 Liveness，避免容器因外部故障被反覆重啟。
-若服務暫時無法處理請求，可透過 Readiness 先停止導入流量。（Day 24）
+若服務暫時無法處理請求，可透過 Readiness 先停止導入流量。（[Day 24](https://ithelp.ithome.com.tw/articles/10421873)）
 
 這五個問題都指向同一件事：不要只記物件定義，要理解控制器在什麼條件下採取什麼動作，以及該從哪一層觀察結果。
 

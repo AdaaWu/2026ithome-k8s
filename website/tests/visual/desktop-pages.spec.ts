@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { CHARACTERS } from '../../src/data/characters'
-import { settle, stabilize } from './stable'
+import { IN_GAME_SHOT, settle, stabilize } from './stable'
 
 const ALL_DAYS = Array.from({ length: 30 }, (_, i) => i + 1)
 const PLAYER = { nickname: '小桑', clearedDays: [1, 2, 3, 6, 9], unlockedCharacters: ['bird', 'bubble', 'tree', 'owl'] }
@@ -54,9 +54,27 @@ test.describe('桌機版：圖鑑、關卡頁、證書頁', () => {
       await settle(page)
       await page.getByRole('button', { name: /開始/ }).last().click()
       await settle(page)
-      await expect(page).toHaveScreenshot(`pages-day${dd}-play.png`, { fullPage: true })
+      await expect(page).toHaveScreenshot(`pages-day${dd}-play.png`, { ...IN_GAME_SHOT, fullPage: true })
     })
   }
+
+  test('遊戲中看簡報按鈕與簡報彈窗', async ({ page }) => {
+    await stabilize(page, PLAYER)
+    await page.goto('/#/day/24')
+    await settle(page)
+    await page.getByTestId('start-game').click()
+    await settle(page)
+    // 準備層蓋住整頁，先開始遊戲才點得到看簡報
+    await page.getByTestId('shell-start').click()
+    await settle(page)
+    // 元素截圖會切到文字邊緣，改截標題列外擴一圈的範圍
+    const head = (await page.locator('.play__head').boundingBox())!
+    const clip = { x: head.x - 24, y: head.y - 16, width: head.width + 48, height: head.height + 32 }
+    await expect(page).toHaveScreenshot('pages-play-head-briefing.png', { clip })
+    await page.getByTestId('briefing-open').click()
+    await settle(page)
+    await expect(page.getByRole('dialog', { name: '任務簡報' })).toHaveScreenshot('pages-briefing-dialog.png')
+  })
 
   test('過關頁', async ({ page }) => {
     await stabilize(page, PLAYER)

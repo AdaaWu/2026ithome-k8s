@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { SAVE_KEY, settle, stabilize } from './stable'
+import { IN_GAME_SHOT, SAVE_KEY, settle, stabilize } from './stable'
 
 const PLAYER = { nickname: '小桑', clearedDays: [1, 2, 3, 6, 9], unlockedCharacters: ['bird', 'bubble', 'tree', 'owl'] }
 const SHOT_DAYS = [1, 3, 10, 16, 21, 29]
@@ -15,10 +15,10 @@ test.describe('桌機小遊戲舞台', () => {
       await settle(page)
       // 準備卡片的彈出動畫走真實時間，等它播完再截圖
       await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished)))
-      await expect(page).toHaveScreenshot(`games-day${pad(day)}-ready.png`)
+      await expect(page).toHaveScreenshot(`games-day${pad(day)}-ready.png`, IN_GAME_SHOT)
       await page.getByTestId('shell-start').click()
       await settle(page)
-      await expect(page).toHaveScreenshot(`games-day${pad(day)}-play.png`, { fullPage: true })
+      await expect(page).toHaveScreenshot(`games-day${pad(day)}-play.png`, { ...IN_GAME_SHOT, fullPage: true })
     })
   }
 })

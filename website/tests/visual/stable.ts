@@ -88,4 +88,7 @@ export async function settle(page: Page) {
   }
 }
 
+/** 遊戲中截圖：隱藏後加的「看簡報」按鈕，只比對遊戲本身 */
+export const IN_GAME_SHOT = { stylePath: join(import.meta.dirname, 'hide-briefing-button.css') }
+
 export { SAVE_KEY }

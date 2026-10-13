@@ -1,0 +1,4 @@
+/* 遊戲中截圖只比對遊戲畫面，隱藏疊在標題列的「看簡報」按鈕；按鈕不佔版面，隱藏後像素應與加入前一致 */
+[data-test="briefing-open"] {
+  visibility: hidden !important;
+}

@@ -13,6 +13,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['island', 'tree', 'bubble', 'bird', 'whistle', 'lighthouse'],
     gameTitle: '半夜救火員',
     gameHint: '先手動救小鳥，再交給島自己補',
+    briefing: {
+      pain: '機器半夜一倒，你得爬起來手動搬服務',
+      conceptPlain: '你寫下想要的狀態，它持續幫你維持',
+      goal: '先手動救火，再把工作交給島',
+      steps: [
+        '巢樹倒了，點地上的小鳥，再點一棵沒倒、沒滿的巢樹',
+        '15 秒後按「寫下期望：6 個服務」',
+        '換你點巢樹把它推倒，推 2 次',
+      ],
+      winCondition: '推倒 2 棵後，服務回到 6/6',
+      insight: '手動救不完；說出結果，島會自己吹新泡泡補上',
+    },
   },
   {
     day: 2,
@@ -24,7 +36,19 @@ export const LEVELS: DayLevel[] = [
     image: 'art/day-02-01.webp',
     characters: ['island', 'tree', 'whistle'],
     gameTitle: '五分鐘登島',
-    gameHint: '照順序吹出正確指令蓋好島',
+    gameHint: '照順序點指令，蓋好島',
+    briefing: {
+      pain: '想學 K8s，卻不想先租雲主機、綁信用卡',
+      conceptPlain: '一群機器組成的整體，K8s 管理的範圍',
+      goal: '在筆電上蓋好島，讓瀏覽器看到 Nginx',
+      steps: [
+        '照順序點指令卡：蓋島 → 看巢樹 → 跑泡泡 → 看泡泡 → 連進去',
+        '看終端機輸出，確認每一步成功',
+        '有 2 張假卡，點了會被退',
+      ],
+      winCondition: '5 個步驟全部完成',
+      insight: '蓋島靠 Kind，之後都靠哨子（kubectl）',
+    },
   },
   {
     day: 3,
@@ -36,7 +60,19 @@ export const LEVELS: DayLevel[] = [
     image: 'art/day-03-01.webp',
     characters: ['island', 'tree', 'bubble', 'bird', 'tree-picker'],
     gameTitle: '島嶼點點名',
-    gameHint: '看指令，點出它查的那一層',
+    gameHint: '讀題目，點出它說的是哪一層',
+    briefing: {
+      pain: 'Cluster、Node、Pod 在腦中糊成一團',
+      conceptPlain: '叢集包節點，節點跑 Pod，Pod 裝容器',
+      goal: '分清楚每題問的是哪一層',
+      steps: [
+        '讀題目，可能是指令或一句描述',
+        '點下方「島／樹／泡泡／小鳥」作答，答錯會亮出正解，重答即可',
+        '答完後點一顆泡泡，看誰受影響',
+      ],
+      winCondition: '答完 8 題，並戳破一顆泡泡',
+      insight: '泡泡破了重吹，雲之島和巢樹都不動',
+    },
   },
   {
     day: 4,
@@ -49,6 +85,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['lighthouse', 'memory-tree', 'tree-picker', 'patrol-captain', 'squirrel'],
     gameTitle: '燈塔村接力',
     gameHint: '依序點角色，把需求傳到樹上',
+    briefing: {
+      pain: '看到一堆沒建過的系統泡泡，不知道誰在管島',
+      conceptPlain: '負責記錄、決策、調整的核心元件群',
+      goal: '把「我要 3 顆泡泡」一棒棒傳到巢樹上',
+      steps: [
+        '看任務卡的提問，找出下一棒',
+        '依序點角色接力，每一棒都要經過燈塔櫃台',
+        '第 2 輪泡泡破一顆，從巡邏隊長開始補',
+      ],
+      winCondition: '兩輪都由管家松鼠吹出泡泡',
+      insight: '你只說結果，巡邏隊長負責把現實調成你要的',
+    },
   },
   {
     day: 5,
@@ -61,6 +109,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['whistle', 'lighthouse', 'bubble'],
     gameTitle: '哨子點唱機',
     gameHint: '組出指令，完成每張任務單',
+    briefing: {
+      pain: 'kubectl 指令上百個，不知道日常該用哪幾個',
+      conceptPlain: '對燈塔櫃台下指令的命令列工具',
+      goal: '依任務單組出正確的指令',
+      steps: [
+        '讀任務單，對象已經幫你填好',
+        '點一個動詞；選 get 時可再加 -n dev、-A 或 -o yaml',
+        '按「吹！」送出',
+      ],
+      winCondition: '75 秒內完成 8 張任務單，時間到會加送 20 秒一次',
+      insight: '排查時先看狀態、再看事件、最後看日誌',
+    },
   },
   {
     day: 6,
@@ -73,6 +133,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['bubble', 'bird', 'food-bucket', 'food-bowl', 'squirrel'],
     gameTitle: '泡泡室友配對',
     gameHint: '把小鳥放進對的泡泡',
+    briefing: {
+      pain: 'Docker 直接跑容器就好，為何要多包一層 Pod',
+      conceptPlain: '最小部署單位，容器共用網路；要共享檔案得掛同一個 Volume',
+      goal: '判斷兩隻小鳥該同住一顆泡泡，還是分開住',
+      steps: [
+        '點一隻小鳥，再點泡泡 A 或 B 放進去',
+        '兩隻都放好，按「吹泡泡」',
+        '放錯會說明原因，重放即可',
+      ],
+      winCondition: '4 回合都配對正確',
+      insight: '要一起生、一起死的才住同一顆，這就是 sidecar',
+    },
   },
   {
     day: 7,
@@ -85,6 +157,19 @@ export const LEVELS: DayLevel[] = [
     characters: ['bubble', 'bird', 'whistle'],
     gameTitle: 'YAML 縮排師',
     gameHint: '點行調縮排，送櫃台驗收',
+    briefing: {
+      pain: 'kubectl run 無法交給同事、放進 git',
+      conceptPlain: '用 apiVersion、kind、metadata、spec 描述 Pod',
+      goal: '修好這份 YAML，讓燈塔櫃台收件',
+      steps: [
+        '點左邊的「n 格」切換縮排，一層縮 2 格',
+        '點藍色的值改 apiVersion、kind',
+        '按「送去櫃台」，照退件訊息修',
+        '收件後點泡泡刪掉',
+      ],
+      winCondition: '櫃台收件，刪掉後沒人補回',
+      insight: '縮排代表從屬；單獨的 Pod 刪了不會回來',
+    },
   },
   {
     day: 8,
@@ -97,6 +182,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['sticker', 'magnifier', 'bubble'],
     gameTitle: '放大鏡尋寶',
     gameHint: '點出所有符合條件的泡泡',
+    briefing: {
+      pain: '泡泡一多，K8s 怎麼知道哪幾顆是你的',
+      conceptPlain: 'Label 是 key=value 貼紙，Selector 依貼紙挑對象',
+      goal: '照放大鏡的條件，找出所有符合的泡泡',
+      steps: [
+        '看上方 Selector 條件',
+        '點選所有貼紙符合的泡泡，可多選',
+        '按「照！」檢查',
+      ],
+      winCondition: '3 回合都全對；同一回合錯 3 次就失敗',
+      insight: 'K8s 看貼紙不看名字，大小寫也要一樣',
+    },
   },
   {
     day: 9,
@@ -108,7 +205,18 @@ export const LEVELS: DayLevel[] = [
     image: 'art/day-09-01.webp',
     characters: ['owl', 'bubble', 'sticker', 'magnifier'],
     gameTitle: '戳不完的泡泡',
-    gameHint: '讓 hello 泡泡歸零',
+    gameHint: '讓 app: hello 泡泡歸零',
+    briefing: {
+      pain: '泡泡刪了就沒了，半夜沒人幫你補',
+      conceptPlain: '持續維持指定數量（replicas）的 Pod',
+      goal: '讓貼 app: hello 的泡泡歸零',
+      steps: [
+        '先試著點泡泡戳破它，看貓頭鷹怎麼反應',
+        '改按下方「− 期望數量」',
+      ],
+      winCondition: 'app: hello 泡泡維持 0 顆 3 秒',
+      insight: '想讓泡泡變少要改期望數量；貼同一張貼紙的泡泡都會被收編',
+    },
   },
   {
     day: 10,
@@ -116,11 +224,23 @@ export const LEVELS: DayLevel[] = [
     concept: 'Deployment',
     intro:
       '新版本做好了，可是你不敢把舊泡泡一口氣全戳破。部署管家攤開一卷版本卷軸，說他有辦法讓新舊版本一顆一顆換過去。',
-    takeaway: '一個版本一隻貓頭鷹（ReplicaSet），部署管家（Deployment）宣告版本與副本需求。',
+    takeaway: '部署管家（Deployment）先加新、等 Ready、再收舊，換版不中斷。',
     image: 'art/day-10-01.webp',
     characters: ['steward', 'owl', 'bubble'],
     gameTitle: '滾動換裝秀',
     gameHint: '加新減舊，可用數不能掉',
+    briefing: {
+      pain: '換新版時全部戳破再吹，中間服務會中斷',
+      conceptPlain: '管理新舊 ReplicaSet，把 Pod 一顆顆換成新版',
+      goal: '把 3 顆 v1 換成 v2，可接客數不能低於 3，總數最多 4 顆',
+      steps: [
+        '按「加一顆 v2」多吹一顆 v2 泡泡',
+        '等它從「啟動中」變成「Ready」',
+        '按「收一顆 v1」收一顆 v1 泡泡，重複到換完',
+      ],
+      winCondition: 'v2 三顆都 Ready，v1 收到 0',
+      insight: '先加新、等 Ready、再收舊',
+    },
   },
   {
     day: 11,
@@ -131,8 +251,20 @@ export const LEVELS: DayLevel[] = [
     takeaway: '推壞版本會卡住，用 rollout undo 一鍵回滾。',
     image: 'art/day-11-01.webp',
     characters: ['steward', 'owl', 'bubble'],
-    gameTitle: '後悔捲軸',
+    gameTitle: '後悔卷軸',
     gameHint: '卡住了就捲回上一版',
+    briefing: {
+      pain: '新版推壞了，你不知道服務是不是已經全掛',
+      conceptPlain: 'Deployment 逐步上線新版，壞了可退回',
+      goal: '預測版本卷軸的變化，最後把壞版本捲回去',
+      steps: [
+        '看變更卡，選「卷軸會多一行」或「不會」',
+        '看部署管家執行變更',
+        '更新卡住後，點卷軸上要回去的那一行',
+      ],
+      winCondition: '3 張變更卡都看完，並回到 nginx:1.27',
+      insight: '壞版本會卡在半路；undo 就是把卷軸往回捲',
+    },
   },
   {
     day: 12,
@@ -145,6 +277,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['bubble', 'bird', 'whistle', 'tree-picker'],
     gameTitle: '泡泡急診室',
     gameHint: '用對工具，找出泡泡病因',
+    briefing: {
+      pain: 'Pod 狀態一串紅字，你只能亂試、亂重啟',
+      conceptPlain: '先看狀態、再看 Events、最後看 logs',
+      goal: '替 3 顆生病的泡泡找出病因',
+      steps: [
+        '看 STATUS 與 RESTARTS',
+        '點「describe」「logs」「logs --previous」其中一個檢查',
+        '從下方選項選出病因',
+      ],
+      winCondition: '3 位病患都診斷正確，三位合計檢查不超過 7 次',
+      insight: 'Events 是 K8s 說的，logs 是程式說的',
+    },
   },
   {
     day: 13,
@@ -156,7 +300,19 @@ export const LEVELS: DayLevel[] = [
     image: 'art/day-13-01.webp',
     characters: ['fence', 'tree', 'bubble'],
     gameTitle: '跨籬喊話',
-    gameHint: '拼出地址，喊到對的柱子',
+    gameHint: '拼出地址，喊到對區的 hello',
+    briefing: {
+      pain: '隔壁團隊也叫 hello，你們開始搶名字',
+      conceptPlain: '邏輯分區，同名資源可在不同區共存',
+      goal: '你站在 prod，搞懂圍籬隔開什麼、隔不開什麼',
+      steps: [
+        '點詞塊拼出地址按「喊！」，hello 是明天登場的 Service 名稱',
+        '選要在哪裡再建一個 hello',
+        '回答封包會不會被圍籬擋下，再點一棵巢樹',
+      ],
+      winCondition: '4 題都完成',
+      insight: '圍籬隔開名字，隔不開網路',
+    },
   },
   {
     day: 14,
@@ -169,6 +325,19 @@ export const LEVELS: DayLevel[] = [
     characters: ['totem', 'bubble', 'sticker', 'magnifier'],
     gameTitle: '名單偵探',
     gameHint: '修好柱子名單，讓流量通',
+    briefing: {
+      pain: 'Pod IP 一換，前端就找不到人',
+      conceptPlain: '用 selector 找 Pod，提供不變的入口 IP',
+      goal: '修好柱子的名單，讓請求成功',
+      steps: [
+        '點黃色的 selector「app: helo」',
+        '從選項挑出正確的貼紙',
+        '看泡泡 Ready、被替換時，名單自動更新',
+        '按「滾動更新」，盯著柱子的 IP',
+      ],
+      winCondition: '累積 15 次成功請求，並完成滾動更新',
+      insight: '泡泡 IP 一直換，柱子 IP 不變',
+    },
   },
   {
     day: 15,
@@ -181,6 +350,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['totem', 'totem-inner', 'totem-gate', 'totem-dock', 'tree'],
     gameTitle: '入口開幾層',
     gameHint: '選最小夠用的柱子型號',
+    briefing: {
+      pain: 'Service 的 IP 在你自己電腦上打不通',
+      conceptPlain: 'ClusterIP 只開島內，NodePort 開樹門，LoadBalancer 接碼頭',
+      goal: '依需求挑「最小夠用」的入口',
+      steps: [
+        '讀需求卡，看誰要連進來',
+        '從選項挑一種入口',
+        '看訪客列打勾或打叉',
+      ],
+      winCondition: '4 回合都選對；2 個回合第一次就選錯會失敗',
+      insight: '外層包內層，夠用就別往外開',
+    },
   },
   {
     day: 16,
@@ -192,7 +373,19 @@ export const LEVELS: DayLevel[] = [
     image: 'art/day-16-01.webp',
     characters: ['gate-map', 'gatekeeper', 'totem'],
     gameTitle: '大門看板',
-    gameHint: '請守門員、排規則，分流訪客',
+    gameHint: '請守門員、選規則，分流訪客',
+    briefing: {
+      pain: '五個服務要對外，開五個 LoadBalancer 就是五份帳單',
+      conceptPlain: '依網域與路徑，把 HTTP 流量分給不同 Service',
+      goal: '讓 6 位訪客各自走到對的柱子',
+      steps: [
+        '訪客卡在門口時，點「點我安裝」請守門員上工',
+        '從 3 張規則卡選 2 張',
+        '按「開門放行」，有人走錯就換卡再放',
+      ],
+      winCondition: '6 位訪客的結果全部正確',
+      insight: '地圖看板只是規則表，要有守門員才會動',
+    },
   },
   {
     day: 17,
@@ -205,6 +398,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['gate-map', 'gatekeeper', 'totem', 'bubble', 'bird'],
     gameTitle: '狀態碼分診',
     gameHint: '看狀態碼，最少檢查找斷點',
+    briefing: {
+      pain: '瀏覽器只回一行 404，你不知道哪一段斷了',
+      conceptPlain: '先看狀態碼跳到可疑站，再由內而外一站站驗證',
+      goal: '看狀態碼，用最少檢查找到斷點',
+      steps: [
+        '看上方的狀態碼',
+        '點一站執行檢查：「守門員」「看板」「柱子」「名單」「泡泡」',
+        '查到打叉的那站，就過這回合',
+      ],
+      winCondition: '4 回合都找到斷點，合計檢查不超過 10 次',
+      insight: '404 沒規則，503 後面沒人，連不上是守門員倒了',
+    },
   },
   {
     day: 18,
@@ -217,6 +422,19 @@ export const LEVELS: DayLevel[] = [
     characters: ['gate-map', 'totem', 'road-keeper', 'bubble', 'bird'],
     gameTitle: '封包旅行團',
     gameHint: '依序點出封包經過的站',
+    briefing: {
+      pain: '角色認識一堆，卻講不出一個請求經過誰',
+      conceptPlain: '經 Ingress 到 Service，再由 kube-proxy 改寫到 Pod',
+      goal: '你是封包，依序走完兩條路線',
+      steps: [
+        '守門員查看板規則，送往 hello 柱子',
+        '柱子翻出名單後，點出發那棵巢樹的道路管理員',
+        '從名單挑一個 Pod IP',
+        '點那顆泡泡所在的巢樹、泡泡、小鳥',
+      ],
+      winCondition: '外部訪客與島內呼叫兩團都抵達小鳥',
+      insight: '柱子沒有網卡，改寫目的地的是道路管理員',
+    },
   },
   {
     day: 19,
@@ -229,6 +447,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['notepad', 'bubble', 'bird'],
     gameTitle: '便條本改了沒',
     gameHint: '用最少重啟讓設定生效',
+    briefing: {
+      pain: '改一個設定，就得重 build 一次 image',
+      conceptPlain: '把設定放在 image 外，用環境變數或檔案注入',
+      goal: '便條本改了，用最少重啟讓新值生效',
+      steps: [
+        '看便條本哪個 key 變黃',
+        '看它注入到 Pod A（環境變數）還是 Pod B（掛成檔案）',
+        '選「等 kubelet 同步」或「重啟 Pod A／B」',
+      ],
+      winCondition: '3 個 key 都讓新值生效',
+      insight: '環境變數要重啟；掛檔會同步，但程式不一定重讀',
+    },
   },
   {
     day: 20,
@@ -241,6 +471,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['lockbox', 'notepad', 'bubble'],
     gameTitle: '玩具鎖鑑定',
     gameHint: '分辨真保護與假安全',
+    briefing: {
+      pain: 'Secret 名字聽起來很安全，你就放心把密碼丟進去',
+      conceptPlain: '存敏感資料的物件，預設只是 base64 編碼',
+      goal: '打開上鎖的小盒子，再分辨哪些做法真的有保護',
+      steps: [
+        '按「base64 -d」',
+        '按「那什麼才是真的保護？」',
+        '點卡片，再點「真的有保護」或「沒有保護」',
+      ],
+      winCondition: '6 張卡分完；放錯超過 2 次就失敗',
+      insight: 'base64 是編碼，不是加密',
+    },
   },
   {
     day: 21,
@@ -248,11 +490,24 @@ export const LEVELS: DayLevel[] = [
     concept: 'Volume',
     intro:
       '你把資料存進泡泡中央的食物桶，結果泡泡一破，桶子跟著碎成一地。小鳥重開時明明都還在，到底差在哪裡？',
-    takeaway: '小鳥（Container）重啟食盆（Volume Mount）還在，泡泡（Pod）破了就沒了。',
+    takeaway: '小鳥（Container）重啟，食物桶（emptyDir）還在；泡泡（Pod）被換掉就沒了。',
     image: 'art/day-21-01.webp',
     characters: ['food-bucket', 'food-bowl', 'bubble', 'bird'],
     gameTitle: '存檔大作戰',
     gameHint: '把資料搬進食物桶保住它',
+    briefing: {
+      pain: '服務重啟一次，一整天的上傳檔案全部消失',
+      conceptPlain: '掛進 Pod 的儲存空間；emptyDir 跟著 Pod 生死',
+      goal: '把檔案搬進共享食物桶，看它活得多久',
+      steps: [
+        '點小鳥肚子裡的檔案，搬進共享食物桶',
+        '中途回答「哪邊會被清空？」',
+        '小鳥又要重啟時，趕快再搬一份進桶',
+        '存滿 5 份，回答泡泡被換掉的下場',
+      ],
+      winCondition: '存滿 5 份，兩題都答對',
+      insight: '小鳥重啟桶還在，泡泡被換掉桶就沒了',
+    },
   },
   {
     day: 22,
@@ -265,6 +520,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['warehouse', 'borrow-slip', 'bubble'],
     gameTitle: '借用單配對',
     gameHint: '幫借用單找最剛好的倉庫',
+    briefing: {
+      pain: '資料庫需要一個 Pod 掛了資料還在的地方',
+      conceptPlain: 'PV 是實際儲存，PVC 是 Pod 申請它的借用單',
+      goal: '幫 3 張借用單找到最剛好的倉庫',
+      steps: [
+        '點借用單，再點容量夠用且最小的那座',
+        '點出 db 泡泡的 YAML 該寫誰',
+        '回答刪掉借用單後，那座倉庫會怎樣',
+      ],
+      winCondition: '3 張都綁好，並完成後兩段',
+      insight: '泡泡認的是借用單，不是倉庫',
+    },
   },
   {
     day: 23,
@@ -277,6 +544,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['warehouse', 'borrow-slip', 'steward', 'totem', 'bubble'],
     gameTitle: '雙層島混沌測試',
     gameHint: '接好設定，撐過三場意外',
+    briefing: {
+      pain: '零件都有了，卻還沒組成像樣的系統',
+      conceptPlain: '連線用 Service 名稱，密碼放 Secret，資料放 PVC',
+      goal: '幫資料庫接好 3 項設定，撐過三場意外',
+      steps: [
+        '點設定卡，再點它的槽：DB_HOST、DB_PASSWORD、資料放哪',
+        '三槽填滿，按「開始混沌測試」',
+        '失敗的槽換另一張卡，再測一次',
+      ],
+      winCondition: '資料庫重建、推上 git、前端滾動更新三場全通過',
+      insight: '前端隨便死，資料要放倉庫',
+    },
   },
   {
     day: 24,
@@ -284,11 +563,22 @@ export const LEVELS: DayLevel[] = [
     concept: 'Probe',
     intro:
       '有顆泡泡看起來好好的，裡面的小鳥卻早就不唱歌了。管家松鼠掛上一個鈴鐺、插上一面小旗子，準備好好檢查一番。',
-    takeaway: '管家松鼠（kubelet）用 Readiness Probe 管流量資格、用 Liveness Probe 判斷是否重啟；別搞反。',
+    takeaway: '管家松鼠（kubelet）用 Readiness Probe 管流量資格、Liveness Probe 判斷是否重啟、Startup Probe 等慢開機；別搞反。',
     image: 'art/day-24-01.webp',
     characters: ['alive-bell', 'ready-flag', 'squirrel', 'bubble', 'totem'],
     gameTitle: '鈴與旗',
-    gameHint: '判斷該降旗還是搖鈴',
+    gameHint: '判斷該降旗、搖鈴，還是等它開機',
+    briefing: {
+      pain: 'Pod 顯示 Running，服務其實早就死了',
+      conceptPlain: 'Liveness 管重啟，Readiness 管接不接客，Startup 給慢開機緩衝',
+      goal: '看泡泡症狀，選該由哪支探針接手',
+      steps: [
+        '看泡泡上方的黃色症狀',
+        '5 秒內點「降旗」「搖鈴重啟」或「等它開機」',
+      ],
+      winCondition: '處理好 8 次；失誤 3 次就失敗',
+      insight: '只是變慢就降小旗子，別搖存活檢查鈴',
+    },
   },
   {
     day: 25,
@@ -300,7 +590,19 @@ export const LEVELS: DayLevel[] = [
     image: 'art/day-25-01.webp',
     characters: ['request-tag', 'limit-line', 'tree-picker', 'bubble', 'bird'],
     gameTitle: '選樹官塞泡泡',
-    gameHint: '依 Request 掛泡泡',
+    gameHint: '依 Request 把泡泡掛上樹',
+    briefing: {
+      pain: '一個服務吃光記憶體，鄰居跟著掛',
+      conceptPlain: 'Request 是排程依據，Limit 是用量上限',
+      goal: '你是選樹官，把 6 顆泡泡掛上巢樹',
+      steps: [
+        '看待排程泡泡的 Request，點放得下的巢樹',
+        '看粗條（Request），不看細線（用量）',
+        '都放不下就按「沒有樹放得下（Pending）」',
+      ],
+      winCondition: '排完 6 顆、答對 2 題 Limit 題；排錯超過 2 次失敗',
+      insight: 'CPU 超標變慢，記憶體超標被砍',
+    },
   },
   {
     day: 26,
@@ -313,6 +615,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['hpa-knob', 'steward', 'owl', 'bubble', 'request-tag'],
     gameTitle: '旋鈕心算王',
     gameHint: '算出 HPA 要調到幾顆',
+    briefing: {
+      pain: '半夜爆量，你不可能守著打 kubectl scale',
+      conceptPlain: '依 CPU 使用率，自動調整 Deployment 的期望副本數',
+      goal: '算出自動調節旋鈕該調到幾顆',
+      steps: [
+        '看現有顆數、平均使用率、目標、上限',
+        '照畫面上的規則小抄算出期望顆數',
+        '點數字，或選「維持不變」「算不出來」',
+      ],
+      winCondition: '5 回合答完；錯 2 個回合就失敗',
+      insight: 'HPA 調的是期望副本數，縮容刻意更慢',
+    },
   },
   {
     day: 27,
@@ -325,6 +639,19 @@ export const LEVELS: DayLevel[] = [
     characters: ['numbered-keeper', 'warehouse', 'borrow-slip', 'totem', 'bubble'],
     gameTitle: '編號點名',
     gameHint: '照順序建泡泡，接回專屬倉庫',
+    briefing: {
+      pain: '資料庫為什麼不能只用 Deployment 跑',
+      conceptPlain: '固定編號、專屬倉庫；Headless Service 無虛擬 IP，給每顆固定 DNS 名',
+      goal: '照規矩建泡泡，連上主庫',
+      steps: [
+        '照 0 → 1 → 2 點空位，前一顆升旗才建下一顆',
+        '1 號被刪，重建後接回它專屬的倉庫',
+        '選 0 號主庫（primary）的地址',
+        '縮成 2 顆時，點該先走的那顆',
+      ],
+      winCondition: '四段都完成',
+      insight: '泡泡換了，編號和資料都不變',
+    },
   },
   {
     day: 28,
@@ -337,6 +664,18 @@ export const LEVELS: DayLevel[] = [
     characters: ['tree-guard-captain', 'job-ticket', 'cron-clock', 'tree', 'bubble'],
     gameTitle: '管理者派工',
     gameHint: '把工作交給對的管理者',
+    briefing: {
+      pain: '有的工作每台機器都要跑，有的跑完就該結束，有的要定時',
+      conceptPlain: '每節點一份、跑完即止、定時建 Job',
+      goal: '把 4 種工作交給對的管理者，委託單就是一次性任務委託單（Job）',
+      steps: [
+        '點工作卡，再點一位管理者',
+        '4 張都派完，按「上工！」，派錯的卡會退回重派',
+        '全部到位後，點空地種一棵新巢樹',
+      ],
+      winCondition: '4 張全部派對，並種下新巢樹',
+      insight: 'CronJob 建 Job，Job 建 Pod，跑完結束是正常的',
+    },
   },
   {
     day: 29,
@@ -344,11 +683,23 @@ export const LEVELS: DayLevel[] = [
     concept: 'Kubernetes Architecture',
     intro:
       '你爬上燈塔頂端，整座雲之島一覽無遺。從你吹響哨子到資料落進倉庫，五條線正同時在島上運轉。',
-    takeaway: '你說、村裡想、樹上做、道路管理員送、倉庫留。',
+    takeaway: '你說（kubectl）、村裡想（控制面）、樹上做（Node）、道路管理員送（kube-proxy）、倉庫留（PV）。',
     image: 'art/day-29-01.webp',
     characters: ['island', 'lighthouse', 'tree', 'bubble', 'totem', 'warehouse'],
     gameTitle: '全島五條線',
     gameHint: '依序點角色，接通五條線',
+    briefing: {
+      pain: '角色都認識了，卻串不起整座島怎麼運作',
+      conceptPlain: '控制面做決定，Node 動手，流量與資料各走各的路',
+      goal: '依序接通「說、想、做、送、留」五條線',
+      steps: [
+        '看下方「下一站是誰」',
+        '依序點亮著的角色，亮著的裡面有干擾',
+        '五條接完，回答兩題燈塔村停電題',
+      ],
+      winCondition: '五條線接通，停電題都答對',
+      insight: '決定和執行分開，燈塔村停電，巢樹上照樣跑',
+    },
   },
   {
     day: 30,
@@ -361,5 +712,17 @@ export const LEVELS: DayLevel[] = [
     characters: ['island', 'whistle', 'lighthouse', 'patrol-captain', 'hpa-knob', 'bubble'],
     gameTitle: '雲之島值班夜',
     gameHint: '連續處理五個島嶼事故',
+    briefing: {
+      pain: '學了 30 天，真的出事還是不知道先做什麼',
+      conceptPlain: '控制器持續把現況拉向你宣告的期望狀態',
+      goal: '連續處理 5 個島嶼事故',
+      steps: [
+        '讀事故描述',
+        '20 秒內選處置，時間到會加送 10 秒一次',
+        '看正解與理由，按「下一題」',
+      ],
+      winCondition: '5 題答完，3 條命沒用完',
+      insight: '你不再記哪台跑什麼，島替你記',
+    },
   },
 ]

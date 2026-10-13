@@ -110,6 +110,7 @@ function useCountdown(totalSec: number, opts?: { onExpire?: () => void }): {
   reset(sec?: number): void
 }
 // 元件 unmount 自動清除
+// 收到 GAME_PAUSED 為 true 時停止遞減，running 維持不變；恢復後接著倒數
 ```
 
 ### ③ useTicker：固定節拍的模擬迴圈
@@ -121,7 +122,16 @@ function useTicker(intervalMs: number, onTick: (tickCount: number) => void): {
   stop(): void
 }
 // 用於泡泡自動補位、流量請求、事件出現；unmount 自動清除
+// 收到 GAME_PAUSED 為 true 時停拍，保留這一拍已走的時間；恢復後補完剩下的時間再繼續
 ```
+
+### 暫停訊號 GAME_PAUSED
+
+- `kit/useGamePaused.ts` 匯出 `GAME_PAUSED`（`InjectionKey<Ref<boolean>>`）
+- `DayView` 以 `provide(GAME_PAUSED, briefingOpen)` 提供；看簡報時為 true
+- `useCountdown`、`useTicker`、`useTimeouts` 內部讀取；Day 元件不需改動
+- 沒有提供者（單元測試直接 mount）時永遠不暫停
+- 不涵蓋：`useHint` 的提示消失計時、CSS 動畫
 
 ### ④ useRounds：回合管理
 
@@ -277,9 +287,9 @@ defineProps<{
 - **互動規則**
   - 第一階段（手動，25 秒）
     - 每 6 秒隨機一棵樹倒下（`fx: 'dim'` + 傾斜），樹上的小鳥掉到地面列，Meter 下降
-    - 倒下的樹 8 秒後換新機器重新長回來（空的）
+    - 手動階段倒下的樹不會長回來，讓玩家體會手動救不完；按「寫下期望」時所有樹換上新機器
     - 玩家點地面的小鳥（pick），再點一棵站著且有空位的樹（place），小鳥回到樹上
-    - 放到倒下的樹或滿的樹：HintBubble「這台倒了／滿了」
+    - 放到倒下的樹或滿的樹：HintBubble「這棵倒了／滿了」
     - 25 秒到，顯示「你救回 N 隻。凌晨三點，你還醒著嗎？」並進入第二階段
   - 第二階段（宣告式，20 秒）
     - 玩家點「寫下期望：6 個服務」，6 隻小鳥都換成 `bubble` 包著 `bird`
@@ -297,7 +307,7 @@ defineProps<{
 
 - **K8s 概念**：Kind 蓋島、kubectl 對島說話、第一顆 Pod、port-forward
 - **gameTitle**：五分鐘登島
-- **gameHint**：照順序吹出正確指令蓋好島
+- **gameHint**：照順序點指令，蓋好島
 - **單局時間**：約 40 秒
 - **畫面配置**
   - 上半：島的舞台（一開始只有海）
@@ -326,7 +336,7 @@ defineProps<{
 
 - **K8s 概念**：Cluster ⊃ Node ⊃ Pod ⊃ Container 四層，以及 Pod 是排程最小單位
 - **gameTitle**：島嶼點點名
-- **gameHint**：看指令，點出它查的那一層
+- **gameHint**：讀題目，點出它說的是哪一層
 - **單局時間**：約 50 秒（8 題 × 6 秒）
 - **畫面配置**
   - 頂部：題目卡（TagChip mono 或一句描述）+ 回合點
@@ -367,7 +377,7 @@ defineProps<{
 - **互動規則**（useSequence）
   - 回合 1「建立」：`whistle → lighthouse → patrol-captain → lighthouse → tree-picker → lighthouse → squirrel`
     - 每次點 `lighthouse`，`memory-tree` 自動跟著亮一下（每筆寫入都落在 etcd）
-    - 第一次點 `lighthouse` 後，whistle 旁跳出 TagChip `deployment created`（櫃台寫完就回話，樹上還沒東西）
+    - 第一次點 `lighthouse` 後，whistle 旁跳出 TagChip「櫃台已登記：要 3 顆泡泡」（櫃台寫完就回話，樹上還沒東西）
     - 點到 `squirrel` → 樹上依序 `bounce` 3 顆泡泡
   - 回合 2「泡泡破了」：開場一顆泡泡 `pop`；序列為 `patrol-captain → lighthouse → tree-picker → lighthouse → squirrel`
   - 點錯：
@@ -407,6 +417,7 @@ defineProps<{
   - 點「吹！」：`whistle` 吹出聲波到右上角小小的 `lighthouse`
     - 正確：任務單蓋章，下一張
     - 錯誤：終端機行顯示貼近真實的回應，例如需要 `-n dev` 卻沒加 → `No resources found in default namespace.`
+    - 動詞錯：終端機清空，動詞與旗標也清掉，指令列回到 `kubectl ___ 對象`，不拼出這題不存在的指令
 - **勝利條件**：時間內完成 8 張
 - **失敗／重試**：時間到 → 失敗彈窗「先看、再查、再讀、再改、再刪」→ 再玩一次
 - **頓悟時刻**：「先看（get）、再查（describe）、再讀（logs）、再改（apply）、再刪（delete）。哨子吹出的每一句，都先抵達燈塔櫃台（API Server）。」
@@ -450,6 +461,7 @@ defineProps<{
 - **畫面配置**
   - 上半：8 行 YAML，每行一列：左側「縮排鈕」（顯示 `··` 點點表示空格數），右側文字；部分行的值是可點 TagChip
   - 下半：`lighthouse` + 「送去櫃台」按鈕；過關後右側出現 `bubble` 內含 `bird`
+  - 櫃台框未退件時常駐縮排小抄：一層縮 2 格、`name` 屬於 `metadata`、藍字可切換
 - **初始狀態**（全部縮排為 0，兩個值是錯的）
 
 ```yaml
@@ -519,7 +531,7 @@ image: nginx:alpine
 
 - **K8s 概念**：ReplicaSet 只維持數量；用 selector 數泡泡；手動 Pod 貼同一張 label 會被算進去並可能被刪
 - **gameTitle**：戳不完的泡泡
-- **gameHint**：讓 app:hello 泡泡歸零
+- **gameHint**：讓 app: hello 泡泡歸零
 - **單局時間**：約 45 秒
 - **畫面配置**
   - 頂部：`owl`，`badge` 顯示 `replicas: 3`，旁邊「−」「＋」兩顆小按鈕；Meter 不需要，改用 TagChip「數到：3」
@@ -550,23 +562,24 @@ image: nginx:alpine
   - 下段：兩個 Meter
     - 「可接客（Ready）」0–4，門檻線 3（紅）
     - 「泡泡總數」0–5，門檻線 4（上限）
-  - 底部 controls：「新貓頭鷹 +1」「舊貓頭鷹 −1」
-- **初始狀態**：舊 owl = 3（3 顆 v1 皆 Ready，`ready-flag` 升起）；新 owl = 0
+  - 底部 controls：「加一顆 v2」「收一顆 v1」
+- **初始狀態**：舊 owl = 3（3 顆 v1 皆標「Ready」）；新 owl = 0
 - **互動規則**（useTicker 100ms）
-  - 「新貓頭鷹 +1」：總數已達 4 → 拒絕，HintBubble「maxSurge 1：最多只能多一顆」；否則 v2 泡泡 `bounce` 出現，旗子降著，1.5 秒後升旗變 Ready
-  - 「舊貓頭鷹 −1」：v1 泡泡 `pop`；若之後 Ready 數 < 3 → Meter 變紅、流量中斷動畫 → 失敗
+  - 「加一顆 v2」：總數已達 4 → 拒絕，HintBubble「maxSurge 1：最多只能多一顆」；否則 v2 泡泡 `bounce` 出現，標示「啟動中」，1.5 秒後變「Ready」（小旗子 Day 24 才登場，這裡只用文字）
+  - 「收一顆 v1」：v1 泡泡 `pop`；若之後 Ready 數 < 3 → Meter 變紅、流量中斷動畫 → 失敗
   - 流量小點持續從左上流向 Ready 的泡泡
 - **勝利條件**：新 owl = 3 且全部 Ready、舊 owl = 0，全程 Ready 數 ≥ 3
-- **失敗／重試**：Ready 數掉到 3 以下 → 失敗彈窗「新的還沒升旗，就先收舊的了」→ 再玩一次
+- **失敗／重試**：Ready 數掉到 3 以下 → 失敗彈窗「新的還沒 Ready，就先收舊的了」→ 再玩一次
+- **卡關保護**：連錯 2 次閃下一步該按的鈕；總數已滿但新泡泡還沒 Ready 時不閃，等它就緒才閃「收一顆 v1」
 - **頓悟時刻**：「一個版本一隻貓頭鷹（ReplicaSet）。部署管家（Deployment）加一顆新的、等它就緒、再收一顆舊的。舊貓頭鷹沒被刪，數字停在 0，明天後悔時就靠它。」
-- **使用角色**：steward, owl, bubble, bird, ready-flag
+- **使用角色**：steward, owl, bubble, bird
 - **使用 kit**：GameShell, KChar, TagChip, Meter, useTicker, HintBubble
 - **忠實度備註**：真實環境由 Deployment controller 自動做加減，玩家在此扮演 controller；新 Pod 沒 Ready 時 controller 不會繼續收舊的
 
-## Day 11：後悔捲軸
+## Day 11：後悔卷軸
 
 - **K8s 概念**：壞版本會卡在滾動更新中途；revision 只記 Pod template（改 image 新增一行、改 replicas 不會）；`rollout undo`
-- **gameTitle**：後悔捲軸
+- **gameTitle**：後悔卷軸
 - **gameHint**：卡住了就捲回上一版
 - **單局時間**：約 60 秒
 - **畫面配置**
@@ -622,6 +635,7 @@ image: nginx:alpine
   - 對 A、C 先點 logs：HintBubble「容器沒起來就沒有 logs，先看 Events」
 - **勝利條件**：3 位病患全部診斷正確，總檢查次數 ≤ 7
 - **失敗／重試**：檢查次數超過 7 → 失敗彈窗「先 get 看狀態、再 describe 看 Events、最後才 logs」→ 再玩一次
+- **卡關保護**：同一位病患用錯工具 2 次閃正確工具；檢查次數已用完時不閃，避免按下閃爍的正解就失敗
 - **頓悟時刻**：「Events 是 K8s 說的，logs 是程式說的。容器沒起來就沒有 logs；CrashLoopBackOff 要加 --previous 才看得到上一輪怎麼死的。」
 - **使用角色**：bubble, bird, magnifier
 - **使用 kit**：GameShell, KChar, TagChip, ChoiceCards, useRounds, HintBubble
@@ -630,26 +644,27 @@ image: nginx:alpine
 
 - **K8s 概念**：Namespace 隔開名字、隔不開網路；同名資源可在不同 Namespace；Node、PV 不屬於 Namespace；跨區 DNS `<svc>.<ns>.svc.cluster.local`
 - **gameTitle**：跨籬喊話
-- **gameHint**：拼出地址，喊到對的柱子
+- **gameHint**：拼出地址，喊到對區的 hello
 - **單局時間**：約 70 秒（4 回合）
 - **畫面配置**
   - 中央一道 `fence` 把島分成左 `dev`、右 `prod`
-  - 兩區各有一根 `totem`，名牌都叫 `hello`（dev 的標 v2、prod 的標 v1）
+  - 兩區各有一塊 `hello` 名稱牌（dev 的標 v2、prod 的標 v1），不用角色圖
+    - 喊的是 Service 名稱（DNS 解析到 Service），柱子 Day 14 才登場，故只放名稱牌；不可改用部署管家，Deployment 沒有 DNS 名稱
   - 兩棵 `tree` 跨在圍籬兩側（樹不屬於任何一區）
   - 右區有一顆玩家所在的 `bubble`（標「你在 prod」）
   - 底部：地址組裝列 + 詞塊 TagChip：`hello`、`.dev`、`.prod`、`.svc.cluster.local`，以及「喊！」「清除」
 - **互動規則**（useRounds）
   - 回合 1：「呼叫 prod 的 hello」→ `hello`、`hello.prod`、完整 FQDN 都算對；只打 `hello` 時加稱讚「同區叫名字就好」
   - 回合 2：「呼叫 dev 的 hello」→ `hello.dev` 或 `hello.dev.svc.cluster.local`
-    - 只打 `hello`：聲波飛到 prod 的柱子，回應 `v1`，HintBubble「同區優先，跨區要帶區名」
+    - 只打 `hello`：聲波飛到 prod 的 hello，回應 `v1`，HintBubble「同區優先，跨區要帶區名」
   - 回合 3：「再建一個叫 hello 的 Deployment」，按鈕改為「建在 dev」「建在 prod」「建在 staging（新圍籬）」
     - dev／prod → 終端機 `Error: deployments.apps "hello" already exists`
-    - staging → 出現新圍籬區與新柱子，成功
+    - staging → 出現新圍籬區與新的 hello 泡泡，成功
   - 回合 4：「dev 的泡泡直接打 prod 泡泡的 IP，會被圍籬擋下嗎？」ChoiceCards「擋下」「通過」→ 播放封包穿過圍籬；答完再提示「點一棵樹看它屬於哪區」→ HintBubble「Node 不屬於任何 Namespace」
 - **勝利條件**：4 回合完成
 - **失敗／重試**：無失敗
 - **頓悟時刻**：「圍籬（Namespace）隔開名字，隔不開網路。同名可以共存，跨區喊話要帶區名：hello.dev.svc.cluster.local。」
-- **使用角色**：fence, totem, tree, bubble, island
+- **使用角色**：fence, tree, bubble
 - **使用 kit**：GameShell, KChar, TagChip, ChoiceCards, useRounds, HintBubble
 - **忠實度備註**：預設沒有 NetworkPolicy 時跨 Namespace 封包可通；要隔離封包需另設網路政策
 
@@ -662,22 +677,22 @@ image: nginx:alpine
 - **畫面配置**
   - 頂部左：客戶端 `bubble`（標 `frontend`），持續送請求到 `http://hello`
   - 頂部右：成功／失敗計數 TagChip
-  - 中段：`totem` 標 `hello  10.96.0.10`，下方 selector TagChip（可點），旁邊 Endpoints 名單（TagChip 清單，mono）
-  - 下段：3 顆後端 `bubble`，各帶 `app: hello` 與 Pod IP；其中一顆 `ready-flag` 降著（啟動中）
+  - 中段：`totem` 標 `hello  10.96.123.45`，下方 selector TagChip（可點），旁邊 Endpoints 名單（TagChip 清單，mono）
+  - 下段：3 顆後端 `bubble`，各帶 `app: hello` 與 Pod IP；頭上標「Ready」或「啟動中」，其中一顆啟動中
   - 底部 controls：「滾動更新」按鈕（修好 selector 後才亮）
 - **初始狀態**：selector 是 `app: helo`（打錯），Endpoints 為空，請求全部失敗
 - **互動規則**（useTicker 1000ms 送請求）
-  - 點 `magnifier` 或後端泡泡：顯示 HintBubble 比對結果（「柱子在找 helo，泡泡貼的是 hello」）
+  - 點 `magnifier` 或後端泡泡：顯示 HintBubble 比對結果（「柱子找 helo，泡泡貼的是 hello，點黃色那張改」）；第 3 秒仍未修好時提示「請求全失敗，點黃色的 app: helo 修名單」
   - 點 selector TagChip → ChoiceCards：`app: hello`、`app: Hello`、`name: hello-7d4b`
-    - 選 `app: hello`：名單出現 2 個 IP（旗子降著的那顆**不進名單**），請求開始成功，小點隨機分散到 2 顆
-    - 3 秒後那顆升旗，自動加入名單
+    - 選 `app: hello`：名單出現 2 個 IP（啟動中的那顆**不進名單**），請求開始成功，小點隨機分散到 2 顆
+    - 3 秒後那顆 Ready，自動加入名單
     - 選其他：名單仍空，HintBubble 說明
   - 修好後第 5 秒事件：一顆泡泡 `pop`，名單上它的 IP `strike`，新泡泡帶新 IP 補進名單；柱子 IP 不變
   - 點「滾動更新」：三顆依序換新，三個 IP 全換，柱子 IP 從頭到尾不變
 - **勝利條件**：累積 15 次成功請求，且已做過一次滾動更新
 - **失敗／重試**：無失敗
 - **頓悟時刻**：「Pod IP 會隨 Pod 替換；Service 提供穩定入口。名單（Endpoints）由 selector 和 Ready 自動維護，柱子打不通，先查名單。」
-- **使用角色**：totem, bubble, bird, magnifier, sticker, ready-flag
+- **使用角色**：totem, bubble, bird, magnifier, sticker
 - **使用 kit**：GameShell, KChar, TagChip, ChoiceCards, useTicker, HintBubble
 - **忠實度備註**：名單空的那段時間請求就是會失敗；Service 提供穩定入口，不保證後端永遠可用
 
@@ -712,7 +727,7 @@ image: nginx:alpine
 
 - **K8s 概念**：Ingress 是規則表、需要 Ingress Controller 才會動；host 與 path 規則；標準 Ingress 只管 HTTP/HTTPS
 - **gameTitle**：大門看板
-- **gameHint**：請守門員、排規則，分流訪客
+- **gameHint**：請守門員、選規則，分流訪客
 - **單局時間**：約 70 秒
 - **畫面配置**
   - 頂部：島的大門，左側 `gate-map`（3 列規則槽），右側守門員位置（一開始是 `gatekeeper` 的 `ghost`）
@@ -742,7 +757,7 @@ image: nginx:alpine
 - **單局時間**：約 70 秒（4 回合）
 - **畫面配置**
   - 頂部：瀏覽器 TagChip `curl http://localhost/hello` 與回傳狀態碼（大字）
-  - 中段：五站橫向縮小排列（手機寬度內兩列）：`gatekeeper`（Controller）、`gate-map`（Ingress 規則）、`totem`（Service）、名單（`magnifier` + TagChip `Endpoints`）、`bubble`（Pod）
+  - 中段：五站橫向縮小排列（手機寬度內兩列）：`gatekeeper`（Controller）、`gate-map`（Ingress 規則）、`totem`（Service）、名單（文字名單卡 `Endpoints`，不用角色圖）、`bubble`（Pod）
   - 底部：檢查輸出區（mono）+ 本局檢查次數
 - **互動規則**（useRounds，順序打亂）
   - 每點一站 = 執行該站檢查指令，顯示輸出並標綠勾或紅叉；檢查次數 +1
@@ -753,8 +768,9 @@ image: nginx:alpine
   - 點到紅叉那站即過回合；回合 A、B 兩個 503 長得一樣，要靠看板那一站的輸出區分
 - **勝利條件**：4 回合總檢查次數 ≤ 10
 - **失敗／重試**：超過 10 次 → 失敗彈窗附分診表「404 看板沒規則、503 規則有了但後面沒人、timeout 守門員沒起來」→ 再玩一次
+- **卡關保護**：同回合問了 2 站正常就閃斷點；檢查次數已用完時不閃，避免按下閃爍的正解就失敗
 - **頓悟時刻**：「先看 HTTP 狀態碼分診，再一站一站問。404 是看板沒有這條規則，503 是規則有了但後面沒人，連不上是守門員本身沒起來。」
-- **使用角色**：gatekeeper, gate-map, totem, magnifier, bubble
+- **使用角色**：gatekeeper, gate-map, totem, bubble
 - **使用 kit**：GameShell, KChar, TagChip, useRounds, HintBubble
 
 ## Day 18：封包旅行團
@@ -768,14 +784,15 @@ image: nginx:alpine
   - 中央兩棵 `tree`（A、B），每棵樹下一位 `road-keeper`
   - 樹 A 上：`gatekeeper` 的 Pod、`bubble` P1（`10.244.1.5`）
   - 樹 B 上：`bubble` P2（`10.244.2.7`）、P3（`10.244.2.8`）
-  - 右上：`gate-map`；中段：`totem`（`hello 10.96.0.10`）
-  - 頂部：封包 TagChip，顯示目前目的地，例如 `dst 10.96.0.10:80`
+  - 右上：`gate-map`；中段：`totem`（`hello 10.96.123.45`）
+  - 頂部：封包 TagChip，顯示目前目的地，例如 `dst 10.96.123.45:80`
 - **互動規則**（useSequence，每回合一條）
-  - 回合 1「訪客打 http://你的網域/hello」：`gate-map → gatekeeper → totem → road-keeper(A) → 選一個 Endpoint → 對應的樹 → bubble → bird`
-    - 到 `road-keeper` 時跳出 Endpoints 名單（3 個 IP）讓玩家點一個；封包目的地從 `10.96.0.10` 變成那顆 Pod 的 IP
+  - 回合 1「訪客打 http://你的網域/hello」：`gatekeeper → gate-map → totem → road-keeper(A) → 選一個 Endpoint → 對應的樹 → bubble → bird`
+    - 到 `road-keeper` 時跳出 Endpoints 名單（3 個 IP）讓玩家點一個；封包目的地從 `10.96.123.45` 變成那顆 Pod 的 IP
     - 下一步必須點**那顆 Pod 所在的樹**；選 P2／P3 要點樹 B，HintBubble「這棵樹不一定是收到請求的那棵」
   - 回合 2「P1 用名字呼叫 http://hello」：`bubble(P1) → road-keeper(A) → 選 Endpoint → 對應的樹 → bubble → bird`
-    - 起點旁自動顯示 `DNS：hello → 10.96.0.10`
+    - 起點旁自動顯示 `DNS：hello → 10.96.123.45`
+    - P1 只在起點當出發泡泡；名單挑 P1 時，後段點 P1 視為抵達泡泡，目的地維持 P1 的 Pod IP（兩回合皆同）
     - 點 `totem`：HintBubble「柱子沒有網卡，它只是一組規則；改寫發生在發送端那棵樹的道路管理員」，不前進也不扣分
   - 點燈塔村任何角色：HintBubble「請求流量不經過燈塔村」
   - 點錯樹下的道路管理員（B）：HintBubble「封包在出發那棵樹就被改寫」
@@ -809,8 +826,8 @@ image: nginx:alpine
     - 等同步：Pod B「磁碟上」變新，「程式在用」仍舊，HintBubble「Nginx 只在啟動時讀一次設定」
     - 重啟 B → 兩行都新，過回合
   - 重啟動畫：舊泡泡 `pop`、新泡泡 `bounce`（新 Pod 名稱）
-- **勝利條件**：3 回合完成，總重啟次數 ≤ 3
-- **失敗／重試**：重啟超過 3 次 → 失敗彈窗「先想清楚：環境變數還是掛檔？程式會不會重讀？」→ 再玩一次
+- **勝利條件**：3 個 key 都讓新值生效
+- **失敗／重試**：無失敗；畫面顯示「重啟 N 次」，每次重啟（含答錯）都計入顯示次數，但不影響過關，所以連錯後按閃爍的正解一定能過
 - **頓悟時刻**：「改 ConfigMap 後，依注入方式決定是否重啟 Pod。環境變數一定要重啟；掛成檔案會同步，但程式有沒有重讀是另一回事。」
 - **使用角色**：notepad, bubble, bird, food-bowl
 - **使用 kit**：GameShell, KChar, TagChip, useRounds, HintBubble
@@ -818,7 +835,7 @@ image: nginx:alpine
 
 ## Day 20：玩具鎖鑑定
 
-- **K8s 概念**：Secret 的 data 只是 base64 編碼不是加密；真正的保護來自 RBAC、etcd 加密與外部金鑰管理
+- **K8s 概念**：Secret 的 data 只是 base64 編碼不是加密；真正的保護來自存取權限、etcd 加密，以及管好誰能 exec 進 Pod
 - **gameTitle**：玩具鎖鑑定
 - **gameHint**：分辨真保護與假安全
 - **單局時間**：約 50 秒
@@ -828,11 +845,11 @@ image: nginx:alpine
 - **互動規則**
   - 第一段：點「base64 -d」→ `lockbox` 彈開，逐字顯示 `p4ssw0rd`，旁邊小字「耗時 0.01 秒，不需要任何金鑰」
   - 第二段（usePickPlace）：點卡片再點收納區
-    - 真的有保護：`RBAC：前端工程師讀不到 Secret`、`開啟 etcd 靜態加密`、`外部金鑰管理（KMS、Sealed Secrets）`
-    - 沒有保護：`base64 編碼`、`describe 只顯示 8 bytes`、`把 Secret YAML 推上公開 git`
+    - 真的有保護：`設定誰讀得到 Secret`、`開啟 etcd 靜態加密`、`管好誰能 exec 進泡泡`（撰寫規範第 8 節：RBAC 只在 Day 30 列名）
+    - 沒有保護：`base64 編碼`、`describe 只顯示 8 bytes`、`Secret YAML 推上公開 git`
   - 放錯：卡片彈回並顯示原因，例如 `describe 只顯示 8 bytes` → 「這只是防手滑投影到螢幕，資料本身沒變」
 - **勝利條件**：6 張全部歸位，錯誤 ≤ 2 次
-- **失敗／重試**：錯誤超過 2 次 → 失敗彈窗 → 再玩一次
+- **失敗／重試**：錯誤超過 2 次 → 失敗彈窗 → 再玩一次；畫面顯示「還能錯 N 次」
 - **頓悟時刻**：「Secret 的保護力來自存取權限與加密設定。base64 是編碼不是加密，把 Secret YAML 推上 git，就等於把密碼明文推上去。」
 - **使用角色**：lockbox, notepad, memory-tree
 - **使用 kit**：GameShell, KChar, TagChip, usePickPlace, HintBubble
@@ -920,7 +937,7 @@ image: nginx:alpine
 
 - **K8s 概念**：Liveness 失敗重啟 Container、Readiness 失敗移出 Endpoints 不重啟、Startup 延後其他探針；Liveness 太敏感會連鎖重啟
 - **gameTitle**：鈴與旗
-- **gameHint**：判斷該降旗還是搖鈴
+- **gameHint**：判斷該降旗、搖鈴，還是等它開機
 - **單局時間**：60 秒
 - **畫面配置**
   - 頂部：`totem` 與流量小點，只流向旗子升起的泡泡；`squirrel` 站在旁邊（玩家扮演它）
@@ -929,20 +946,21 @@ image: nginx:alpine
 - **互動規則**（useTicker，每 3–4 秒隨機一顆泡泡出現症狀 TagChip）
   - 症狀與正解：
     - `回應變慢（GC 中）` → 降旗
-    - `資料庫連不上` → 降旗
+    - `這顆連線池滿了` → 降旗
     - `死結：程序在，但永遠不回應` → 搖鈴重啟
     - `開機中：載入模型` → 等它開機
   - 正解：該泡泡依規則處理，3 秒後恢復並自動升旗
     - 降旗：泡泡完好，柱子跳過它，RESTARTS 不變
     - 搖鈴：小鳥 `shake` 重啟，RESTARTS +1，泡泡名稱不變
   - 錯誤：
-    - 對「變慢」或「資料庫連不上」搖鈴 → 該泡泡重啟 3 秒，流量壓到其他泡泡，其中一顆跟著出現「變慢」（連鎖）
+    - 對「變慢」或「這顆連線池滿了」搖鈴 → 該泡泡重啟 3 秒，流量壓到其他泡泡，其中一顆跟著出現「變慢」（連鎖）
+      - HintBubble：變慢為「只是慢就重啟，流量壓垮別顆」；連線池滿為「連線池滿重啟也沒用，降旗讓它喘口氣」
     - 對「死結」降旗 → 泡泡永遠不恢復，HintBubble「降旗不會重啟，死結解不開」
     - 對「開機中」搖鈴 → 重啟後又從頭開機，HintBubble「這就是 Startup 存在的理由」
   - 5 秒沒處理：算一次失誤
 - **勝利條件**：60 秒內正確處理 ≥ 8 個症狀，失誤 ≤ 2
-- **失敗／重試**：失誤 3 次 → 失敗彈窗「Liveness 決定生死，Readiness 決定流量」→ 再玩一次
-- **頓悟時刻**：「管家松鼠（kubelet）用 Readiness 管流量資格、用 Liveness 判斷是否重啟。慢的時候先降旗，別搖鈴；資料庫的檢查放 Readiness。」
+- **失敗／重試**：失誤 3 次 → 失敗彈窗「Liveness 決定生死，Readiness 決定流量，Startup 決定何時開始問」→ 再玩一次
+- **頓悟時刻**：「管家松鼠（kubelet）用 Readiness 管流量、Liveness 管重啟、Startup 給慢開機緩衝。只是慢就降旗別搖鈴，資料庫檢查別放 Liveness。」
 - **使用角色**：bubble, bird, alive-bell, ready-flag, totem, squirrel
 - **使用 kit**：GameShell, KChar, TagChip, Meter, useTicker, useCountdown, HintBubble
 - **忠實度備註**：真實環境由 kubelet 依探針設定自動判斷；玩家在此替 kubelet 做「設定探針時就要預先決定」的判斷
@@ -983,6 +1001,7 @@ image: nginx:alpine
 - **單局時間**：約 60 秒（5 回合）
 - **畫面配置**
   - 頂部：`hpa-knob` 與指針，旁邊數據卡（現有幾顆、平均使用率、目標、上下限）
+  - 數據卡下方常駐規則小抄：公式與進位、0.9～1.1 維持不變、要縮容但用量降下來不到 5 分鐘維持不變、沒設 Request 算不出來
   - 中段：`steward` 手上的 `replicas` 牌 + `owl` + 泡泡列
   - 底部：答案按鈕，數字 2–10 兩排，另有「維持不變」「<unknown>」
 - **互動規則**（useRounds，ChoiceCards 風格的數字鍵）
@@ -1073,6 +1092,7 @@ image: nginx:alpine
   - 線 5「留」：`bird → borrow-slip → warehouse`
     - 點 `food-bucket` → HintBubble「食物桶（emptyDir）跟著泡泡一起消失」
   - 每條線完成時，該線以顏色連起來留在地圖上
+  - 完成時 HintBubble 只顯示一句短話；K8s 名稱鏈（例如 `kubectl → API Server → etcd`）寫在任務卡「剛接通：…」，停電題第 1 題時仍顯示最後一條
   - 最後：燈塔村變暗（`dim`），ChoiceCards 多選題「燈塔村停電時，哪些還會繼續？」
     - 正解：`已在跑的泡泡繼續接客`、`柱子照常轉送到現有泡泡`
     - 錯誤：`刪掉的泡泡自己長回來`、`新的 kubectl apply 生效`
@@ -1102,7 +1122,7 @@ image: nginx:alpine
     - 上台：`steward`、`owl`
   - 事故 4：資料庫泡泡重建後資料要還在 → 正解「掛 PVC，資料放倉庫」；干擾「放 emptyDir」「寫在容器裡」
     - 上台：`borrow-slip`、`warehouse`
-  - 事故 5：尖峰時服務變慢，前端被一直重啟 → 正解「把資料庫檢查從 Liveness 移到 Readiness，Liveness 放寬」；干擾「Liveness 再調嚴格」「關掉所有探針」
+  - 事故 5：尖峰時資料庫變慢，前端的 Liveness 有查資料庫，一直被重啟 → 正解「把資料庫檢查移出 Liveness，Liveness 只看程式本身」；干擾「Liveness 再調嚴格」「關掉所有探針」
     - 上台：`alive-bell`、`ready-flag`
   - 答錯或超時：扣一命，顯示正解與一句理由，仍進下一題
   - 全部結束：`lighthouse`、`memory-tree`、`tree-picker`、`patrol-captain`、`gatekeeper`、`hpa-knob`、`numbered-keeper`、`whistle`、`island` 一起跳上，組成全員合照
@@ -1144,7 +1164,7 @@ image: nginx:alpine
 - Day 3 島嶼點點名（1）
 - Day 9 戳不完的泡泡（2）
 - Day 10 滾動換裝秀（3）
-- Day 11 後悔捲軸（3）
+- Day 11 後悔卷軸（3）
 - Day 26 旋鈕心算王（1）
 - Day 27 編號點名（2）
 

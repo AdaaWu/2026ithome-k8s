@@ -25,7 +25,7 @@
 src/
   domain/           純 TypeScript 規則，不 import Vue、不碰瀏覽器
     character.ts      圖鑑角色型別與答題判斷
-    level.ts          每日關卡型別、六幕定義
+    level.ts          每日關卡型別、任務簡報型別、六幕定義
     progress.ts       存檔資料型別與純函式狀態轉換
     achievement.ts    稱號計算（含「K8s 雲之島統治大王」）
   data/             內容資料（企劃產出）
@@ -68,6 +68,7 @@ src/
 ## 路由
 
 - `/` 起始畫面：輸入暱稱
+- `/prologue` 世界觀序章：只有新取暱稱會導來，地圖側欄有常駐入口
 - `/map` 島嶼目錄：Day 1–30 + Day 31 圖鑑
 - `/day/:n` 每日關卡
 - `/codex` 角色圖鑑（Day 31）

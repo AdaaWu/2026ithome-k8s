@@ -44,9 +44,22 @@ describe('Day29Game', () => {
     await vi.advanceTimersByTimeAsync(1500)
     await wrapper.get('[data-choice=no]').trigger('click')
     await vi.advanceTimersByTimeAsync(1500)
+    expect(wrapper.find('[data-test=shell-finish]').exists()).toBe(false)
+    await vi.advanceTimersByTimeAsync(2000)
 
     await wrapper.get('[data-test=shell-finish]').trigger('click')
     await wrapper.get('[data-test=shell-finish]').trigger('click')
     expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('接通一條線後，名稱鏈寫在任務卡，提示氣泡只留一句短話', async () => {
+    const wrapper = mount(Day29Game)
+    await wrapper.get('[data-test=shell-start]').trigger('click')
+    expect(wrapper.find('[data-test=chain]').exists()).toBe(false)
+
+    for (const id of LINES[0]!) await tap(wrapper, id)
+    expect(wrapper.get('[data-test=chain]').text()).toBe('剛接通：kubectl → API Server → etcd')
+    expect(wrapper.get('[role=status]').text()).not.toContain('kubectl')
+    expect(wrapper.get('[role=status]').text().length).toBeLessThanOrEqual(25)
   })
 })

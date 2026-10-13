@@ -18,6 +18,7 @@ interface Line {
   steps: Array<{ id: Role; why: string }>
   decoys: Array<{ id: Role; why: string }>
   doneHint: string
+  chain: string
 }
 
 const NAME: Record<Role, string> = {
@@ -39,6 +40,7 @@ const LINES: Line[] = [
       { id: 'squirrel', why: '松鼠不聽哨子，只看櫃台' },
     ],
     doneHint: '回了 created，島上可能什麼都還沒發生',
+    chain: 'kubectl → API Server → etcd',
   },
   {
     verb: '想', title: '控制面做決定', color: '#a58bc9',
@@ -54,6 +56,7 @@ const LINES: Line[] = [
       { id: 'memory-tree', why: '記憶樹只跟櫃台說話' },
     ],
     doneHint: '每一步其實都經過櫃台，這裡省略',
+    chain: 'Controller Manager → Deployment → ReplicaSet → Scheduler → API Server',
   },
   {
     verb: '做', title: 'Node 執行', color: 'var(--leaf-deep)',
@@ -68,11 +71,12 @@ const LINES: Line[] = [
       { id: 'tree-picker', why: '選樹官只挑樹，不動手' },
     ],
     doneHint: '這是全島唯一真的動手的地方',
+    chain: 'kubelet → Pod → Container → Readiness Probe',
   },
   {
     verb: '送', title: '流量進來', color: 'var(--sky-deep)',
     steps: [
-      { id: 'gate-map', why: '訪客先看大門地圖看板' },
+      { id: 'gate-map', why: '守門員（Ingress Controller）照大門地圖看板分流' },
       { id: 'totem', why: '看板挑一根柱子' },
       { id: 'road-keeper', why: '道路管理員把封包轉過去' },
       { id: 'bubble', why: '封包抵達泡泡' },
@@ -83,6 +87,7 @@ const LINES: Line[] = [
       { id: 'steward', why: '管家管副本，不轉送流量' },
     ],
     doneHint: '流量一路都沒經過燈塔村',
+    chain: 'Ingress（守門員 Ingress Controller 執行）→ Service → kube-proxy → Pod → Container',
   },
   {
     verb: '留', title: '資料落地', color: 'var(--bark)',
@@ -96,6 +101,7 @@ const LINES: Line[] = [
       { id: 'bubble', why: '寫在泡泡裡，破了就沒了' },
     ],
     doneHint: '倉庫蓋在地上，泡泡破了它還在',
+    chain: 'Container → PVC → PV',
   },
 ]
 
@@ -110,13 +116,13 @@ const QUESTIONS = [
     why: '決定和執行分開，樹上照跑',
   },
   {
-    ask: '停電時刪掉一顆泡泡，它會自己長回來嗎？',
+    ask: '停電時一棵巢樹倒了，上面的泡泡會搬到別棵樹嗎？',
     options: [
       { id: 'no', label: '不會，巡邏隊長停了沒人補' },
-      { id: 'yes', label: '會，松鼠會自己補' },
+      { id: 'yes', label: '會，別棵樹的松鼠會接手' },
     ],
     answer: 'no',
-    why: '發現少一顆的是隊長，它停了',
+    why: '松鼠只顧自己那棵樹，發現少一顆要補的是隊長，它停了',
   },
 ]
 
@@ -144,6 +150,8 @@ const phase = ref<'lines' | 'blackout'>('lines')
 const question = ref(0)
 const busy = ref(false)
 const created = ref(false)
+// 剛接通那條線的 K8s 名稱鏈，放在任務卡不蓋住地圖
+const lastChain = ref<string | null>(null)
 const shaking = ref<Role | null>(null)
 const missCount = ref(0)
 const seq = useSequence<Role>(LINES[0]!.steps.map((s) => s.id))
@@ -198,7 +206,8 @@ function completeLine() {
   busy.value = true
   playSfx('correct')
   if (lineIndex.value === 0) created.value = true
-  hint.show(line.value.doneHint, 'good', 3000)
+  lastChain.value = line.value.chain
+  hint.show(line.value.doneHint, 'good')
   later(() => {
     lineIndex.value++
     busy.value = false
@@ -214,7 +223,10 @@ function choose(_id: string, correct: boolean) {
   if (!correct) return hint.show(q.why, 'bad')
   later(() => {
     question.value++
-    if (question.value === QUESTIONS.length) later(() => (status.value = 'won'), 600)
+    if (question.value < QUESTIONS.length) return
+    // 先讓玩家看一眼接好的全島圖，再跳過關
+    hint.show('五條線全通：說、想、做、送、留', 'good', 2600)
+    later(() => (status.value = 'won'), 2600)
   }, 700)
 }
 
@@ -272,10 +284,12 @@ function finish() {
       <div>
         <small class="task__label">線 {{ lineIndex + 1 }} / {{ LINES.length }}</small>
         <p class="task__title">{{ line.title }}：下一站是誰？</p>
+        <small v-if="lastChain" class="chain" data-test="chain">剛接通：{{ lastChain }}</small>
       </div>
     </div>
 
     <div v-else-if="question < QUESTIONS.length" class="quiz">
+      <small v-if="lastChain && question === 0" class="chain" data-test="chain">剛接通：{{ lastChain }}</small>
       <p class="quiz__ask">{{ QUESTIONS[question]!.ask }}</p>
       <ChoiceCards :key="question" :options="QUESTIONS[question]!.options" :answer="QUESTIONS[question]!.answer" @choose="choose" />
     </div>
@@ -345,18 +359,24 @@ function finish() {
 }
 
 .map__role :deep(.kchar__label) {
-  font-size: 0.66rem;
+  position: relative;
+  font-size: 0.7rem;
   white-space: nowrap;
+  background: var(--cloud);
 }
 
-.map__role.is-off {
-  transform: translateX(-50%) scale(0.78);
+/* 只縮角色本體，標籤維持可讀字級 */
+.map__role.is-off :deep(.kchar__body) {
+  transform: scale(0.78);
 }
 
 .map .map__created {
   position: absolute;
   left: 0;
   top: 78px;
+  min-height: 24px;
+  padding: 1px 6px;
+  font-size: 0.7rem;
   opacity: 1;
 }
 
@@ -392,6 +412,18 @@ function finish() {
 
 .quiz {
   margin: auto 12px 12px;
+}
+
+.chain {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.quiz .chain {
+  margin-bottom: 4px;
+  text-align: center;
 }
 
 .quiz__ask {

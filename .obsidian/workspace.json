@@ -6,7 +6,6 @@
       {
         "id": "9f32b9570d1fd8a5",
         "type": "tabs",
-        "dimension": 20.110410094637224,
         "children": [
           {
             "id": "0a2bdc1ac64e03cd",
@@ -35,29 +34,23 @@
               "icon": "lucide-file",
               "title": "k8s-series-spec"
             }
-          }
-        ]
-      },
-      {
-        "id": "aceea52c38913ad0",
-        "type": "tabs",
-        "dimension": 79.88958990536278,
-        "children": [
+          },
           {
-            "id": "798b1403f84ac638",
+            "id": "9c80cdd9f40d5e5b",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "day-30.md",
+                "file": "ITHOME 全系列文連結.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "day-30"
+              "title": "ITHOME 全系列文連結"
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -207,10 +200,17 @@
       "bases:建立新的 base": false
     }
   },
-  "active": "798b1403f84ac638",
+  "active": "9c80cdd9f40d5e5b",
   "lastOpenFiles": [
-    "day-29.md",
+    "website/test-results",
     "day-30.md",
+    "ITHOME 全系列文連結.md",
+    "website/tests/e2e/onboarding.spec.ts",
+    "website/src/presentation/views/PrologueView.vue",
+    "website/src/presentation/components/ui/BriefingCard.vue",
+    "website/specs/08-onboarding.md",
+    "day-01.md",
+    "day-29.md",
     "day-28.md",
     "illustrations/day-30-diagram-overlay.svg",
     "website/dist/assets/kit-Cj9wdimv.css",
@@ -219,10 +219,6 @@
     "website/dist/assets/RulerView-C_81LFQ0.css",
     "website/dist/assets/MapView-iLO-ezEL.css",
     "website/dist/assets/DayView-CAHBwO-j.css",
-    "website/dist/assets/CodexView-DY1Y1aA6.css",
-    "website/dist/assets/useTicker-CAX-SKOC.js",
-    "website/dist/assets/useSequence-CaIyNYEn.js",
-    "website/dist/assets/useRounds-D0jDc-DT.js",
     "illustrations/day-30-diagram.svg",
     "illustrations/day-29-storage.png",
     "illustrations/day-29-network.png",
@@ -248,9 +244,6 @@
     "day-13.md",
     "day-12.md",
     "day-11.md",
-    "day-10.md",
-    "day-09.md",
-    "day-08.md",
     "illustrations/day-30-diagram.png",
     "illustrations/day-29-diagram.png",
     "illustrations/day-28-diagram.png"
